@@ -13,7 +13,7 @@ The application has a 120-second deadline and the runner has an independent
 
 - real JSON, raw-protocol, binary, and large-channel round trips;
 - Tauri events in both directions;
-- local document layout and a CSP-blocked image request;
+- local document layout and CSP-blocked network and bundled image requests;
 - rejected commands from remote, local-child, sandboxed, and opaque frames;
 - rejection of cross-origin bundled-asset reads;
 - rejected remote, sandboxed-local, and opaque top-level callers; and
@@ -24,6 +24,13 @@ The navigation stress case complements the deterministic generation-revocation
 unit tests; it does not claim exhaustive coverage of every possible scheduling
 interleaving. Layout and animation callbacks are not pixel/screenshot proof.
 Native smoke receipts and visual-rendering receipts remain separate gates.
+
+Servo 0.5.0 treats `tauri://` origins as opaque, so this fixture explicitly
+allows `tauri:` scripts and frames. A passing IPC receipt therefore does not
+prove that an existing Tauri application's `'self'` policy works unchanged.
+That compatibility gap remains a release blocker, not a recommended product
+CSP adjustment. The `img-src 'none'` canaries must still block both network
+and intercepted bundled assets before their handlers are reached.
 
 All negative calls carry the same valid test key used by a successful local
 positive control. The test checks actual Rust handler counts independently of

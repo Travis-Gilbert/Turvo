@@ -113,4 +113,5 @@ jobs:
         with:
           name: native-security-${{ matrix.platform.target }}
           path: .reports/native-security-*.log
+          include-hidden-files: true
           if-no-files-found: ignore

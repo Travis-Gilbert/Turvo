@@ -4,16 +4,22 @@
 ;(async function () {
   const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
   const deadline = Date.now() + 15000
-  while (!window.__TAURI__ || !window.__TURVO_TEST_BASE__) {
+  while (!window.__TURVO_TEST_BASE__) {
     if (Date.now() > deadline) throw new Error('Tauri initialization did not arrive')
     await pause(20)
   }
   const base = window.__TURVO_TEST_BASE__
+  await fetch(base + '/stage/script-start')
   const assert = (condition, message) => { if (!condition) throw new Error(message) }
   const report = (caseName, passed, detail = '') => fetch(base + '/report', {
     method: 'POST', body: JSON.stringify({ case: caseName, passed, detail })
   })
   try {
+    while (!window.__TAURI__) {
+      if (Date.now() > deadline) throw new Error('Tauri initialization did not arrive')
+      await pause(20)
+    }
+    await fetch(base + '/stage/globals-ready')
     const { invoke, Channel } = window.__TAURI__.core
     const { listen, emit } = window.__TAURI__.event
     const originalFetch = window.fetch.bind(window)
@@ -68,14 +74,15 @@
 
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     assert(document.querySelector('h1').getBoundingClientRect().width > 0, 'bundled document has no layout')
-    const imageBlocked = new Promise((resolve, reject) => {
-      const image = new Image()
-      image.onload = () => reject(new Error('CSP unexpectedly allowed an image'))
-      image.onerror = resolve
-      image.src = base + '/blocked-image'
-      document.body.append(image)
-    })
-    await imageBlocked
+    for (const imageUrl of [base + '/blocked-image', new URL('csp-canary.svg', location.href).href]) {
+      await new Promise((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => reject(new Error('CSP unexpectedly allowed an image'))
+        image.onerror = resolve
+        image.src = imageUrl
+        document.body.append(image)
+      })
+    }
     const cases = ['remote-frame', 'local-frame', 'sandbox-frame', 'opaque-frame']
     for (const caseName of cases) {
       const frame = document.createElement('iframe')

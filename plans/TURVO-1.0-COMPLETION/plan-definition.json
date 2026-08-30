@@ -146,6 +146,10 @@
     {
       "id": "F14",
       "text": "Commit aa639664be21a94d7a30da9525921f36c94817a8 passed all jobs in run 33332869372 (99314527731, 99314527798, 99314527824, 99314527916). Every desktop passed 47 unit tests, two public API tests, Clippy, and both examples; five Node transport tests also passed. Real request-body streaming, cancellation, caller-provenance logic, and main-frame script handling are compile/unit verified. W02I remains working until the new native adversarial fixture passes."
+    },
+    {
+      "id": "F15",
+      "text": "First native run 33333199948 at 30a98f040d55e89ecfafefff6a3eb415d674ca86 passed 48 unit tests, two API tests, Clippy, and all three example builds on each desktop. Native jobs 99315382070 (macOS) and 99315382073 (Linux) timed out before IPC because CSP 'self' blocked tauri://localhost/probe.js; Servo assigns custom-scheme URLs opaque origins. Linux then segfaulted at process exit; macOS returned zero despite the failed receipt. Windows job 99315382083 failed earlier with RequiredExtensionUnavailable creating the WGL rendering context. These are release blockers. The diagnostic fixture explicitly allows tauri: scripts/frames to probe IPC, retains CSP image canaries, and does not claim unchanged consumer CSP compatibility."
     }
   ],
   "decisions": [
@@ -437,7 +441,7 @@
       "status": "working",
       "controller": "agent",
       "depends_on": ["V02"],
-      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI, and public Servo API research or isolated patch"],
+      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI and its observed graphics/shutdown blockers, and public Servo API research or isolated patch"],
       "obligations": ["O03", "O04"],
       "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
       "consumes": ["V02 asset routing", "F08", "ADR04", "ADR05"],

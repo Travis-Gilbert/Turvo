@@ -38,6 +38,7 @@ struct Observations {
   channel: bool,
   js_event: bool,
   blocked_asset_requested: bool,
+  blocked_app_asset_requested: bool,
 }
 
 type Shared = Arc<Mutex<Observations>>;
@@ -97,6 +98,7 @@ fn finish(app: &tauri::AppHandle<turvo::Turvo>, state: &Shared, failure: Option<
     && state.channel
     && state.js_event
     && !state.blocked_asset_requested
+    && !state.blocked_app_asset_requested
     && CASES.iter().all(|case| state.reports.contains(*case));
   println!(
     "TURVO_NATIVE_SECURITY {}",
@@ -108,7 +110,8 @@ fn finish(app: &tauri::AppHandle<turvo::Turvo>, state: &Shared, failure: Option<
       "binary": state.binary,
       "channel": state.channel,
       "js_event": state.js_event,
-      "blocked_asset_requested": state.blocked_asset_requested
+      "blocked_asset_requested": state.blocked_asset_requested,
+      "blocked_app_asset_requested": state.blocked_app_asset_requested
     })
   );
   app.exit(if passed { 0 } else { 1 });
@@ -131,6 +134,7 @@ fn serve(server: Server, base: String, app: tauri::AppHandle<turvo::Turvo>, stat
       Err(_) => break,
     };
     let path = request.url().split('?').next().unwrap_or("/").to_owned();
+    println!("native fixture request: {} {path}", request.method());
     let mut report = None;
     let (body, content_type, status) = match path.as_str() {
       "/attacker.html" => (
@@ -183,6 +187,7 @@ fn serve(server: Server, base: String, app: tauri::AppHandle<turvo::Turvo>, stat
         state.lock().unwrap().blocked_asset_requested = true;
         ("CSP should prevent this request".into(), "text/plain", 200)
       }
+      path if path.starts_with("/stage/") => ("ok".into(), "text/plain", 200),
       _ => ("not found".into(), "text/plain", 404),
     };
     let response = Response::from_string(body)
@@ -251,6 +256,13 @@ fn main() {
   let setup_state = state.clone();
   let app = turvo::builder()
     .manage(state)
+    .on_page_load(|_, payload| {
+      println!(
+        "native page load: {:?} {}",
+        payload.event(),
+        payload.url().scheme()
+      );
+    })
     .invoke_handler(tauri::generate_handler![
       protected_action,
       binary_echo,
@@ -264,6 +276,7 @@ fn main() {
         events_state.lock().unwrap().js_event = event.payload() == "\"js-value\"";
         let _ = handle.emit("security:ack", "ack-value");
       });
+      let assets_state = setup_state.clone();
       WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Turvo native security probe")
         .inner_size(800.0, 600.0)
@@ -271,7 +284,10 @@ fn main() {
           "window.__TURVO_TEST_BASE__ = {};",
           serde_json::to_string(&base)?
         ))
-        .on_web_resource_request(|request, response| {
+        .on_web_resource_request(move |request, response| {
+          if request.uri().path() == "/csp-canary.svg" {
+            assets_state.lock().unwrap().blocked_app_asset_requested = true;
+          }
           if request.uri().path() == "/sandbox.html" {
             response.headers_mut().append(
               tauri::http::header::CONTENT_SECURITY_POLICY,

@@ -25,7 +25,8 @@ def main() -> int:
     environment = os.environ.copy()
     environment["RUST_BACKTRACE"] = "1"
     if sys.platform.startswith("linux"):
-        command = ["dbus-run-session", "--", "xvfb-run", "-a", *command]
+        # Start the display first so D-Bus-activated desktop services inherit it.
+        command = ["xvfb-run", "-a", "dbus-run-session", "--", *command]
         environment["LIBGL_ALWAYS_SOFTWARE"] = "1"
     process = subprocess.Popen(
         command,

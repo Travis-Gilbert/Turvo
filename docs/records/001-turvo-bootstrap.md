@@ -118,4 +118,25 @@ The console IPC bridge has been replaced by real Servo protocol requests with
 body streaming, engine-derived caller identity, frame guards, and navigation
 generation checks. The native security fixture in `examples/security` now
 tests those assumptions through actual documents, not mocked engine metadata.
-Its first native result is pending; this compile receipt does not close A2/A3.
+This compile receipt does not close A2/A3.
+
+## First native failure receipt
+
+Commit `30a98f040d55e89ecfafefff6a3eb415d674ca86` passed 48 unit tests,
+two public API tests, Clippy, and all three example builds per desktop in
+[run 33333199948](https://github.com/Travis-Gilbert/Turvo/actions/runs/33333199948).
+The real native launches then failed:
+
+- macOS and Linux: Servo blocked `tauri://localhost/probe.js` under `script-src
+  'self'`; no privileged IPC case ran. Servo's custom-scheme origins are opaque.
+- Windows: Surfman's WGL path failed with `RequiredExtensionUnavailable`
+  before the page loaded. Investigate the published ANGLE backend and its
+  packaging requirements rather than substitute a compile-only receipt.
+- Linux segfaulted during process exit after the failed receipt; macOS returned
+  exit code zero. The runner correctly rejects both failures independently of
+  the application's printed status.
+
+The diagnostic fixture now explicitly allows `tauri:` scripts and frames so
+the IPC probe can advance. This is not a fix for the unchanged consumer CSP
+contract. Network and bundled-asset image canaries retain `img-src 'none'` to
+detect policy bypass through either resource path. W02I remains working.

@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `c59f59c06fe9833be173f484504acd20e115bb05a9dd24fd761801df446001a3`
+Canonical SHA-256: `4b0fab440e0626d6a2ce176f1c0eba11106ce018b17c4f50f45482adbef649e4`
 
 ## Current facts
 
@@ -18,6 +18,7 @@ Canonical SHA-256: `c59f59c06fe9833be173f484504acd20e115bb05a9dd24fd761801df4460
 - `F12`: Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and servo_base for packages servo-net-traits and servo-base respectively; imports were corrected from those exact declarations. Native proof is still pending.
 - `F13`: Pinned Tauri protocol/tauri.rs strips tauri://localhost to derive asset paths; Wry reverses the Windows HTTP mapping only for the handler-facing URI. The adapter now follows that lookup contract without changing the browser response URL or Origin. Servo fetch/methods.rs also treats fetchable custom protocols as basic responses before the normal CORS path, so a real cross-origin asset canary was added to the native security fixture. This is an open policy-risk probe, not yet a native receipt.
 - `F14`: Commit aa639664be21a94d7a30da9525921f36c94817a8 passed all jobs in run 33332869372 (99314527731, 99314527798, 99314527824, 99314527916). Every desktop passed 47 unit tests, two public API tests, Clippy, and both examples; five Node transport tests also passed. Real request-body streaming, cancellation, caller-provenance logic, and main-frame script handling are compile/unit verified. W02I remains working until the new native adversarial fixture passes.
+- `F15`: First native run 33333199948 at 30a98f040d55e89ecfafefff6a3eb415d674ca86 passed 48 unit tests, two API tests, Clippy, and all three example builds on each desktop. Native jobs 99315382070 (macOS) and 99315382073 (Linux) timed out before IPC because CSP 'self' blocked tauri://localhost/probe.js; Servo assigns custom-scheme URLs opaque origins. Linux then segfaulted at process exit; macOS returned zero despite the failed receipt. Windows job 99315382083 failed earlier with RequiredExtensionUnavailable creating the WGL rendering context. These are release blockers. The diagnostic fixture explicitly allows tauri: scripts/frames to probe IPC, retains CSP image canaries, and does not claim unchanged consumer CSP compatibility.
 
 ## Explicit exclusions
 

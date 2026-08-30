@@ -1,6 +1,6 @@
 # Execution replay
 
-Canonical SHA-256: `c59f59c06fe9833be173f484504acd20e115bb05a9dd24fd761801df446001a3`
+Canonical SHA-256: `4b0fab440e0626d6a2ce176f1c0eba11106ce018b17c4f50f45482adbef649e4`
 
 This is a generated status replay. Durable proof lives in each node's discharge evidence and the referenced external artifacts.
 
