@@ -1,6 +1,6 @@
 # Execution replay
 
-Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
+Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
 
 This is a generated status replay. Durable proof lives in each node's discharge evidence and the referenced external artifacts.
 
@@ -14,7 +14,7 @@ This is a generated status replay. Durable proof lives in each node's discharge 
 - [x] `V02` completed: Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations.
 - [~] `W02I` working: awaiting execution
 - [ ] `V02I` pending: awaiting execution
-- [ ] `W03` pending: awaiting execution
+- [p] `W03` parked: awaiting execution
 - [ ] `V03` pending: awaiting execution
 - [ ] `E01` pending: awaiting execution
 - [ ] `W04` pending: awaiting execution

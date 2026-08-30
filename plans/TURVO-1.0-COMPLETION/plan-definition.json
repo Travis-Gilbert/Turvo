@@ -1,7 +1,7 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 2,
+  "generation": 3,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
@@ -162,6 +162,14 @@
     {
       "id": "F18",
       "text": "Published Servo 0.5.0 already exposes no-wgl, enabling mozangle 0.6 EGL/DLL builds plus Surfman's ANGLE backend. Servo's own Python build_commands.py stages libEGL.dll and libGLESv2.dll after building. Turvo now selects this feature only on Windows and stages the exact Cargo build-script-executed output for standalone native tests. Four local staging tests cover current versus stale, incomplete, ambiguous, and host-versus-cross-target outputs; the actual Windows ANGLE build and native run remain pending."
+    },
+    {
+      "id": "F19",
+      "text": "Run 33334815996 at b4d0f429b10fd5f015420ea1c90c6080dda984e4 completed with Linux and macOS green. Windows job 99319711975 built and staged Servo's ANGLE DLLs, passed runtime tests, Clippy, and all examples, and reached real native IPC. Its retained native-security-x86_64-pc-windows-msvc artifact recorded local-json/local-raw, binary/channel/event success, but a remote iframe read a cross-origin bundled asset and blocked_app_asset_requested was true. Graphics startup is repaired; mapped HTTP asset CORS/CSP behavior is a reproduced release blocker. The native security oracle remains failed."
+    },
+    {
+      "id": "F20",
+      "text": "The versioned Tauri proposal targets public tauri-v2.11.5 commit 7cd71369c00978a3783b6ae3e9972358abbe4ae6. It adds an opaque runtime opener token and default-rejecting builder hook without changing Wry construction or exhaustive public structs. Four runtime tests and two real MockRuntime contract tests are authored; local format and patch checks pass, hosted compilation is pending. Tauri's own test dev-dependency enables Wry, so no-Wry core compilation is a distinct check. The pinned contribution policy requires human review/testing of AI output before upstream submission; no upstream PR or approval is claimed."
     }
   ],
   "decisions": [
@@ -213,6 +221,14 @@
       "choice": "Supersede ADR06's CI-driver branch with Servo's maintained no-wgl/ANGLE backend on Windows. Stage its own DLLs from current Cargo JSON build output, reject ambiguous or missing outputs, and retain the clean-machine package gate. Do not invent a graphics backend or claim that enabling the feature proves native behavior.",
       "reversibility_class": "reversible_with_cost",
       "retraction_path": "Revisit the backend selection only with native hardware evidence or a published Servo rendering API change; never remove the required Windows native gate."
+    },
+    {
+      "id": "ADR08",
+      "question": "How can W03 produce a reviewable upstream proposal without representing AI work as human-reviewed?",
+      "choice": "Use the versioned-public-patch path already allowed by W03, pinned to exact Tauri source and tested on all three desktop hosts in Turvo CI. Preserve the existing native opener signature, document the new runtime-only accessor tradeoff, and default-reject unsupported tokens. Do not submit an upstream PR until a human has reviewed and tested it under Tauri's contribution policy. E01 remains an accepted-release or explicitly approved-public-revision gate.",
+      "options_considered": ["Submit an upstream PR immediately: no human review receipt exists, contrary to the pinned contribution policy.", "Publish a versioned patch and hosted compatibility tests: preserves reviewability and the original W03 artifact option without implying upstream acceptance."],
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
@@ -265,15 +281,15 @@
     {
       "rank": 1,
       "node": "W02I",
-      "why": "Asset routing is verified at its declared test level. F08's caller-identity gap now has a published low-level API candidate in F11 that must be proven before native API parity or release.",
+      "why": "The Windows ANGLE run has returned a native CORS/CSP failure (F19), satisfying W02I's resume condition. W03 now has a versioned patch and is suspended on its hosted compatibility workflow.",
       "value_vector": {
-        "success": {"value": "uncertain", "evidence": "F11 supplies engine metadata but native IPC behavior is not yet observed"},
-        "cost": {"value": "high", "evidence": "Body-stream adaptation, authenticated source mapping, and adversarial native probes"},
-        "latency": {"value": "bounded-probe", "evidence": "Pinned source and hosted native runners can test the candidate"},
+        "success": {"value": "uncertain", "evidence": "The published engine's HTTP interceptor lacks the provenance needed by the reproduced native policy cases"},
+        "cost": {"value": "medium", "evidence": "Evaluate public URL/origin alternatives and a minimal upstream-compatible engine repair"},
+        "latency": {"value": "bounded-probe", "evidence": "Exact native failure and pinned fetch pipeline are available"},
         "reversibility": {"value": "high", "evidence": "Focused source and workflow repairs are ordinary commits"},
-        "verification_coverage": {"value": "critical", "evidence": "Actual local, remote, iframe, opaque-origin, and navigation identity"},
-        "information_gain": {"value": "highest", "evidence": "Determines whether public Servo is sufficient for privileged app IPC"},
-        "optionality": {"value": "high", "evidence": "A working public API adapter avoids an engine fork requirement"}
+        "verification_coverage": {"value": "critical", "evidence": "No remote asset disclosure or CSP bypass while retaining legitimate app behavior"},
+        "information_gain": {"value": "high", "evidence": "Determine whether current published APIs can satisfy the fixed native oracle"},
+        "optionality": {"value": "high", "evidence": "An engine API proposal can preserve the public-release constraint without silently adopting a private fork"}
       }
     }
   ],
@@ -509,10 +525,12 @@
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "pending",
+      "status": "parked",
+      "park_reason": "Awaiting the three-platform Tauri opener patch workflow for proposal SHA-256 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. Source and tests are authored, not compile-verified.",
+      "resume_condition": "The Tauri opener patch workflow on the commit containing this proposal completes or requests attention; inspect all three exact-revision compatibility results.",
       "controller": "agent",
       "depends_on": ["V02"],
-      "scope": ["external Tauri clean worktree and docs/research/tauri-new-window.md"],
+      "scope": ["external Tauri clean worktree, patches/tauri, docs/research/tauri-new-window.md, and a scoped upstream-patch validation workflow"],
       "obligations": ["O06"],
       "gist": "Implement and propose an additive Tauri API that lets non-Wry runtimes process window.open safely.",
       "consumes": ["ADR02", "V02 baseline"],
@@ -520,12 +538,12 @@
       "blueprint": ["Preserve Wry behavior and public compatibility.", "Give runtime-neutral embedders enough request information to create or deny a new window without native Wry objects."],
       "oracle_class": "upstream compile, tests, and public review artifact",
       "implementation_mode": "real_external_patch",
-      "evidence_class": "upstream test receipt and PR URL",
+      "evidence_class": "upstream-source test receipt and public PR URL or versioned proposal commit",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo test -p tauri-runtime", "cargo test -p tauri"],
+      "proof_commands": ["cargo test -p tauri-runtime --lib --locked", "cargo check -p tauri --no-default-features --lib --locked", "cargo test -p tauri --lib --tests --features test --locked"],
       "discharge_evidence": [],
-      "retraction_path": "Close the PR and retain Turvo's documented blocked behavior if the design is rejected.",
+      "retraction_path": "Close the PR or revise the versioned proposal and retain Turvo's documented blocked behavior if the design is rejected.",
       "verify_sibling": "V03"
     },
     {
@@ -535,10 +553,10 @@
       "status": "pending",
       "controller": "verifier",
       "depends_on": ["W03"],
-      "scope": ["read-only upstream Tauri patch, compatibility tests, and public PR"],
+      "scope": ["read-only upstream Tauri patch, compatibility tests, and public PR or versioned proposal commit"],
       "obligations": ["O06"],
       "gist": "Confirm the proposed seam is additive, runtime-neutral, safe, and sufficient for a Servo adapter.",
-      "consumes": ["W03 patch and PR"],
+      "consumes": ["W03 versioned patch or PR and exact-revision hosted test receipts"],
       "produces": ["upstream verification receipt"],
       "blueprint": ["Audit Wry compatibility and independently exercise a mock non-Wry runtime path."],
       "oracle_class": "independent upstream verification",
@@ -546,7 +564,7 @@
       "evidence_class": "upstream tests and public review state",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh pr checks --watch"],
+      "proof_commands": ["gh run view <exact-proposal-run> --log", "read-only native API compatibility and MockRuntime test audit"],
       "discharge_evidence": [],
       "retraction_path": "Return W03 to frontier with compatibility failures or review objections."
     },

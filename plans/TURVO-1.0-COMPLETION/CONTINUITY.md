@@ -1,8 +1,8 @@
 # Continuity
 
-Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
+Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
 
-Generation: `2`
+Generation: `3`
 
 ## Resume here
 
@@ -21,7 +21,7 @@ Generation: `2`
 
 ## Parked work
 
-None.
+- `W03`: Awaiting the three-platform Tauri opener patch workflow for proposal SHA-256 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. Source and tests are authored, not compile-verified. Resume: The Tauri opener patch workflow on the commit containing this proposal completes or requests attention; inspect all three exact-revision compatibility results.
 
 ## Invariants
 

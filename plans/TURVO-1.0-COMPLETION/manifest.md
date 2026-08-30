@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
+Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
 
 ## Destination
 
@@ -22,7 +22,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 
 ## Opening move
 
-- 1. `W02I`: Asset routing is verified at its declared test level. F08's caller-identity gap now has a published low-level API candidate in F11 that must be proven before native API parity or release.
+- 1. `W02I`: The Windows ANGLE run has returned a native CORS/CSP failure (F19), satisfying W02I's resume condition. W03 now has a versioned patch and is suspended on its hosted compatibility workflow.
 
 ## Task board
 
@@ -38,7 +38,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 | [V02](nodes/V02.md) | completed | verifier | verify.local | W02 | O03, O04 |
 | [W02I](nodes/W02I.md) | working | agent | work.implementation | V02 | O03, O04 |
 | [V02I](nodes/V02I.md) | pending | verifier | verify.live | W02I | O03, O04 |
-| [W03](nodes/W03.md) | pending | agent | work.external | V02 | O06 |
+| [W03](nodes/W03.md) | parked | agent | work.external | V02 | O06 |
 | [V03](nodes/V03.md) | pending | verifier | verify.live | W03 | O06 |
 | [E01](nodes/E01.md) | pending | world | weather | V03 | O06 |
 | [W04](nodes/W04.md) | pending | agent | work.implementation | E01 | O06 |

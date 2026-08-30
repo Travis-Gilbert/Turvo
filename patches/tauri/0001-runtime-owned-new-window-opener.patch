@@ -1,0 +1,388 @@
+diff --git a/.changes/runtime-new-window-opener.md b/.changes/runtime-new-window-opener.md
+new file mode 100644
+index 0000000..8c76f61
+--- /dev/null
++++ b/.changes/runtime-new-window-opener.md
+@@ -0,0 +1,6 @@
++---
++'tauri-runtime': 'minor:enhance'
++'tauri': 'minor:enhance'
++---
++
++Add runtime-owned new-window opener tokens and an opt-in window-builder hook for custom runtimes. Existing native opener construction and Wry behavior are preserved; unsupported runtime-owned openers fail before window creation. Runtime-neutral callers can use the optional native and runtime opener accessors instead of the legacy native-only accessor.
+diff --git a/crates/tauri-runtime/src/lib.rs b/crates/tauri-runtime/src/lib.rs
+index eac06fb..235af6b 100644
+--- a/crates/tauri-runtime/src/lib.rs
++++ b/crates/tauri-runtime/src/lib.rs
+@@ -125,6 +125,9 @@ pub enum Error {
+   /// Failed to create window.
+   #[error("failed to create window")]
+   CreateWindow,
++  /// The runtime does not support this runtime-owned new-window opener.
++  #[error("the runtime does not support this runtime-owned new-window opener")]
++  UnsupportedNewWindowOpener,
+   /// The given window label is invalid.
+   #[error("Window labels must only include alphanumeric characters, `-`, `/`, `:` and `_`.")]
+   InvalidWindowLabel,
+diff --git a/crates/tauri-runtime/src/webview.rs b/crates/tauri-runtime/src/webview.rs
+index d7fb9c8..78e4f7d 100644
+--- a/crates/tauri-runtime/src/webview.rs
++++ b/crates/tauri-runtime/src/webview.rs
+@@ -16,6 +16,7 @@ use tauri_utils::config::{
+ use url::Url;
+ 
+ use std::{
++  any::Any,
+   borrow::Cow,
+   collections::HashMap,
+   hash::{Hash, Hasher},
+@@ -124,7 +125,44 @@ pub struct NewWindowOpener {
+ pub struct NewWindowFeatures {
+   pub(crate) size: Option<crate::dpi::LogicalSize<f64>>,
+   pub(crate) position: Option<crate::dpi::LogicalPosition<f64>>,
+-  pub(crate) opener: NewWindowOpener,
++  opener: NewWindowOpenerKind,
++}
++
++#[derive(Debug)]
++enum NewWindowOpenerKind {
++  Native(NewWindowOpener),
++  Runtime(RuntimeNewWindowOpener),
++}
++
++/// An opaque opener token owned and interpreted by a custom [`Runtime`].
++///
++/// This lets a runtime preserve its engine's new-window request without constructing
++/// WebKit or WebView2 objects. Store thread-safe identifiers here, not thread-affine
++/// engine objects. The receiving runtime must validate the token's type, ownership,
++/// lifetime, and single-use requirements before creating the related webview.
++///
++/// Cloning this value shares the token; it does not authorize another window.
++#[derive(Clone)]
++pub struct RuntimeNewWindowOpener(Arc<dyn Any + Send + Sync>);
++
++impl std::fmt::Debug for RuntimeNewWindowOpener {
++  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++    f.debug_struct("RuntimeNewWindowOpener")
++      .finish_non_exhaustive()
++  }
++}
++
++impl RuntimeNewWindowOpener {
++  /// Wraps a thread-safe, runtime-owned opener token.
++  pub fn new<T: Any + Send + Sync>(token: T) -> Self {
++    Self(Arc::new(token))
++  }
++
++  /// Returns the token when its concrete type matches the receiving runtime.
++  /// A type match alone does not establish that the opener is still valid.
++  pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
++    self.0.downcast_ref()
++  }
+ }
+ 
+ impl NewWindowFeatures {
+@@ -136,7 +174,23 @@ impl NewWindowFeatures {
+     Self {
+       size,
+       position,
+-      opener,
++      opener: NewWindowOpenerKind::Native(opener),
++    }
++  }
++
++  /// Creates features for a custom runtime without native WebKit or WebView2 objects.
++  ///
++  /// The token is forwarded by Tauri's webview-window builder to
++  /// [`crate::window::WindowBuilder::with_runtime_new_window_opener`].
++  pub fn new_for_runtime(
++    size: Option<crate::dpi::LogicalSize<f64>>,
++    position: Option<crate::dpi::LogicalPosition<f64>>,
++    opener: RuntimeNewWindowOpener,
++  ) -> Self {
++    Self {
++      size,
++      position,
++      opener: NewWindowOpenerKind::Runtime(opener),
+     }
+   }
+ 
+@@ -153,8 +207,87 @@ impl NewWindowFeatures {
+   }
+ 
+   /// Returns information about the webview that initiated a new window request.
++  ///
++  /// # Panics
++  ///
++  /// Panics for features created with [`Self::new_for_runtime`]. Runtime-neutral
++  /// callers should use [`Self::native_opener`] or [`Self::runtime_opener`] instead.
+   pub fn opener(&self) -> &NewWindowOpener {
+-    &self.opener
++    self
++      .native_opener()
++      .expect("runtime-owned window features do not have a native opener")
++  }
++
++  /// Returns the native opener, if this request came from a native webview runtime.
++  pub fn native_opener(&self) -> Option<&NewWindowOpener> {
++    match &self.opener {
++      NewWindowOpenerKind::Native(opener) => Some(opener),
++      NewWindowOpenerKind::Runtime(_) => None,
++    }
++  }
++
++  /// Returns the opaque opener, if this request came from a custom runtime.
++  pub fn runtime_opener(&self) -> Option<&RuntimeNewWindowOpener> {
++    match &self.opener {
++      NewWindowOpenerKind::Native(_) => None,
++      NewWindowOpenerKind::Runtime(opener) => Some(opener),
++    }
++  }
++}
++
++#[cfg(test)]
++mod new_window_tests {
++  use super::{NewWindowFeatures, NewWindowOpener, RuntimeNewWindowOpener};
++  use crate::dpi::{LogicalPosition, LogicalSize};
++
++  // Existing native callers retain these exact constructor/accessor signatures.
++  const _: fn(
++    Option<LogicalSize<f64>>,
++    Option<LogicalPosition<f64>>,
++    NewWindowOpener,
++  ) -> NewWindowFeatures = NewWindowFeatures::new;
++  const _: fn(&NewWindowFeatures) -> &NewWindowOpener = NewWindowFeatures::opener;
++
++  #[test]
++  fn runtime_features_preserve_geometry_and_typed_token() {
++    let size = Some(LogicalSize::new(640.0, 480.0));
++    let position = Some(LogicalPosition::new(20.0, 30.0));
++    let features =
++      NewWindowFeatures::new_for_runtime(size, position, RuntimeNewWindowOpener::new(42_u64));
++
++    assert_eq!(features.size(), size);
++    assert_eq!(features.position(), position);
++    assert!(features.native_opener().is_none());
++    let opener = features.runtime_opener().unwrap();
++    assert_eq!(opener.downcast_ref::<u64>(), Some(&42));
++    assert!(opener.downcast_ref::<String>().is_none());
++  }
++
++  #[test]
++  fn cloned_token_shares_identity_across_threads() {
++    let opener = RuntimeNewWindowOpener::new(String::from("request"));
++    let copy = opener.clone();
++    assert!(std::ptr::eq(
++      opener.downcast_ref::<String>().unwrap(),
++      copy.downcast_ref::<String>().unwrap(),
++    ));
++    std::thread::spawn(move || {
++      assert_eq!(copy.downcast_ref::<String>().unwrap(), "request");
++    })
++    .join()
++    .unwrap();
++  }
++
++  #[test]
++  fn debug_does_not_expose_token_contents() {
++    let opener = RuntimeNewWindowOpener::new("private-request-data");
++    assert!(!format!("{opener:?}").contains("private-request-data"));
++  }
++
++  #[test]
++  #[should_panic(expected = "runtime-owned window features do not have a native opener")]
++  fn legacy_accessor_rejects_runtime_owned_features() {
++    NewWindowFeatures::new_for_runtime(None, None, RuntimeNewWindowOpener::new(42_u64)).opener();
+   }
+ }
+ 
+diff --git a/crates/tauri-runtime/src/window.rs b/crates/tauri-runtime/src/window.rs
+index e20613e..c0e7e36 100644
+--- a/crates/tauri-runtime/src/window.rs
++++ b/crates/tauri-runtime/src/window.rs
+@@ -263,6 +263,18 @@ pub trait WindowBuilder: WindowBuilderBase {
+   /// Initializes a new window builder from a [`WindowConfig`]
+   fn with_config(config: &WindowConfig) -> Self;
+ 
++  /// Preserves a custom runtime's opener when building a window with a webview.
++  ///
++  /// Implementations must retain and validate the token when creating the related
++  /// webview. Unknown, expired, foreign, or already-consumed tokens must be rejected.
++  /// The default rejects all tokens rather than silently creating an unrelated window.
++  fn with_runtime_new_window_opener(
++    self,
++    _opener: crate::webview::RuntimeNewWindowOpener,
++  ) -> crate::Result<Self> {
++    Err(crate::Error::UnsupportedNewWindowOpener)
++  }
++
+   /// Show window in the center of the screen.
+   #[must_use]
+   fn center(self) -> Self;
+diff --git a/crates/tauri/src/webview/mod.rs b/crates/tauri/src/webview/mod.rs
+index b89d3c9..e9e31db 100644
+--- a/crates/tauri/src/webview/mod.rs
++++ b/crates/tauri/src/webview/mod.rs
+@@ -18,7 +18,9 @@ pub use cookie;
+ use http::HeaderMap;
+ use serde::Serialize;
+ use tauri_macros::default_runtime;
+-pub use tauri_runtime::webview::{NewWindowFeatures, PageLoadEvent, ScrollBarStyle};
++pub use tauri_runtime::webview::{
++  NewWindowFeatures, PageLoadEvent, RuntimeNewWindowOpener, ScrollBarStyle,
++};
+ // Remove this re-export in v3
+ pub use tauri_runtime::Cookie;
+ #[cfg(desktop)]
+diff --git a/crates/tauri/src/webview/webview_window.rs b/crates/tauri/src/webview/webview_window.rs
+index c61b96e..3471837 100644
+--- a/crates/tauri/src/webview/webview_window.rs
++++ b/crates/tauri/src/webview/webview_window.rs
+@@ -24,7 +24,10 @@ use crate::{
+   menu::{ContextMenu, Menu},
+   runtime::{window::CursorIcon, UserAttentionType},
+ };
+-use tauri_runtime::webview::NewWindowFeatures;
++use tauri_runtime::{
++  webview::{NewWindowFeatures, RuntimeNewWindowOpener},
++  window::WindowBuilder as _,
++};
+ use tauri_utils::config::{BackgroundThrottlingPolicy, Color, WebviewUrl, WindowConfig};
+ use url::Url;
+ 
+@@ -48,6 +51,7 @@ use super::{DownloadEvent, ResolvedScope};
+ pub struct WebviewWindowBuilder<'a, R: Runtime, M: Manager<R>> {
+   window_builder: WindowBuilder<'a, R, M>,
+   webview_builder: WebviewBuilder<R>,
++  runtime_new_window_opener: Option<RuntimeNewWindowOpener>,
+ }
+ 
+ impl<'a, R: Runtime, M: Manager<R>> WebviewWindowBuilder<'a, R, M> {
+@@ -103,6 +107,7 @@ impl<'a, R: Runtime, M: Manager<R>> WebviewWindowBuilder<'a, R, M> {
+     Self {
+       window_builder: WindowBuilder::new(manager, &label),
+       webview_builder: WebviewBuilder::new(&label, url),
++      runtime_new_window_opener: None,
+     }
+   }
+ 
+@@ -151,6 +156,7 @@ impl<'a, R: Runtime, M: Manager<R>> WebviewWindowBuilder<'a, R, M> {
+     Ok(Self {
+       window_builder: WindowBuilder::from_config(manager, config)?,
+       webview_builder: WebviewBuilder::from_config(config),
++      runtime_new_window_opener: None,
+     })
+   }
+ 
+@@ -435,7 +441,13 @@ tauri::Builder::default()
+   }
+ 
+   /// Creates a new window.
+-  pub fn build(self) -> crate::Result<WebviewWindow<R>> {
++  pub fn build(mut self) -> crate::Result<WebviewWindow<R>> {
++    if let Some(opener) = self.runtime_new_window_opener {
++      self.window_builder.window_builder = self
++        .window_builder
++        .window_builder
++        .with_runtime_new_window_opener(opener)?;
++    }
+     let (window, webview) = self.window_builder.with_webview(self.webview_builder)?;
+     Ok(WebviewWindow { window, webview })
+   }
+@@ -1350,6 +1362,10 @@ impl<R: Runtime, M: Manager<R>> WebviewWindowBuilder<'_, R, M> {
+ 
+   /// Set the window features.
+   /// Useful if you need to share the same window features, for instance when using the [`Self::on_new_window`].
++  ///
++  /// Runtime-owned openers are forwarded to the runtime's window builder. If the
++  /// runtime does not support the opener, [`Self::build`] returns an error before
++  /// creating a window. Native WebKit and WebView2 openers keep their existing behavior.
+   #[cfg(any(
+     target_os = "macos",
+     windows,
+@@ -1360,6 +1376,7 @@ impl<R: Runtime, M: Manager<R>> WebviewWindowBuilder<'_, R, M> {
+     target_os = "openbsd"
+   ))]
+   pub fn window_features(mut self, features: NewWindowFeatures) -> Self {
++    self.runtime_new_window_opener = features.runtime_opener().cloned();
+     if let Some(position) = features.position() {
+       self.window_builder = self.window_builder.position(position.x, position.y);
+     }
+@@ -1369,17 +1386,17 @@ impl<R: Runtime, M: Manager<R>> WebviewWindowBuilder<'_, R, M> {
+     }
+ 
+     #[cfg(target_os = "macos")]
+-    {
++    if let Some(opener) = features.native_opener() {
+       self.webview_builder = self
+         .webview_builder
+-        .with_webview_configuration(features.opener().target_configuration.clone());
++        .with_webview_configuration(opener.target_configuration.clone());
+     }
+ 
+     #[cfg(all(feature = "wry", windows))]
+-    {
++    if let Some(opener) = features.native_opener() {
+       self.webview_builder = self
+         .webview_builder
+-        .with_environment(features.opener().environment.clone());
++        .with_environment(opener.environment.clone());
+     }
+ 
+     #[cfg(all(
+@@ -1392,10 +1409,10 @@ impl<R: Runtime, M: Manager<R>> WebviewWindowBuilder<'_, R, M> {
+         target_os = "openbsd",
+       )
+     ))]
+-    {
++    if let Some(opener) = features.native_opener() {
+       self.webview_builder = self
+         .webview_builder
+-        .with_related_view(features.opener().webview.clone());
++        .with_related_view(opener.webview.clone());
+     }
+     self
+   }
+diff --git a/crates/tauri/tests/runtime_new_window.rs b/crates/tauri/tests/runtime_new_window.rs
+new file mode 100644
+index 0000000..1bbc624
+--- /dev/null
++++ b/crates/tauri/tests/runtime_new_window.rs
+@@ -0,0 +1,37 @@
++// Copyright 2019-2024 Tauri Programme within The Commons Conservancy
++// SPDX-License-Identifier: Apache-2.0
++// SPDX-License-Identifier: MIT
++
++#![cfg(all(feature = "test", not(any(target_os = "android", target_os = "ios"))))]
++
++use tauri::{
++  test::{mock_builder, mock_context, noop_assets},
++  webview::{NewWindowFeatures, RuntimeNewWindowOpener},
++  Manager, WebviewUrl, WebviewWindowBuilder,
++};
++
++#[test]
++fn mock_runtime_still_creates_windows_without_an_opener() {
++  let app = mock_builder().build(mock_context(noop_assets())).unwrap();
++  WebviewWindowBuilder::new(&app, "ordinary", WebviewUrl::default())
++    .build()
++    .unwrap();
++  assert!(app.get_webview_window("ordinary").is_some());
++}
++
++#[test]
++fn unsupported_runtime_opener_is_not_silently_dropped() {
++  let app = mock_builder().build(mock_context(noop_assets())).unwrap();
++  let features =
++    NewWindowFeatures::new_for_runtime(None, None, RuntimeNewWindowOpener::new(42_u64));
++  let result = WebviewWindowBuilder::new(&app, "child", WebviewUrl::default())
++    .window_features(features)
++    .build();
++  assert!(matches!(
++    result,
++    Err(tauri::Error::Runtime(
++      tauri_runtime::Error::UnsupportedNewWindowOpener
++    ))
++  ));
++  assert!(app.get_webview_window("child").is_none());
++}

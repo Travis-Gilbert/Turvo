@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
+Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
 
 ## Current facts
 
@@ -22,6 +22,8 @@ Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c
 - `F16`: Run 33333939812 at 11240b27377bc77ef346e8ae5082453c07ef88ba reached real IPC on Linux job 99317354543 and macOS job 99317354551. Both recorded local-json and local-raw native calls, binary and large-channel success, both event directions, and no blocked image handler calls. Both then failed because the remote iframe read a cross-origin bundled asset. Servo's is_fetchable custom-protocol flag bypasses the normal CORS path. Restricting it to source-authenticated IPC endpoints fails closed for asset fetches, but does not solve custom-origin local fetch/module compatibility or Windows interception policy. The entire origin gate remains open.
 - `F17`: Run 33334311977 at a0b50fb17469c9b3446705355e04b0ed34187f9a passed all nine native adversarial cases on macOS job 99318349568 and Linux job 99318349598, with exactly local-json, local-raw, and restored-local Rust calls, binary/channels/events, no blocked asset handler calls, and clean exit. Both passed 49 unit and two API tests. Windows job 99318349555 passed compilation but even checksum-pinned Mesa still failed RequiredExtensionUnavailable. Surfman's WGL device requires WGL_NV_DX_interop, not merely software OpenGL. No Windows native or normal custom-origin fetch/module compatibility receipt exists.
 - `F18`: Published Servo 0.5.0 already exposes no-wgl, enabling mozangle 0.6 EGL/DLL builds plus Surfman's ANGLE backend. Servo's own Python build_commands.py stages libEGL.dll and libGLESv2.dll after building. Turvo now selects this feature only on Windows and stages the exact Cargo build-script-executed output for standalone native tests. Four local staging tests cover current versus stale, incomplete, ambiguous, and host-versus-cross-target outputs; the actual Windows ANGLE build and native run remain pending.
+- `F19`: Run 33334815996 at b4d0f429b10fd5f015420ea1c90c6080dda984e4 completed with Linux and macOS green. Windows job 99319711975 built and staged Servo's ANGLE DLLs, passed runtime tests, Clippy, and all examples, and reached real native IPC. Its retained native-security-x86_64-pc-windows-msvc artifact recorded local-json/local-raw, binary/channel/event success, but a remote iframe read a cross-origin bundled asset and blocked_app_asset_requested was true. Graphics startup is repaired; mapped HTTP asset CORS/CSP behavior is a reproduced release blocker. The native security oracle remains failed.
+- `F20`: The versioned Tauri proposal targets public tauri-v2.11.5 commit 7cd71369c00978a3783b6ae3e9972358abbe4ae6. It adds an opaque runtime opener token and default-rejecting builder hook without changing Wry construction or exhaustive public structs. Four runtime tests and two real MockRuntime contract tests are authored; local format and patch checks pass, hosted compilation is pending. Tauri's own test dev-dependency enables Wry, so no-Wry core compilation is a distinct check. The pinned contribution policy requires human review/testing of AI output before upstream submission; no upstream PR or approval is claimed.
 
 ## Explicit exclusions
 

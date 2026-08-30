@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
+Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -59,3 +59,11 @@ Choice: Supersede ADR06's CI-driver branch with Servo's maintained no-wgl/ANGLE 
 Reversibility: `reversible_with_cost`
 
 Retraction: Revisit the backend selection only with native hardware evidence or a published Servo rendering API change; never remove the required Windows native gate.
+
+## ADR08: How can W03 produce a reviewable upstream proposal without representing AI work as human-reviewed?
+
+Choice: Use the versioned-public-patch path already allowed by W03, pinned to exact Tauri source and tested on all three desktop hosts in Turvo CI. Preserve the existing native opener signature, document the new runtime-only accessor tradeoff, and default-reject unsupported tokens. Do not submit an upstream PR until a human has reviewed and tested it under Tauri's contribution policy. E01 remains an accepted-release or explicitly approved-public-revision gate.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves.

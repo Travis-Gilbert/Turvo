@@ -424,7 +424,9 @@ def render_continuity(plan: dict[str, Any], digest: str) -> str:
         for task in completed
     ]
     parked_lines = [
-        f"{inline_code(task['id'])}: {task['gist']}" for task in parked
+        f"{inline_code(task['id'])}: {task.get('park_reason', task['gist'])} "
+        f"Resume: {task.get('resume_condition', 'Recompute the node from its blocker evidence.')}"
+        for task in parked
     ]
     return (
         "# Continuity\n\n"
