@@ -94,7 +94,19 @@ W03 remains parked, with these partial receipts retained, until the complete
 Servo-sufficiency review can pass. A separate read-only source pass found the
 metadata gap above; this is not an independent-agent or maintainer approval.
 
-Source anchors:
+## Automated review receipt
+
+On 2026-08-30, CodeRabbit reviewed the seven-file proposal delta in the isolated
+Tauri checkout against the pinned `tauri-v2.11.5` tag. The successful command was
+`coderabbit review --agent -t uncommitted --base tauri-v2.11.5`; its completion
+event listed all seven files and reported zero issues. The exported patch is
+unchanged, with SHA-256
+`6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a`.
+
+CodeRabbit raised 0 issues. This is an automated source-review receipt, not
+maintainer approval, native Servo popup proof, or discharge of V03.
+
+## Source anchors
 
 - [Servo 0.5.0 creation request and delegate](https://docs.rs/crate/servo/0.5.0/source/webview_delegate.rs)
 - [Servo 0.5.0 responder-backed webview builder](https://docs.rs/crate/servo/0.5.0/source/webview.rs)
