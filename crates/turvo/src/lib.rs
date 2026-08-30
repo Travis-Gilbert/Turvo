@@ -4287,7 +4287,7 @@ fn handle_event_loop<T: UserEvent>(
   windows: &WindowsStore,
   #[cfg(feature = "tracing")] active_tracing_spans: &ActiveTraceSpanStore,
 ) {
-  if *control_flow != ControlFlow::Exit {
+  if !matches!(*control_flow, ControlFlow::ExitWithCode(_)) {
     *control_flow = ControlFlow::Wait;
   }
 
@@ -4314,6 +4314,16 @@ fn handle_event_loop<T: UserEvent>(
 
     Event::LoopDestroyed => {
       callback(RunEvent::Exit);
+      // App handles can outlive the event loop and retain this store. Break
+      // that ownership cycle while still on the main thread, letting Servo's
+      // Drop implementation join its engine threads before process teardown.
+      // Release the RefCell borrow before dropping delegates, and destroy
+      // each webview while its native parent window is still alive.
+      let closed_windows = std::mem::take(&mut *windows.0.borrow_mut());
+      for mut window in closed_windows.into_values() {
+        window.webviews.clear();
+      }
+      window_id_map.0.lock().unwrap().clear();
     }
 
     Event::RedrawRequested(id) => {
@@ -4513,7 +4523,7 @@ fn handle_event_loop<T: UserEvent>(
         let should_prevent = matches!(recv, Ok(ExitRequestedEventAction::Prevent));
 
         if !should_prevent {
-          *control_flow = ControlFlow::Exit;
+          *control_flow = ControlFlow::ExitWithCode(code);
         }
       }
       Message::Window(id, WindowMessage::Close) => {

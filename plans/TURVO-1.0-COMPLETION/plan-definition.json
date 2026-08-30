@@ -150,6 +150,10 @@
     {
       "id": "F15",
       "text": "First native run 33333199948 at 30a98f040d55e89ecfafefff6a3eb415d674ca86 passed 48 unit tests, two API tests, Clippy, and all three example builds on each desktop. Native jobs 99315382070 (macOS) and 99315382073 (Linux) timed out before IPC because CSP 'self' blocked tauri://localhost/probe.js; Servo assigns custom-scheme URLs opaque origins. Linux then segfaulted at process exit; macOS returned zero despite the failed receipt. Windows job 99315382083 failed earlier with RequiredExtensionUnavailable creating the WGL rendering context. These are release blockers. The diagnostic fixture explicitly allows tauri: scripts/frames to probe IPC, retains CSP image canaries, and does not claim unchanged consumer CSP compatibility."
+    },
+    {
+      "id": "F16",
+      "text": "Run 33333939812 at 11240b27377bc77ef346e8ae5082453c07ef88ba reached real IPC on Linux job 99317354543 and macOS job 99317354551. Both recorded local-json and local-raw native calls, binary and large-channel success, both event directions, and no blocked image handler calls. Both then failed because the remote iframe read a cross-origin bundled asset. Servo's is_fetchable custom-protocol flag bypasses the normal CORS path. Restricting it to source-authenticated IPC endpoints fails closed for asset fetches, but does not solve custom-origin local fetch/module compatibility or Windows interception policy. The entire origin gate remains open."
     }
   ],
   "decisions": [
@@ -187,6 +191,13 @@
       "choice": "Use the pinned lower-level custom ProtocolHandler Request with engine Origin, client, and pipeline metadata. Read its body through ipc-channel's existing async stream adapter, reject nested and enforced-sandbox clients, bind opaque local identity to the served main-document pipeline, and revoke queued calls on navigation. Standard Tauri invokes use ipc:// on every OS; mapped HTTP never dispatches IPC. Native adversarial receipts remain required.",
       "reversibility_class": "reversible_with_cost",
       "retraction_path": "Remove the candidate adapter if native tests invalidate its provenance assumptions and propose a public Servo embedding API change. Never restore console-derived source identity. Consumer forks must patch servo and servo-net-traits coherently."
+    },
+    {
+      "id": "ADR06",
+      "question": "How should native CI handle the reproduced asset exposure and hosted Windows graphics limitations?",
+      "choice": "Use Servo's non-fetchable policy for ordinary custom assets and reserve the CORS exemption for source-authenticated IPC handlers. Reuse checksum-pinned Mesa as the Windows CI display driver without changing the product renderer or claiming hardware/ANGLE packaging proof. Keep custom-origin compatibility and the metadata-limited HTTP interception policy as engine-level release blockers.",
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Replace the restrictive protocol policy only after a public engine API enforces same-origin and CSP semantics with native positive/negative receipts. Remove CI Mesa if an equivalent native graphics runner is available."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",

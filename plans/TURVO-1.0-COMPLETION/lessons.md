@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `4b0fab440e0626d6a2ce176f1c0eba11106ce018b17c4f50f45482adbef649e4`
+Canonical SHA-256: `ba88bd9386d60b246f39d561530253d8be945967ddf2c045e2e57de1e762bb74`
 
 ## Current facts
 
@@ -19,6 +19,7 @@ Canonical SHA-256: `4b0fab440e0626d6a2ce176f1c0eba11106ce018b17c4f50f45482adbef6
 - `F13`: Pinned Tauri protocol/tauri.rs strips tauri://localhost to derive asset paths; Wry reverses the Windows HTTP mapping only for the handler-facing URI. The adapter now follows that lookup contract without changing the browser response URL or Origin. Servo fetch/methods.rs also treats fetchable custom protocols as basic responses before the normal CORS path, so a real cross-origin asset canary was added to the native security fixture. This is an open policy-risk probe, not yet a native receipt.
 - `F14`: Commit aa639664be21a94d7a30da9525921f36c94817a8 passed all jobs in run 33332869372 (99314527731, 99314527798, 99314527824, 99314527916). Every desktop passed 47 unit tests, two public API tests, Clippy, and both examples; five Node transport tests also passed. Real request-body streaming, cancellation, caller-provenance logic, and main-frame script handling are compile/unit verified. W02I remains working until the new native adversarial fixture passes.
 - `F15`: First native run 33333199948 at 30a98f040d55e89ecfafefff6a3eb415d674ca86 passed 48 unit tests, two API tests, Clippy, and all three example builds on each desktop. Native jobs 99315382070 (macOS) and 99315382073 (Linux) timed out before IPC because CSP 'self' blocked tauri://localhost/probe.js; Servo assigns custom-scheme URLs opaque origins. Linux then segfaulted at process exit; macOS returned zero despite the failed receipt. Windows job 99315382083 failed earlier with RequiredExtensionUnavailable creating the WGL rendering context. These are release blockers. The diagnostic fixture explicitly allows tauri: scripts/frames to probe IPC, retains CSP image canaries, and does not claim unchanged consumer CSP compatibility.
+- `F16`: Run 33333939812 at 11240b27377bc77ef346e8ae5082453c07ef88ba reached real IPC on Linux job 99317354543 and macOS job 99317354551. Both recorded local-json and local-raw native calls, binary and large-channel success, both event directions, and no blocked image handler calls. Both then failed because the remote iframe read a cross-origin bundled asset. Servo's is_fetchable custom-protocol flag bypasses the normal CORS path. Restricting it to source-authenticated IPC endpoints fails closed for asset fetches, but does not solve custom-origin local fetch/module compatibility or Windows interception policy. The entire origin gate remains open.
 
 ## Explicit exclusions
 

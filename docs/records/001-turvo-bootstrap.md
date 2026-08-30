@@ -140,3 +140,13 @@ The diagnostic fixture now explicitly allows `tauri:` scripts and frames so
 the IPC probe can advance. This is not a fix for the unchanged consumer CSP
 contract. Network and bundled-asset image canaries retain `img-src 'none'` to
 detect policy bypass through either resource path. W02I remains working.
+
+The next run, [33333939812](https://github.com/Travis-Gilbert/Turvo/actions/runs/33333939812)
+at `11240b27377bc77ef346e8ae5082453c07ef88ba`, reached real IPC on both Unix
+platforms. It recorded exact local JSON/raw calls, binary and large-channel
+round trips, both event directions, and correctly blocked image canaries.
+It then reproduced a remote iframe reading a bundled asset. Only authenticated
+IPC protocols may use Servo's `is_fetchable` exemption; ordinary assets now
+use the engine's non-fetchable policy. Local fetch/module support, unchanged
+`'self'` policies, and Windows HTTP interception still require an engine-level
+solution. These partial native observations do not close A2/A3.

@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `4b0fab440e0626d6a2ce176f1c0eba11106ce018b17c4f50f45482adbef649e4`
+Canonical SHA-256: `ba88bd9386d60b246f39d561530253d8be945967ddf2c045e2e57de1e762bb74`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -43,3 +43,11 @@ Choice: Use the pinned lower-level custom ProtocolHandler Request with engine Or
 Reversibility: `reversible_with_cost`
 
 Retraction: Remove the candidate adapter if native tests invalidate its provenance assumptions and propose a public Servo embedding API change. Never restore console-derived source identity. Consumer forks must patch servo and servo-net-traits coherently.
+
+## ADR06: How should native CI handle the reproduced asset exposure and hosted Windows graphics limitations?
+
+Choice: Use Servo's non-fetchable policy for ordinary custom assets and reserve the CORS exemption for source-authenticated IPC handlers. Reuse checksum-pinned Mesa as the Windows CI display driver without changing the product renderer or claiming hardware/ANGLE packaging proof. Keep custom-origin compatibility and the metadata-limited HTTP interception policy as engine-level release blockers.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Replace the restrictive protocol policy only after a public engine API enforces same-origin and CSP semantics with native positive/negative receipts. Remove CI Mesa if an equivalent native graphics runner is available.

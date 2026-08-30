@@ -7,6 +7,10 @@ server. Never reuse that server or its configuration endpoint in a product.
 Build with `cargo build -p turvo-security --locked`, then launch the resulting
 binary with `python scripts/run-native-smoke.py <binary-path>`. Linux requires
 `dbus-run-session` and `xvfb-run`; CI supplies a software OpenGL display.
+Windows CI installs checksum-pinned Mesa beside the probe executable because
+hosted runners do not expose the WGL extensions Servo needs. This exercises
+the real WGL window path with a software driver; it does not establish
+hardware performance or the production ANGLE packaging contract.
 
 The application has a 120-second deadline and the runner has an independent
 180-second deadline. A successful receipt requires:
@@ -31,6 +35,10 @@ prove that an existing Tauri application's `'self'` policy works unchanged.
 That compatibility gap remains a release blocker, not a recommended product
 CSP adjustment. The `img-src 'none'` canaries must still block both network
 and intercepted bundled assets before their handlers are reached.
+Ordinary custom protocols are intentionally not marked fetchable: Servo's
+flag bypasses CORS rather than enabling a same-origin policy. Local `fetch()`
+and module-script compatibility consequently need an engine-level solution;
+the authenticated IPC protocols are the only callers of that exemption.
 
 All negative calls carry the same valid test key used by a successful local
 positive control. The test checks actual Rust handler counts independently of

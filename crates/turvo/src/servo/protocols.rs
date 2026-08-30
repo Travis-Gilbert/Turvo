@@ -224,6 +224,12 @@ struct CustomProtocol {
   scheme: String,
 }
 
+impl CustomProtocol {
+  fn is_privileged(&self) -> bool {
+    self.scheme == "ipc" || self.scheme == BRIDGE_SCHEME
+  }
+}
+
 impl ProtocolHandler for CustomProtocol {
   fn load<'a>(
     &'a self,
@@ -236,7 +242,7 @@ impl ProtocolHandler for CustomProtocol {
     let method = request.method.clone();
     let headers = request.headers.clone();
     let body = request.body.clone();
-    let protected = self.scheme == "ipc" || self.scheme == BRIDGE_SCHEME;
+    let protected = self.is_privileged();
     let source = if protected {
       match self.router.sources.authenticate(request) {
         Ok(source) => Some(source),
@@ -324,7 +330,11 @@ impl ProtocolHandler for CustomProtocol {
   }
 
   fn is_fetchable(&self) -> bool {
-    true
+    // Servo's fetchable flag bypasses the normal CORS path. Only endpoints
+    // that authenticate every caller may opt into that exemption. Ordinary
+    // assets retain Servo's navigation/no-cors handling without exposing
+    // readable responses to unrelated documents.
+    self.is_privileged()
   }
 
   fn is_secure(&self) -> bool {
@@ -508,6 +518,24 @@ mod tests {
     assert!(registry.get("app-assets").is_some());
     assert!(registry.get("http").is_none());
     assert!(registry.get("https").is_none());
+    assert!(!registry.is_fetchable("tauri"));
+    assert!(!registry.is_fetchable("app-assets"));
+  }
+
+  #[test]
+  fn only_authenticated_protocols_bypass_the_normal_fetch_policy() {
+    let router = Arc::new(router());
+    for scheme in ["ipc", BRIDGE_SCHEME, "tauri", "app-assets"] {
+      let protocol = CustomProtocol {
+        router: router.clone(),
+        scheme: scheme.into(),
+      };
+      assert_eq!(protocol.is_fetchable(), protocol.is_privileged());
+      assert_eq!(
+        protocol.is_fetchable(),
+        matches!(scheme, "ipc" | BRIDGE_SCHEME)
+      );
+    }
   }
 
   #[test]

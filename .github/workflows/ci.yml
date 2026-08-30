@@ -104,6 +104,11 @@ jobs:
       - name: Build native security probe
         run: cargo build -p turvo-security --locked --target ${{ matrix.platform.target }}
 
+      - name: Install software OpenGL display support
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/install-ci-mesa.ps1 -Destination target/${{ matrix.platform.target }}/debug
+
       - name: Exercise native IPC and document isolation
         run: python scripts/run-native-smoke.py target/${{ matrix.platform.target }}/debug/turvo-security
 
