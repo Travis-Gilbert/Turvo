@@ -138,6 +138,14 @@
     {
       "id": "F12",
       "text": "Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and servo_base for packages servo-net-traits and servo-base respectively; imports were corrected from those exact declarations. Native proof is still pending."
+    },
+    {
+      "id": "F13",
+      "text": "Pinned Tauri protocol/tauri.rs strips tauri://localhost to derive asset paths; Wry reverses the Windows HTTP mapping only for the handler-facing URI. The adapter now follows that lookup contract without changing the browser response URL or Origin. Servo fetch/methods.rs also treats fetchable custom protocols as basic responses before the normal CORS path, so a real cross-origin asset canary was added to the native security fixture. This is an open policy-risk probe, not yet a native receipt."
+    },
+    {
+      "id": "F14",
+      "text": "Commit aa639664be21a94d7a30da9525921f36c94817a8 passed all jobs in run 33332869372 (99314527731, 99314527798, 99314527824, 99314527916). Every desktop passed 47 unit tests, two public API tests, Clippy, and both examples; five Node transport tests also passed. Real request-body streaming, cancellation, caller-provenance logic, and main-frame script handling are compile/unit verified. W02I remains working until the new native adversarial fixture passes."
     }
   ],
   "decisions": [

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Turvo Security Probe",
+  "version": "0.1.0",
+  "identifier": "dev.turvo.security-probe",
+  "build": {
+    "frontendDist": [
+      "index.html", "probe.js", "attacker.html", "attacker.js",
+      "sandbox.html", "restore.html", "restore.js", "private.txt"
+    ]
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' http://127.0.0.1:*; connect-src 'self' ipc: turvo-ipc: http://127.0.0.1:*; frame-src 'self' http://127.0.0.1:* data:; img-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["../../assets/icons/icon.png", "../../assets/icons/icon.ico", "../../assets/icons/icon.icns"]
+  }
+}

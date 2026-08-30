@@ -24,6 +24,14 @@ on registered names are rejected instead of falling through to a loopback
 server. A dropped response fails closed with an error. On other platforms the
 existing custom-scheme registry remains the loading path.
 
+The handler-facing Windows URI is translated back to its registered scheme,
+matching Wry's existing custom-protocol contract. This is a lookup-only
+translation: `http://tauri.localhost/nested/app.js` is delivered to the asset
+handler as `tauri://localhost/nested/app.js`, but the browser-visible response
+URL and incoming headers retain their original values. Passing the HTTP URI
+directly would make Tauri's resolver fall back to the root document for nested
+assets. The native fixture exercises separate JavaScript and text resources.
+
 ## Why this is not IPC authentication
 
 The bootstrap's `show_console_message` bridge supplies `webview.url()` as the

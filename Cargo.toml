@@ -3,6 +3,7 @@ members = [
   "crates/turvo",
   "examples/api",
   "examples/helloworld",
+  "examples/security",
 ]
 resolver = "2"
 

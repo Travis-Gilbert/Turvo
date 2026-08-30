@@ -30,10 +30,10 @@ for the first working window.
 |---|---|---|---|
 | A1 | Bundled hello-world renders through Servo on Linux, Windows, macOS | Turvo-tip example builds pass on all three platforms; native launch pending | Launch and capture on each native platform |
 | A2 | JS invoke returns a Rust command result; events cross both directions | API probe wired; unrun | Native smoke receipts plus repeatable automation |
-| A3 | Local scheme is local and remote content is remote for Tauri capabilities | Windows mapping and source-authenticated IPC remain separate open gates; console-derived top-level identity is insufficient | Positive local and negative remote, iframe, opaque-origin, and navigation-race tests per platform |
+| A3 | Local scheme is local and remote content is remote for Tauri capabilities | Request-based IPC and frame guards pass unit tests; native isolation and asset-policy checks remain open | Positive local and negative remote, iframe, opaque-origin, and navigation-race tests per platform |
 | A4 | Firefox connects to a configured devtools port | Secure token/approval API implemented; unrun | Native connection receipt and inspected page |
 | A5 | Create/retitle/resize/close multi-window; `window.open` is runtime-managed | Command path wired; `window.open` blocked by Tauri opener types | Native command test plus Tauri upstream change or approved patch |
-| A6 | `main` CI green on three platforms; monthly `next` migration PR opens | Baseline CI green at `750d642`; tracked `next` created; native smoke and migration PR pending | Public-repo Actions receipts and one demonstrated migration PR |
+| A6 | `main` CI green on three platforms; monthly `next` migration PR opens | Compile CI green at `aa63966`; tracked `next` exists; native smoke and migration PR pending | Public-repo Actions receipts and one demonstrated migration PR |
 | A7 | `turvo` 0.1.0 is published; existing app swaps in two edits | API and docs wired; unpublished | crates.io release and clean consumer smoke |
 | A8 | TheoremWeb desktop boots with its Servo fork via consumer `[patch]` | Out of this repository's bootstrap scope | Exact-revision Theorem build and native boot receipt |
 
@@ -106,3 +106,16 @@ The local package audit now produces 27 files (534.8 KiB uncompressed), includin
 the Windows manifest. These receipts establish a compile baseline only.
 Native rendering, IPC source authentication, DevTools attachment, complete
 window behavior, and crates.io publication are not established by this run.
+
+## Request-based IPC compile receipt
+
+Commit `aa639664be21a94d7a30da9525921f36c94817a8` passed
+[CI run 33332869372](https://github.com/Travis-Gilbert/Turvo/actions/runs/33332869372).
+All three desktop targets passed 47 unit tests, two public API tests, Clippy,
+and both existing examples. Five Node transport tests passed as well.
+
+The console IPC bridge has been replaced by real Servo protocol requests with
+body streaming, engine-derived caller identity, frame guards, and navigation
+generation checks. The native security fixture in `examples/security` now
+tests those assumptions through actual documents, not mocked engine metadata.
+Its first native result is pending; this compile receipt does not close A2/A3.

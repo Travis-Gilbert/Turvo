@@ -70,7 +70,10 @@ impl ProtocolRouter {
     Ok(registry)
   }
 
-  fn mapped_handler(&self, url: &Url) -> Result<Option<&CustomProtocolHandler>, http::StatusCode> {
+  fn mapped_handler(
+    &self,
+    url: &Url,
+  ) -> Result<Option<(&str, &CustomProtocolHandler)>, http::StatusCode> {
     if !matches!(url.scheme(), "http" | "https") {
       return Ok(None);
     }
@@ -80,7 +83,7 @@ impl ProtocolRouter {
     else {
       return Ok(None);
     };
-    let Some(handler) = self.handlers.get(scheme) else {
+    let Some((registered_scheme, handler)) = self.handlers.get_key_value(scheme) else {
       return Ok(None);
     };
     // The mapped HTTP interface has no authenticated initiator metadata.
@@ -95,11 +98,11 @@ impl ProtocolRouter {
     if !url.username().is_empty() || url.password().is_some() || url.port().is_some() {
       return Err(http::StatusCode::FORBIDDEN);
     }
-    Ok(Some(handler))
+    Ok(Some((registered_scheme.as_str(), handler)))
   }
 
   pub fn load_web_resource(&self, load: WebResourceLoad) {
-    let handler = match self.mapped_handler(&load.request().url) {
+    let (scheme, handler) = match self.mapped_handler(&load.request().url) {
       Ok(Some(handler)) => handler,
       Ok(None) => return, // Dropping an unclaimed load resumes normal fetching.
       Err(status) => {
@@ -108,8 +111,12 @@ impl ProtocolRouter {
       }
     };
     let request = load.request();
+    let Ok(handler_url) = mapped_protocol_url(scheme, &request.url) else {
+      complete_load(load, status_response(http::StatusCode::BAD_REQUEST));
+      return;
+    };
     let request = protocol_request(
-      &request.url,
+      &handler_url,
       request.method.clone(),
       request.headers.clone(),
       Vec::new(),
@@ -130,6 +137,16 @@ impl ProtocolRouter {
       },
     );
   }
+}
+
+fn mapped_protocol_url(scheme: &str, url: &Url) -> Result<Url, url::ParseError> {
+  // Match Wry's handler-facing contract while leaving the browser URL and
+  // request Origin untouched. Tauri's asset resolver strips tauri://localhost
+  // before looking up the path; a raw HTTP URL would select the root asset.
+  Url::parse(&format!(
+    "{scheme}://localhost{}",
+    &url[url::Position::BeforePath..]
+  ))
 }
 
 fn protocol_request(
@@ -433,6 +450,31 @@ mod tests {
     )
     .unwrap();
     assert!(!request.headers().contains_key(http::header::ORIGIN));
+  }
+
+  #[test]
+  fn mapped_asset_callback_gets_the_custom_scheme_and_complete_path() {
+    let browser_url =
+      Url::parse("https://tauri.localhost/nested/app%20file.js?next=http://tauri.localhost/")
+        .unwrap();
+    let handler_url = mapped_protocol_url("tauri", &browser_url).unwrap();
+    assert_eq!(
+      handler_url.as_str(),
+      "tauri://localhost/nested/app%20file.js?next=http://tauri.localhost/"
+    );
+    assert_eq!(browser_url.scheme(), "https");
+    assert_eq!(browser_url.host_str(), Some("tauri.localhost"));
+    let mut headers = http::HeaderMap::new();
+    headers.insert(
+      http::header::ORIGIN,
+      "https://remote.example".parse().unwrap(),
+    );
+    let request = protocol_request(&handler_url, http::Method::GET, headers, Vec::new()).unwrap();
+    assert_eq!(
+      request.headers()[http::header::ORIGIN],
+      "https://remote.example"
+    );
+    assert_eq!(request.uri().path(), "/nested/app%20file.js");
   }
 
   #[test]

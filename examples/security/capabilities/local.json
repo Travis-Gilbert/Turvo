@@ -1,0 +1,13 @@
+{
+  "identifier": "local-security-probe",
+  "description": "Only the bundled top-level probe may exercise native commands.",
+  "local": true,
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default",
+    "allow-protected-action",
+    "allow-binary-echo",
+    "allow-channel-echo",
+    "allow-emit-from-rust"
+  ]
+}

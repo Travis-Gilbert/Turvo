@@ -87,11 +87,11 @@ receipts and must not be presented as established project facts.
 
 | Area | Status | Evidence |
 |---|---|---|
-| Runtime bootstrap | Three-platform tests, Clippy, and example builds green at `750d642` | CI run 33329627108; Record 001 |
+| Runtime bootstrap | Three-platform tests, Clippy, and example builds green at `aa63966` | CI run 33332869372; Record 001 |
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
-| Cross-platform CI | All four baseline jobs green; native smoke pending | CI run 33329627108 |
+| Cross-platform CI | Compile matrix green; native security fixture implemented, first run pending | CI run 33332869372 |
 | Completion graph | W01/V01 and W02/V02 verified; W02I IPC isolation active | `plans/TURVO-1.0-COMPLETION/manifest.md` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
@@ -127,6 +127,7 @@ build graph.
 
 Continue the canonical completion graph at W02I. Windows asset routing passed
 the three-platform compile/test matrix at `7813baa` (run 33330884047). The new
-request-based IPC adapter still requires native source-isolation proof.
+request-based IPC adapter passed 47 unit tests and two public API tests per
+desktop target at `aa63966`. It still requires native source-isolation proof.
 Native rendering, IPC, DevTools,
 window behavior, publication, and Theorem integration remain unverified.
