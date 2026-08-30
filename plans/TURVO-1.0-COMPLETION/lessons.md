@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
+Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
 
 ## Current facts
 
@@ -24,6 +24,8 @@ Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c4808
 - `F18`: Published Servo 0.5.0 already exposes no-wgl, enabling mozangle 0.6 EGL/DLL builds plus Surfman's ANGLE backend. Servo's own Python build_commands.py stages libEGL.dll and libGLESv2.dll after building. Turvo now selects this feature only on Windows and stages the exact Cargo build-script-executed output for standalone native tests. Four local staging tests cover current versus stale, incomplete, ambiguous, and host-versus-cross-target outputs; the actual Windows ANGLE build and native run remain pending.
 - `F19`: Run 33334815996 at b4d0f429b10fd5f015420ea1c90c6080dda984e4 completed with Linux and macOS green. Windows job 99319711975 built and staged Servo's ANGLE DLLs, passed runtime tests, Clippy, and all examples, and reached real native IPC. Its retained native-security-x86_64-pc-windows-msvc artifact recorded local-json/local-raw, binary/channel/event success, but a remote iframe read a cross-origin bundled asset and blocked_app_asset_requested was true. Graphics startup is repaired; mapped HTTP asset CORS/CSP behavior is a reproduced release blocker. The native security oracle remains failed.
 - `F20`: The versioned Tauri proposal targets public tauri-v2.11.5 commit 7cd71369c00978a3783b6ae3e9972358abbe4ae6. It adds an opaque runtime opener token and default-rejecting builder hook without changing Wry construction or exhaustive public structs. Four runtime tests and two real MockRuntime contract tests are authored; local format and patch checks pass, hosted compilation is pending. Tauri's own test dev-dependency enables Wry, so no-Wry core compilation is a distinct check. The pinned contribution policy requires human review/testing of AI output before upstream submission; no upstream PR or approval is claimed.
+- `F21`: Tauri proposal run 33335848522 at d4c8b2bba0c6213e2e7e3c7638dc9da2c9321994 passed every step on Linux job 99322484464 and macOS job 99322484638, including the runtime tests, no-default-feature core compilation, and default-Wry/core/mock tests. Windows job 99322484628 failed before compilation: the hosted Git checkout converted upstream files and the patch to CRLF, while Tauri's rustfmt requires LF. The bounded repair is to disable checkout CRLF conversion before either checkout on the disposable runner, not reformat upstream source or skip Windows validation.
+- `F22`: After the native F19 failure, a second pinned-source/API review found no supported tuple-origin custom-scheme registration in Servo 0.5.0. Ordinary non-fetchable custom schemes fail safe but do not provide normal fetch/module behavior. Switching Windows URLs to tauri:// also fails Tauri 2.11.5's OS-selected local-origin classification. The maintained HTTP fetch path already owns CORS, preflight, tainting, and response policy; a standards-preserving fix needs a public engine transport hook and/or an accepted runtime-neutral URL/origin seam, not invented metadata or a permissive flag. See docs/research/protocol-origin-boundary.md for the attempted alternatives and external gate.
 
 ## Explicit exclusions
 

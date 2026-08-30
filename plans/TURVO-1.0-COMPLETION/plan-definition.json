@@ -170,6 +170,14 @@
     {
       "id": "F20",
       "text": "The versioned Tauri proposal targets public tauri-v2.11.5 commit 7cd71369c00978a3783b6ae3e9972358abbe4ae6. It adds an opaque runtime opener token and default-rejecting builder hook without changing Wry construction or exhaustive public structs. Four runtime tests and two real MockRuntime contract tests are authored; local format and patch checks pass, hosted compilation is pending. Tauri's own test dev-dependency enables Wry, so no-Wry core compilation is a distinct check. The pinned contribution policy requires human review/testing of AI output before upstream submission; no upstream PR or approval is claimed."
+    },
+    {
+      "id": "F21",
+      "text": "Tauri proposal run 33335848522 at d4c8b2bba0c6213e2e7e3c7638dc9da2c9321994 passed every step on Linux job 99322484464 and macOS job 99322484638, including the runtime tests, no-default-feature core compilation, and default-Wry/core/mock tests. Windows job 99322484628 failed before compilation: the hosted Git checkout converted upstream files and the patch to CRLF, while Tauri's rustfmt requires LF. The bounded repair is to disable checkout CRLF conversion before either checkout on the disposable runner, not reformat upstream source or skip Windows validation."
+    },
+    {
+      "id": "F22",
+      "text": "After the native F19 failure, a second pinned-source/API review found no supported tuple-origin custom-scheme registration in Servo 0.5.0. Ordinary non-fetchable custom schemes fail safe but do not provide normal fetch/module behavior. Switching Windows URLs to tauri:// also fails Tauri 2.11.5's OS-selected local-origin classification. The maintained HTTP fetch path already owns CORS, preflight, tainting, and response policy; a standards-preserving fix needs a public engine transport hook and/or an accepted runtime-neutral URL/origin seam, not invented metadata or a permissive flag. See docs/research/protocol-origin-boundary.md for the attempted alternatives and external gate."
     }
   ],
   "decisions": [
@@ -280,16 +288,16 @@
   "opening_moves": [
     {
       "rank": 1,
-      "node": "W02I",
-      "why": "The Windows ANGLE run has returned a native CORS/CSP failure (F19), satisfying W02I's resume condition. W03 now has a versioned patch and is suspended on its hosted compatibility workflow.",
+      "node": "W03",
+      "why": "W02I is parked on the witnessed public-engine origin/policy gap (F19/F22). W03's Unix compatibility checks passed; its Windows validation needs the bounded checkout line-ending repair identified in F21.",
       "value_vector": {
-        "success": {"value": "uncertain", "evidence": "The published engine's HTTP interceptor lacks the provenance needed by the reproduced native policy cases"},
-        "cost": {"value": "medium", "evidence": "Evaluate public URL/origin alternatives and a minimal upstream-compatible engine repair"},
-        "latency": {"value": "bounded-probe", "evidence": "Exact native failure and pinned fetch pipeline are available"},
+        "success": {"value": "high", "evidence": "The exact Windows failure is CRLF checkout conversion before compilation; Unix patch tests already pass"},
+        "cost": {"value": "low", "evidence": "Configure the disposable checkout to preserve LF and rerun the unchanged oracle"},
+        "latency": {"value": "hosted-build", "evidence": "Windows Rust compatibility tests still require execution"},
         "reversibility": {"value": "high", "evidence": "Focused source and workflow repairs are ordinary commits"},
-        "verification_coverage": {"value": "critical", "evidence": "No remote asset disclosure or CSP bypass while retaining legitimate app behavior"},
-        "information_gain": {"value": "high", "evidence": "Determine whether current published APIs can satisfy the fixed native oracle"},
-        "optionality": {"value": "high", "evidence": "An engine API proposal can preserve the public-release constraint without silently adopting a private fork"}
+        "verification_coverage": {"value": "critical", "evidence": "Cross-platform native API compatibility and safe runtime opener forwarding"},
+        "information_gain": {"value": "high", "evidence": "A real Windows build can now test the proposed API"},
+        "optionality": {"value": "high", "evidence": "The proposal remains outside Turvo's released dependency graph"}
       }
     }
   ],
@@ -480,10 +488,12 @@
       "id": "W02I",
       "label": "Replace console-derived privileged IPC identity",
       "type": "work.implementation",
-      "status": "working",
+      "status": "parked",
+      "park_reason": "Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established.",
+      "resume_condition": "A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.",
       "controller": "agent",
       "depends_on": ["V02"],
-      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI and its observed graphics/shutdown blockers, and public Servo API research or isolated patch"],
+      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI and its observed graphics/shutdown blockers, public Servo API research or isolated patch, and scoped README/AGENTS security status"],
       "obligations": ["O03", "O04"],
       "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
       "consumes": ["V02 asset routing", "F08", "ADR04", "ADR05"],
@@ -525,9 +535,7 @@
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "parked",
-      "park_reason": "Awaiting the three-platform Tauri opener patch workflow for proposal SHA-256 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. Source and tests are authored, not compile-verified.",
-      "resume_condition": "The Tauri opener patch workflow on the commit containing this proposal completes or requests attention; inspect all three exact-revision compatibility results.",
+      "status": "working",
       "controller": "agent",
       "depends_on": ["V02"],
       "scope": ["external Tauri clean worktree, patches/tauri, docs/research/tauri-new-window.md, and a scoped upstream-patch validation workflow"],

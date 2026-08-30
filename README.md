@@ -24,8 +24,10 @@ Turvo is pre-release software. The repository currently contains:
 - compile/test CI definitions for Linux, Windows, and macOS.
 
 Cross-platform compilation is not the same as cross-platform runtime proof.
-Privileged IPC source isolation is still an open release gate; do not load
-untrusted remote pages or frames into an app with this experimental bootstrap.
+The native IPC/security fixture passes on Linux and macOS. Windows boots with
+ANGLE and reaches IPC, but its mapped-asset path fails cross-origin and CSP
+checks. Ordinary app `fetch()` and module compatibility also remain unresolved.
+Do not use this bootstrap in production or load untrusted remote pages/frames.
 The [protocol audit](https://github.com/Travis-Gilbert/Turvo/blob/main/docs/research/protocol-origin-boundary.md)
 records the engine API limitations and required negative tests.
 

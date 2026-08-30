@@ -2,8 +2,10 @@
 
 Status: Windows asset routing is unit verified at `7813baa`. All nine native
 IPC isolation cases pass on macOS/Linux at `a0b50fb` in run 33334311977.
-Windows native behavior and general app-origin compatibility remain release
-blockers; this is not a complete security assessment.
+Windows now boots with ANGLE, but run 33334815996 at `b4d0f42` reproduces mapped
+asset cross-origin disclosure and a CSP canary failure. General app-origin
+compatibility also remains release-blocked; this is not a complete security
+assessment.
 
 ## Verified dependency surface
 
@@ -132,11 +134,68 @@ Related upstream context includes
 [custom-protocol fetch semantics](https://github.com/servo/servo/issues/33564)
 and [opaque file-origin CSP behavior](https://github.com/servo/servo/issues/42209).
 
-Windows has not yet reached the security cases. Mesa did not satisfy Surfman's
-WGL DX-interop requirement. The next candidate uses Servo's published
-`no-wgl`/ANGLE backend and current Cargo-output DLL staging. ANGLE packaging,
-Windows interception policy, and normal custom-origin compatibility remain
-separate requirements even if the IPC fixture passes.
+Mesa did not satisfy Surfman's WGL DX-interop requirement. Servo's published
+`no-wgl`/ANGLE backend and current Cargo-output DLL staging did: Windows job
+99319711975 in [run 33334815996](https://github.com/Travis-Gilbert/Turvo/actions/runs/33334815996)
+passed compilation, tests, Clippy, and all examples, then reached native IPC.
+The retained Windows artifact records local JSON/raw calls, binary/channel
+responses and an event, followed by a failed remote-asset canary. Its
+`blocked_app_asset_requested` flag was also true. These are observed failures,
+not a successful Windows security receipt. Clean-machine ANGLE packaging is
+still a separate gate.
+
+## Repair ladder and public API proposal
+
+1. Read the failing native receipts and exact published fetch implementation.
+   Both the Windows remote-asset read and CSP canary fail after graphics and
+   legitimate IPC succeed.
+2. The bounded ordinary-custom-protocol repair (`is_fetchable = false`) passed
+   the Unix negative tests but cannot fix Windows HTTP interception. It also
+   does not provide normal local `fetch()` and ES-module compatibility.
+3. Layer diagnosis: the published HTTP interceptor sits outside the normal
+   fetch policy route. Its public metadata is insufficient to recreate that
+   route safely in Turvo. The lower-level custom-protocol interface has better
+   provenance, but its origin model remains opaque.
+4. No occupied peer was available. Current Context7 docs and exact published
+   crate sources were consulted; no upstream maintainer review is implied.
+5. W02I is parked on a public engine/API dependency, not marked complete.
+   Replacing the declared native oracle with successful unit tests is not an
+   acceptable repair.
+
+Alternatives checked:
+
+- Re-enable `is_fetchable` for all assets: rejected by the reproduced remote
+  read; the flag is an exemption, not a same-origin implementation.
+- Derive a sender from referrer, destination, or the top-level page: these do
+  not identify the initiating document or its policy and are not authority.
+- Rewrite Windows app URLs to `tauri://localhost`: Tauri's pinned local-origin
+  classifier selects the HTTP mapping on Windows. This would need a Tauri API
+  change and would retain the custom-scheme opaque-origin problem.
+- Serve a new loopback endpoint: changes the two-edit consumer contract,
+  creates a listening service, and still needs Tauri URL/origin integration.
+- Require a private Servo fork on public `main`: contradicts the handoff's
+  published-engine requirement.
+
+The preferred proposal is to reuse the engine's existing HTTP fetch policy
+machinery for an embedder-provided response, rather than duplicate CORS/CSP in
+Turvo. The hook must preserve request checks before dispatch and the normal
+preflight, response filtering, redirect, cancellation, and origin behavior.
+For all desktops to share ordinary tuple-origin behavior, Tauri also needs a
+runtime-neutral app-URL choice, or Servo must expose a coherent registered
+custom-origin facility. The latter is not present in the pinned public API.
+
+Acceptance for that proposal includes same-origin app fetch and module success,
+remote and sandboxed denial, CSP-blocked requests never reaching the app
+handler, correct no-CORS opaque responses, redirect/preflight handling, and the
+existing IPC/navigation-race suite. A transport-only patch is not proof of all
+those properties.
+
+No private-fork dependency, engine patch, upstream issue, or security report was
+submitted by this run. Potential upstream security findings must follow
+[Servo's reporting policy](https://github.com/servo/servo/blob/main/SECURITY.md).
+The current public release constraint is retained. Resume requires a suitable
+published API/revision or explicit authorization to change that constraint for
+an isolated patched-engine integration lane.
 
 ## Source anchors
 

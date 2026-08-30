@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `e9df3f408ee5e698728df2b6f280bae0def4943a095982a1f4a94b1c48085c7d`
+Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
 
 Generation: `3`
 
 ## Resume here
 
-- `W02I` (working): Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.
+- `W03` (working): Implement and propose an additive Tauri API that lets non-Wry runtimes process window.open safely.
 
 ## Completed receipts
 
@@ -21,7 +21,7 @@ Generation: `3`
 
 ## Parked work
 
-- `W03`: Awaiting the three-platform Tauri opener patch workflow for proposal SHA-256 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. Source and tests are authored, not compile-verified. Resume: The Tauri opener patch workflow on the commit containing this proposal completes or requests attention; inspect all three exact-revision compatibility results.
+- `W02I`: Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established. Resume: A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.
 
 ## Invariants
 

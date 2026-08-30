@@ -2,7 +2,6 @@
 description: Behavioral guidelines to use when writing, reviewing, or refactoring code to create good work, avoid over-complication, surface assumptions, and define verifiable success criteria.
 license: MIT
 ---
-
 # 0. No Cheap Solutions
 ### The spec if the floor, not the ceiling 
 		- You are one of the most competent coding agents on earth because because of that it's easy to get overconfident confidence is cheap. Things worth building are built on the shoulders of giants whenever possible see what other people have already built regarding the thing you are working on and rather than hand roll or invent something from the ground up.
@@ -91,8 +90,9 @@ receipts and must not be presented as established project facts.
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
-| Cross-platform CI | macOS/Linux native green; Windows WGL failed, published ANGLE backend selected for next run | CI run 33334311977 |
-| Completion graph | W01/V01 and W02/V02 verified; W02I IPC isolation active | `plans/TURVO-1.0-COMPLETION/manifest.md` |
+| Cross-platform CI | macOS/Linux native green; Windows ANGLE boots but native asset CORS/CSP tests fail | CI run 33334815996 |
+| Completion graph | W01/V01 and W02/V02 verified; W02I parked on public engine API, W03 opener proposal under test | `plans/TURVO-1.0-COMPLETION/manifest.md` |
+| Tauri opener proposal | Versioned public patch; Unix compatibility green, Windows checkout correction in progress | CI run 33335848522; `patches/tauri` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |
@@ -125,10 +125,11 @@ build graph.
 
 ## Next Step
 
-Continue the canonical completion graph at W02I. Windows asset routing passed
-the three-platform compile/test matrix at `7813baa` (run 33330884047). The new
-request-based IPC adapter and all nine native security cases passed on macOS
-and Linux at `a0b50fb`, with clean shutdown. Windows still requires the ANGLE
-build/staging/native receipt. Unchanged CSP and local fetch/module compatibility,
-visual rendering, DevTools, full window behavior, publication, and Theorem
-integration remain open.
+Continue the canonical completion graph at W03's versioned Tauri proposal.
+W02I is parked: Windows now boots with ANGLE, but native mapped-asset CORS/CSP
+checks fail. The public Servo API also lacks the required ordinary app-origin
+fetch/module semantics; see `docs/research/protocol-origin-boundary.md` for the
+repair ladder and resume condition. Do not introduce a private-fork dependency
+or claim release readiness. The Tauri patch needs all-platform verification and
+an accepted revision before adoption. Visual rendering, DevTools, full window
+behavior, publication, and Theorem integration remain open.

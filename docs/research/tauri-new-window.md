@@ -53,8 +53,11 @@ enable Wry. They exercise a **mock runtime**, not a Wry-free test binary. A
 separate `cargo check -p tauri --no-default-features --lib --locked` checks the
 no-Wry library configuration. Neither check proves Servo child-window behavior.
 
-Local formatting and patch whitespace checks pass. The hosted three-platform
-workflow has not yet produced a receipt. MSRV/mobile coverage, positive Servo
+Local formatting and patch whitespace checks pass. At `d4c8b2b`,
+[run 33335848522](https://github.com/Travis-Gilbert/Turvo/actions/runs/33335848522)
+passed every check on Linux and macOS. Windows stopped at formatting because
+its checkout converted upstream files to CRLF; the workflow now preserves LF
+before either checkout. Windows compilation is still pending. MSRV/mobile coverage, positive Servo
 opener consumption, opener navigation/close races, and visual/native child
 window behavior are not discharged by these tests.
 
