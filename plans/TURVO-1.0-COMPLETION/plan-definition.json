@@ -114,6 +114,10 @@
     {
       "id": "F06",
       "text": "CI run 33327853233 made format/package plus complete Ubuntu and macOS jobs green; Windows passed all 24 Turvo unit tests but the downstream public_api test still lacked the Common Controls v6 manifest, proving the fix must be emitted by Turvo's own build script."
+    },
+    {
+      "id": "F07",
+      "text": "CI run 33328684442 confirmed the Turvo-owned manifest fix: Windows runtime unit tests, public_api integration tests, and Clippy all passed. Its hello-world build then exposed the separate missing ICO requirement in tauri-build; Ubuntu and macOS remained fully green."
     }
   ],
   "decisions": [

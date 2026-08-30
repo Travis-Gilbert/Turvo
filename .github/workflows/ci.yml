@@ -82,6 +82,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           key: servo-${{ matrix.platform.target }}
+          cache-on-failure: true
 
       - name: Test runtime
         run: cargo test -p turvo --lib --tests --locked --target ${{ matrix.platform.target }}
