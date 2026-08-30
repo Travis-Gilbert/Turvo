@@ -110,6 +110,10 @@
     {
       "id": "F05",
       "text": "The configured Cargo target volume was 99 percent utilized with approximately 9 GiB free at charting, so hosted CI outranks a fresh local Servo build until storage is made safe."
+    },
+    {
+      "id": "F06",
+      "text": "CI run 33327853233 made format/package plus complete Ubuntu and macOS jobs green; Windows passed all 24 Turvo unit tests but the downstream public_api test still lacked the Common Controls v6 manifest, proving the fix must be emitted by Turvo's own build script."
     }
   ],
   "decisions": [

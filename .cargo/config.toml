@@ -1,5 +1,0 @@
-[env]
-# Tauri's common-controls-v6 feature needs its application manifest embedded
-# into Windows test artifacts as well as binaries. This is the same opt-in used
-# by Tauri's own workspace.
-__TAURI_WORKSPACE__ = "true"

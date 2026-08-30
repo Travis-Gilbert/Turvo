@@ -16,4 +16,22 @@ fn main() {
   let mobile = target_os == "ios" || target_os == "android";
   alias("desktop", !mobile);
   alias("mobile", mobile);
+
+  if target_os == "windows" {
+    embed_windows_manifest();
+  }
+}
+
+// Tauri enables Microsoft Common Controls v6, whose entry points are selected
+// through an application manifest. A library build script must emit these
+// arguments itself so downstream binaries and integration tests receive the
+// manifest too.
+fn embed_windows_manifest() {
+  let manifest =
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("windows-app-manifest.xml");
+
+  println!("cargo:rerun-if-changed={}", manifest.display());
+  println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
+  println!("cargo:rustc-link-arg=/MANIFESTINPUT:{}", manifest.display());
+  println!("cargo:rustc-link-arg=/WX");
 }
