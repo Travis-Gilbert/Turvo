@@ -154,6 +154,14 @@
     {
       "id": "F16",
       "text": "Run 33333939812 at 11240b27377bc77ef346e8ae5082453c07ef88ba reached real IPC on Linux job 99317354543 and macOS job 99317354551. Both recorded local-json and local-raw native calls, binary and large-channel success, both event directions, and no blocked image handler calls. Both then failed because the remote iframe read a cross-origin bundled asset. Servo's is_fetchable custom-protocol flag bypasses the normal CORS path. Restricting it to source-authenticated IPC endpoints fails closed for asset fetches, but does not solve custom-origin local fetch/module compatibility or Windows interception policy. The entire origin gate remains open."
+    },
+    {
+      "id": "F17",
+      "text": "Run 33334311977 at a0b50fb17469c9b3446705355e04b0ed34187f9a passed all nine native adversarial cases on macOS job 99318349568 and Linux job 99318349598, with exactly local-json, local-raw, and restored-local Rust calls, binary/channels/events, no blocked asset handler calls, and clean exit. Both passed 49 unit and two API tests. Windows job 99318349555 passed compilation but even checksum-pinned Mesa still failed RequiredExtensionUnavailable. Surfman's WGL device requires WGL_NV_DX_interop, not merely software OpenGL. No Windows native or normal custom-origin fetch/module compatibility receipt exists."
+    },
+    {
+      "id": "F18",
+      "text": "Published Servo 0.5.0 already exposes no-wgl, enabling mozangle 0.6 EGL/DLL builds plus Surfman's ANGLE backend. Servo's own Python build_commands.py stages libEGL.dll and libGLESv2.dll after building. Turvo now selects this feature only on Windows and stages the exact Cargo build-script-executed output for standalone native tests. Four local staging tests cover current versus stale, incomplete, ambiguous, and host-versus-cross-target outputs; the actual Windows ANGLE build and native run remain pending."
     }
   ],
   "decisions": [
@@ -198,6 +206,13 @@
       "choice": "Use Servo's non-fetchable policy for ordinary custom assets and reserve the CORS exemption for source-authenticated IPC handlers. Reuse checksum-pinned Mesa as the Windows CI display driver without changing the product renderer or claiming hardware/ANGLE packaging proof. Keep custom-origin compatibility and the metadata-limited HTTP interception policy as engine-level release blockers.",
       "reversibility_class": "reversible_with_cost",
       "retraction_path": "Replace the restrictive protocol policy only after a public engine API enforces same-origin and CSP semantics with native positive/negative receipts. Remove CI Mesa if an equivalent native graphics runner is available."
+    },
+    {
+      "id": "ADR07",
+      "question": "What replaces the unsuccessful Mesa/WGL native probe?",
+      "choice": "Supersede ADR06's CI-driver branch with Servo's maintained no-wgl/ANGLE backend on Windows. Stage its own DLLs from current Cargo JSON build output, reject ambiguous or missing outputs, and retain the clean-machine package gate. Do not invent a graphics backend or claim that enabling the feature proves native behavior.",
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Revisit the backend selection only with native hardware evidence or a published Servo rendering API change; never remove the required Windows native gate."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",

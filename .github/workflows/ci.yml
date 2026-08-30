@@ -32,6 +32,8 @@ jobs:
         run: cargo fmt --all --check
       - name: Test JavaScript IPC transport
         run: node --test crates/turvo/tests/invoke_transport.test.mjs
+      - name: Test native library staging
+        run: python3 -B -m unittest discover -s scripts -p 'test_*.py'
       - name: Check completion graph projections
         run: python3 plans/TURVO-1.0-COMPLETION/render_board.py --check
       - name: Check published crate contents
@@ -89,6 +91,10 @@ jobs:
           key: servo-${{ matrix.platform.target }}
           cache-on-failure: true
 
+      - name: Build Windows tests and stage ANGLE
+        if: runner.os == 'Windows'
+        run: python scripts/build_windows.py target/${{ matrix.platform.target }}/debug -- test -p turvo --lib --tests --locked --target ${{ matrix.platform.target }} --no-run
+
       - name: Test runtime
         run: cargo test -p turvo --lib --tests --locked --target ${{ matrix.platform.target }}
 
@@ -103,11 +109,6 @@ jobs:
 
       - name: Build native security probe
         run: cargo build -p turvo-security --locked --target ${{ matrix.platform.target }}
-
-      - name: Install software OpenGL display support
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: ./scripts/install-ci-mesa.ps1 -Destination target/${{ matrix.platform.target }}/debug
 
       - name: Exercise native IPC and document isolation
         run: python scripts/run-native-smoke.py target/${{ matrix.platform.target }}/debug/turvo-security

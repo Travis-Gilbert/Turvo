@@ -7,10 +7,11 @@ server. Never reuse that server or its configuration endpoint in a product.
 Build with `cargo build -p turvo-security --locked`, then launch the resulting
 binary with `python scripts/run-native-smoke.py <binary-path>`. Linux requires
 `dbus-run-session` and `xvfb-run`; CI supplies a software OpenGL display.
-Windows CI installs checksum-pinned Mesa beside the probe executable because
-hosted runners do not expose the WGL extensions Servo needs. This exercises
-the real WGL window path with a software driver; it does not establish
-hardware performance or the production ANGLE packaging contract.
+Windows uses Servo's published ANGLE backend. CI first builds the tests with
+`scripts/build_windows.py`, which stages `libEGL.dll` and `libGLESv2.dll` from
+the exact Cargo-reported mozangle output beside binaries and test executables.
+It fails on missing or ambiguous outputs instead of searching stale artifacts.
+Clean-machine bundle packaging and hardware performance remain separate gates.
 
 The application has a 120-second deadline and the runner has an independent
 180-second deadline. A successful receipt requires:

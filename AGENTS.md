@@ -87,11 +87,11 @@ receipts and must not be presented as established project facts.
 
 | Area | Status | Evidence |
 |---|---|---|
-| Runtime bootstrap | Three-platform tests, Clippy, and example builds pass at `30a98f0`; native failures remain | CI run 33333199948; Record 001 |
+| Runtime bootstrap | Three-platform compilation; full native security suite passes on macOS/Linux at `a0b50fb` | CI run 33334311977; Record 001 |
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
-| Cross-platform CI | Native run exposed custom-origin CSP, Windows WGL, and shutdown failures | CI run 33333199948 |
+| Cross-platform CI | macOS/Linux native green; Windows WGL failed, published ANGLE backend selected for next run | CI run 33334311977 |
 | Completion graph | W01/V01 and W02/V02 verified; W02I IPC isolation active | `plans/TURVO-1.0-COMPLETION/manifest.md` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
@@ -127,8 +127,8 @@ build graph.
 
 Continue the canonical completion graph at W02I. Windows asset routing passed
 the three-platform compile/test matrix at `7813baa` (run 33330884047). The new
-request-based IPC adapter passed 48 unit tests and two public API tests per
-desktop target at `30a98f0`. Native IPC has not yet executed: fix the observed
-app-scheme CSP and Windows graphics prerequisites, then replay the probe.
-Native rendering, IPC, DevTools,
-window behavior, publication, and Theorem integration remain unverified.
+request-based IPC adapter and all nine native security cases passed on macOS
+and Linux at `a0b50fb`, with clean shutdown. Windows still requires the ANGLE
+build/staging/native receipt. Unchanged CSP and local fetch/module compatibility,
+visual rendering, DevTools, full window behavior, publication, and Theorem
+integration remain open.

@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `ba88bd9386d60b246f39d561530253d8be945967ddf2c045e2e57de1e762bb74`
+Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -51,3 +51,11 @@ Choice: Use Servo's non-fetchable policy for ordinary custom assets and reserve 
 Reversibility: `reversible_with_cost`
 
 Retraction: Replace the restrictive protocol policy only after a public engine API enforces same-origin and CSP semantics with native positive/negative receipts. Remove CI Mesa if an equivalent native graphics runner is available.
+
+## ADR07: What replaces the unsuccessful Mesa/WGL native probe?
+
+Choice: Supersede ADR06's CI-driver branch with Servo's maintained no-wgl/ANGLE backend on Windows. Stage its own DLLs from current Cargo JSON build output, reject ambiguous or missing outputs, and retain the clean-machine package gate. Do not invent a graphics backend or claim that enabling the feature proves native behavior.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Revisit the backend selection only with native hardware evidence or a published Servo rendering API change; never remove the required Windows native gate.

@@ -1,9 +1,9 @@
 # Protocol routing and IPC identity
 
-Status: Windows asset adapter verified at commit `7813baa`; request-based IPC
-adapter implemented but not yet natively verified. Native security proof
-remains a release blocker. This document records source findings, not a
-reproduced native exploit or a completed security assessment.
+Status: Windows asset routing is unit verified at `7813baa`. All nine native
+IPC isolation cases pass on macOS/Linux at `a0b50fb` in run 33334311977.
+Windows native behavior and general app-origin compatibility remain release
+blockers; this is not a complete security assessment.
 
 ## Verified dependency surface
 
@@ -114,6 +114,29 @@ the required native cases below.
    content-security policies.
 
 The adapter unit tests and compile matrix are deliberately narrower receipts.
+
+## Native observations and compatibility boundary
+
+The `11240b2` fixture reproduced a remote frame reading a bundled asset when
+all custom protocols were marked fetchable. This matches Servo's documented
+flag semantics, rather than proving the flag performs a same-origin check.
+`a0b50fb` restricts that exemption to authenticated IPC protocols. The full
+nine-case suite then passed on both Unix targets, including exact Rust call
+counts, negative document cases, CSP canaries, and clean shutdown.
+
+The fixture explicitly allows `tauri:` scripts/frames because `'self'` does
+not match the custom scheme's opaque origin. Ordinary asset `fetch()` and
+module scripts also need a proper origin-aware engine API. Disabling asset
+fetchability is a safe restriction, not that compatibility implementation.
+Related upstream context includes
+[custom-protocol fetch semantics](https://github.com/servo/servo/issues/33564)
+and [opaque file-origin CSP behavior](https://github.com/servo/servo/issues/42209).
+
+Windows has not yet reached the security cases. Mesa did not satisfy Surfman's
+WGL DX-interop requirement. The next candidate uses Servo's published
+`no-wgl`/ANGLE backend and current Cargo-output DLL staging. ANGLE packaging,
+Windows interception policy, and normal custom-origin compatibility remain
+separate requirements even if the IPC fixture passes.
 
 ## Source anchors
 

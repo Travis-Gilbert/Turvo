@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `ba88bd9386d60b246f39d561530253d8be945967ddf2c045e2e57de1e762bb74`
+Canonical SHA-256: `4dba414e10d2d384f69622124a428291f638e7b9b58a6643f2c28d58521c76d8`
 
 ## Current facts
 
@@ -20,6 +20,8 @@ Canonical SHA-256: `ba88bd9386d60b246f39d561530253d8be945967ddf2c045e2e57de1e762
 - `F14`: Commit aa639664be21a94d7a30da9525921f36c94817a8 passed all jobs in run 33332869372 (99314527731, 99314527798, 99314527824, 99314527916). Every desktop passed 47 unit tests, two public API tests, Clippy, and both examples; five Node transport tests also passed. Real request-body streaming, cancellation, caller-provenance logic, and main-frame script handling are compile/unit verified. W02I remains working until the new native adversarial fixture passes.
 - `F15`: First native run 33333199948 at 30a98f040d55e89ecfafefff6a3eb415d674ca86 passed 48 unit tests, two API tests, Clippy, and all three example builds on each desktop. Native jobs 99315382070 (macOS) and 99315382073 (Linux) timed out before IPC because CSP 'self' blocked tauri://localhost/probe.js; Servo assigns custom-scheme URLs opaque origins. Linux then segfaulted at process exit; macOS returned zero despite the failed receipt. Windows job 99315382083 failed earlier with RequiredExtensionUnavailable creating the WGL rendering context. These are release blockers. The diagnostic fixture explicitly allows tauri: scripts/frames to probe IPC, retains CSP image canaries, and does not claim unchanged consumer CSP compatibility.
 - `F16`: Run 33333939812 at 11240b27377bc77ef346e8ae5082453c07ef88ba reached real IPC on Linux job 99317354543 and macOS job 99317354551. Both recorded local-json and local-raw native calls, binary and large-channel success, both event directions, and no blocked image handler calls. Both then failed because the remote iframe read a cross-origin bundled asset. Servo's is_fetchable custom-protocol flag bypasses the normal CORS path. Restricting it to source-authenticated IPC endpoints fails closed for asset fetches, but does not solve custom-origin local fetch/module compatibility or Windows interception policy. The entire origin gate remains open.
+- `F17`: Run 33334311977 at a0b50fb17469c9b3446705355e04b0ed34187f9a passed all nine native adversarial cases on macOS job 99318349568 and Linux job 99318349598, with exactly local-json, local-raw, and restored-local Rust calls, binary/channels/events, no blocked asset handler calls, and clean exit. Both passed 49 unit and two API tests. Windows job 99318349555 passed compilation but even checksum-pinned Mesa still failed RequiredExtensionUnavailable. Surfman's WGL device requires WGL_NV_DX_interop, not merely software OpenGL. No Windows native or normal custom-origin fetch/module compatibility receipt exists.
+- `F18`: Published Servo 0.5.0 already exposes no-wgl, enabling mozangle 0.6 EGL/DLL builds plus Surfman's ANGLE backend. Servo's own Python build_commands.py stages libEGL.dll and libGLESv2.dll after building. Turvo now selects this feature only on Windows and stages the exact Cargo build-script-executed output for standalone native tests. Four local staging tests cover current versus stale, incomplete, ambiguous, and host-versus-cross-target outputs; the actual Windows ANGLE build and native run remain pending.
 
 ## Explicit exclusions
 
