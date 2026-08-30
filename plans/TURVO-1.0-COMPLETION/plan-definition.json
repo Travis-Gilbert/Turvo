@@ -134,6 +134,10 @@
     {
       "id": "F11",
       "text": "Servo 0.5.0 navigation.rs sets each document request's pipeline_id from the new engine pipeline; fetch.rs assigns fetches the calling global's pipeline_id and client. The lower-level published protocol Request also has the actual Origin and a body stream. This is a candidate source-authenticated IPC path, not a native security receipt; opaque and sandboxed documents and consumer fork type coherence require explicit tests."
+    },
+    {
+      "id": "F12",
+      "text": "Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and base despite package names servo-net-traits and servo-base; imports were corrected from that exact diagnostic. Native proof is still pending."
     }
   ],
   "decisions": [

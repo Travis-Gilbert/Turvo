@@ -6,10 +6,10 @@ use std::sync::{mpsc, Mutex};
 use content_security_policy::PolicyDisposition;
 use futures_util::StreamExt;
 use ipc_channel::ipc;
-use servo::{protocol_handler::NetworkError, WebResourceRequest};
-use servo_net_traits::request::{
+use net_traits::request::{
   BodyChunkRequest, BodyChunkResponse, Origin, Request, RequestBody, RequestMode,
 };
+use servo::{protocol_handler::NetworkError, WebResourceRequest};
 use url::Url;
 
 pub(super) const BRIDGE_SCHEME: &str = "turvo-ipc";
@@ -212,13 +212,12 @@ pub(super) async fn read_request_body(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use content_security_policy::{CspList, PolicySource};
-  use servo::ServoUrl;
-  use servo_base::{
+  use base::{
     generic_channel::GenericSharedMemory,
     id::{PipelineId, PipelineNamespace, PipelineNamespaceId},
   };
-  use servo_net_traits::{
+  use content_security_policy::{CspList, PolicySource};
+  use net_traits::{
     blob_url_store::UrlWithBlobClaim,
     policy_container::PolicyContainer,
     request::{
@@ -226,6 +225,7 @@ mod tests {
       RequestClient,
     },
   };
+  use servo::ServoUrl;
 
   fn request(origin: &str, nested: bool) -> Request {
     let origin = ServoUrl::parse(origin).unwrap().origin();

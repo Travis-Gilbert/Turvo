@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c9db6`
+Canonical SHA-256: `b7edbcb983fc7ddccf8c60d17ef7e3fe1ad6a6875c11811b6eb979ad67eb20df`
 
 ## Current facts
 
@@ -15,6 +15,7 @@ Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c
 - `F09`: Commit 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed CI run 33329627108: format/package job 99305763884, macOS 99305763947, Linux 99305763979, Windows 99305763986. Every desktop job passed runtime tests, Clippy, hello-world, and API-example builds. Tracked next was created from that verified commit. Native application behavior remains unverified.
 - `F10`: Commit 7813baa3529e6db53113e30adfc4242de65ee276 passed run 33330884047: jobs 99309104737, 99309104910, 99309104920, 99309104928. All desktop targets passed 31 unit tests (including seven new protocol tests), two public API tests, Clippy, and both examples. Next independently passed its baseline run 33330599055.
 - `F11`: Servo 0.5.0 navigation.rs sets each document request's pipeline_id from the new engine pipeline; fetch.rs assigns fetches the calling global's pipeline_id and client. The lower-level published protocol Request also has the actual Origin and a body stream. This is a candidate source-authenticated IPC path, not a native security receipt; opaque and sandboxed documents and consumer fork type coherence require explicit tests.
+- `F12`: Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and base despite package names servo-net-traits and servo-base; imports were corrected from that exact diagnostic. Native proof is still pending.
 
 ## Explicit exclusions
 
