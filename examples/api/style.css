@@ -1,0 +1,45 @@
+:root {
+  color: #182018;
+  background: #eef2ea;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 2rem;
+}
+
+main {
+  max-width: 46rem;
+  margin: auto;
+}
+
+section {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid #aeb8a8;
+  border-radius: 0.75rem;
+  background: #f8faf6;
+}
+
+button,
+input {
+  margin: 0.25rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #7b8877;
+  border-radius: 0.45rem;
+  font: inherit;
+}
+
+button {
+  color: white;
+  background: #304d38;
+  cursor: pointer;
+}
+
+output {
+  display: block;
+  min-height: 1.5rem;
+  margin-top: 0.75rem;
+  font-family: ui-monospace, monospace;
+}

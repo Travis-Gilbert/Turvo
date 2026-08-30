@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turvo API example</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Turvo API parity probe</h1>
+      <p>This page exercises commands, events, and runtime-managed windows.</p>
+
+      <section>
+        <h2>Invoke</h2>
+        <input id="name" value="Servo" aria-label="Name" />
+        <button id="greet">Invoke Rust</button>
+      </section>
+
+      <section>
+        <h2>Events</h2>
+        <button id="js-event">JS to Rust to JS</button>
+        <button id="rust-event">Rust to JS</button>
+      </section>
+
+      <section>
+        <h2>Secondary window</h2>
+        <button data-command="create_secondary_window">Create/focus</button>
+        <button data-command="retitle_secondary_window">Retitle</button>
+        <button data-command="resize_secondary_window">Resize</button>
+        <button data-command="close_secondary_window">Close</button>
+      </section>
+
+      <output id="status" aria-live="polite">Waiting for a probe.</output>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

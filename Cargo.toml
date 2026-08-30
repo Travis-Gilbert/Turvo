@@ -1,0 +1,23 @@
+[workspace]
+members = [
+  "crates/turvo",
+  "examples/api",
+  "examples/helloworld",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.94"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/Travis-Gilbert/Turvo"
+repository = "https://github.com/Travis-Gilbert/Turvo"
+
+[workspace.dependencies]
+tauri = { version = "=2.11.5", default-features = false, features = ["common-controls-v6"] }
+tauri-build = { version = "=2.6.3" }
+
+[profile.dev]
+debug = 0
+incremental = false

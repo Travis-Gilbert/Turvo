@@ -1,0 +1,282 @@
+name: Servo next migration
+
+on:
+  schedule:
+    - cron: "23 6 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: servo-next-migration
+  cancel-in-progress: false
+
+env:
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_DEV_INCREMENTAL: false
+
+jobs:
+  ensure-next:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Create the next branch when absent
+        run: |
+          if ! git ls-remote --exit-code origin refs/heads/next >/dev/null 2>&1; then
+            git push origin HEAD:refs/heads/next
+          fi
+
+  migrate:
+    needs: ensure-next
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    outputs:
+      latest: ${{ steps.release.outputs.latest }}
+      update: ${{ steps.release.outputs.update }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: next
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Servo build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libdbus-1-dev \
+            libegl1-mesa-dev \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libgtk-3-dev \
+            libharfbuzz-dev \
+            libwebkit2gtk-4.1-dev \
+            libx11-dev \
+            libxkbcommon-x11-dev \
+            lld
+          echo "RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: clippy,rustfmt
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: servo-next-linux
+
+      - name: Resolve and prefetch the latest stable Servo
+        id: release
+        run: |
+          mkdir -p .turvo-migration-input .turvo-migration-output
+          curl \
+            --fail \
+            --retry 3 \
+            --show-error \
+            --silent \
+            --user-agent "turvo-servo-next/0.1 ($GITHUB_SERVER_URL/$GITHUB_REPOSITORY)" \
+            https://crates.io/api/v1/crates/servo \
+            > .turvo-migration-input/crates-io.json
+
+          latest=$(jq -r '.crate.max_stable_version' .turvo-migration-input/crates-io.json)
+          current=$(sed -n 's/^servo = "=\([^"]*\)"$/\1/p' crates/turvo/Cargo.toml)
+          if ! [[ "$latest" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "crates.io returned an invalid stable version: $latest" >&2
+            exit 1
+          fi
+          if [ -z "$current" ]; then
+            echo "could not read Turvo's exact Servo pin" >&2
+            exit 1
+          fi
+
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$current" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "update=true" >> "$GITHUB_OUTPUT"
+
+          cargo fetch --locked
+          prefetch_dir="$RUNNER_TEMP/turvo-servo-prefetch"
+          mkdir -p "$prefetch_dir/src"
+          printf '%s\n' \
+            '[package]' \
+            'name = "turvo-servo-prefetch"' \
+            'version = "0.0.0"' \
+            'edition = "2021"' \
+            '' \
+            '[dependencies]' \
+            "servo = \"=$latest\"" \
+            > "$prefetch_dir/Cargo.toml"
+          printf 'fn main() {}\n' > "$prefetch_dir/src/main.rs"
+          cargo fetch --manifest-path "$prefetch_dir/Cargo.toml"
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
+            cargo check --manifest-path "$prefetch_dir/Cargo.toml"
+
+          migration_note="docs/research/servo-migrations/$latest.md"
+          mkdir -p "$(dirname "$migration_note")"
+          touch "$migration_note"
+          git add --intent-to-add "$migration_note"
+
+      # The cache post-step runs after Codex and relays only its patch to fresh
+      # jobs. Codex remains the final active step on this runner.
+      - name: Prepare the patch relay
+        if: steps.release.outputs.update == 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .turvo-migration-output
+          key: servo-next-patch-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Migrate to the latest Servo release
+        if: steps.release.outputs.update == 'true'
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ":workspace"
+          safety-strategy: drop-sudo
+          allow-bots: true
+          model: ${{ vars.TURVO_MIGRATION_MODEL || 'gpt-5.3-codex-spark' }}
+          effort: high
+          prompt-file: .github/prompts/servo-next.md
+
+  validate:
+    needs: migrate
+    if: needs.migrate.outputs.update == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: next
+          persist-credentials: false
+
+      - name: Restore the agent patch
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .turvo-migration-output
+          key: servo-next-patch-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+
+      - name: Validate patch scope
+        run: |
+          patch=.turvo-migration-output/migration.patch
+          test -s "$patch"
+          git apply --check "$patch"
+          while IFS=$'\t' read -r _added _deleted path; do
+            if ! [[ "$path" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+              echo "unsafe patch path: $path" >&2
+              exit 1
+            fi
+            case "$path" in
+              Cargo.toml|Cargo.lock|crates/turvo/*|examples/*|.github/workflows/ci.yml|docs/research/servo-migrations/*) ;;
+              *)
+                echo "patch path is outside the migration scope: $path" >&2
+                exit 1
+                ;;
+            esac
+          done < <(git apply --numstat "$patch")
+          git apply "$patch"
+
+      - name: Install Servo build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libdbus-1-dev \
+            libegl1-mesa-dev \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libgtk-3-dev \
+            libharfbuzz-dev \
+            libwebkit2gtk-4.1-dev \
+            libx11-dev \
+            libxkbcommon-x11-dev \
+            lld
+          echo "RUSTFLAGS=-C link-arg=-fuse-ld=lld" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          components: clippy,rustfmt
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: servo-next-validation
+
+      - name: Validate migration on Linux
+        run: |
+          cargo fmt --all --check
+          cargo test -p turvo --lib --tests --locked
+          cargo clippy -p turvo --lib --tests --locked -- -D warnings
+          cargo build -p turvo-helloworld --locked
+          cargo build -p turvo-api --locked
+
+  open-pr:
+    needs: [migrate, validate]
+    if: needs.migrate.outputs.update == 'true' && needs.validate.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: next
+          fetch-depth: 0
+
+      - name: Restore the validated agent patch
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .turvo-migration-output
+          key: servo-next-patch-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+
+      - name: Recheck and apply patch scope
+        run: |
+          patch=.turvo-migration-output/migration.patch
+          test -s "$patch"
+          git apply --check "$patch"
+          while IFS=$'\t' read -r _added _deleted path; do
+            if ! [[ "$path" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+              echo "unsafe patch path: $path" >&2
+              exit 1
+            fi
+            case "$path" in
+              Cargo.toml|Cargo.lock|crates/turvo/*|examples/*|.github/workflows/ci.yml|docs/research/servo-migrations/*) ;;
+              *)
+                echo "patch path is outside the migration scope: $path" >&2
+                exit 1
+                ;;
+            esac
+          done < <(git apply --numstat "$patch")
+          git apply "$patch"
+
+      - name: Open a draft migration pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ github.token }}
+          base: next
+          branch: automation/servo-${{ needs.migrate.outputs.latest }}
+          delete-branch: true
+          draft: true
+          commit-message: "chore(servo): migrate next to ${{ needs.migrate.outputs.latest }}"
+          title: "chore(servo): migrate next to ${{ needs.migrate.outputs.latest }}"
+          body: |
+            Automated Servo migration authored by the Turvo migration agent.
+
+            The generated patch passed the focused Linux test, Clippy, and
+            example-build lane before this draft was opened. The pull request's
+            standard CI run is the separate Linux, Windows, and macOS gate.
+          add-paths: |
+            Cargo.toml
+            Cargo.lock
+            crates/turvo/**
+            examples/**
+            .github/workflows/ci.yml
+            docs/research/servo-migrations/**

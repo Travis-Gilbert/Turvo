@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Turvo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+
+      body {
+        align-items: center;
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem;
+        place-items: center;
+      }
+
+      main {
+        max-width: 36rem;
+        width: 100%;
+      }
+
+      form {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      input {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Turvo</h1>
+      <p>A bundled Tauri page rendered by an in-process Servo engine.</p>
+      <form id="greeting-form">
+        <input id="name" aria-label="Name" value="desktop" />
+        <button type="submit">Invoke Rust</button>
+      </form>
+      <p id="result" role="status"></p>
+    </main>
+    <script>
+      const { invoke } = window.__TAURI__.core
+      const form = document.querySelector('#greeting-form')
+      const name = document.querySelector('#name')
+      const result = document.querySelector('#result')
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        result.textContent = await invoke('greet', { name: name.value })
+      })
+    </script>
+  </body>
+</html>
+

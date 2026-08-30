@@ -1,0 +1,8 @@
+/target/
+.DS_Store
+
+# Local Harness/session state is not part of the public crate.
+/.theorem/
+/docs/notes/
+/.turvo-migration-input/
+/.turvo-migration-output/
