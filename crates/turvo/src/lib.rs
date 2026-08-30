@@ -209,7 +209,8 @@ pub struct InitializationScript {
   pub script: String,
   /// Whether the script should be injected to main frame only.
   ///
-  /// Servo injects scripts into every frame; this flag is kept for API parity.
+  /// Turvo guards main-frame scripts because Servo injects user scripts into
+  /// every frame. Use explicit window properties for cross-script globals.
   pub for_main_frame_only: bool,
 }
 

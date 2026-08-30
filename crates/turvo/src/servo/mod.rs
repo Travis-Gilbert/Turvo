@@ -14,6 +14,7 @@ use crate::{WebViewAttributes, WebViewBuilder};
 use self::embedder::Embedder;
 
 pub mod embedder;
+mod ipc;
 mod protocols;
 
 fn parse_url(url: &str, description: &str) -> Result<Url> {

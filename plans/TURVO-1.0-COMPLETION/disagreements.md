@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
+Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c9db6`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -35,3 +35,11 @@ Choice: No. Refine the protocol work into asset routing and a separate source-au
 Reversibility: `reversible`
 
 Retraction: Recombine the nodes only when the same engine-authenticated request surface and native receipts prove both boundaries.
+
+## ADR05: Which published Servo surface can preserve bodies and authenticate privileged IPC without a console or origin fallback?
+
+Choice: Use the pinned lower-level custom ProtocolHandler Request with engine Origin, client, and pipeline metadata. Read its body through ipc-channel's existing async stream adapter, reject nested and enforced-sandbox clients, bind opaque local identity to the served main-document pipeline, and revoke queued calls on navigation. Standard Tauri invokes use ipc:// on every OS; mapped HTTP never dispatches IPC. Native adversarial receipts remain required.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Remove the candidate adapter if native tests invalidate its provenance assumptions and propose a public Servo embedding API change. Never restore console-derived source identity. Consumer forks must patch servo and servo-net-traits coherently.

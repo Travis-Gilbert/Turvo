@@ -6,7 +6,7 @@ use std::{
   cell::{Cell, RefCell},
   collections::HashMap,
   rc::Rc,
-  sync::Arc,
+  sync::{mpsc, Arc},
 };
 
 use euclid::{
@@ -35,38 +35,57 @@ use tao::{
 };
 use url::Url;
 
+use super::ipc::{BridgeMessage, BridgeSink};
 use super::protocols::{CustomProtocolHandler, ProtocolRouter};
 use crate::{
   InitializationScript, PageLoadEvent, Rect, ServoError as Error, ServoResult as Result,
 };
 
-const IPC_MESSAGE_PREFIX: &str = "__SERVO_IPC__:";
 const IPC_BRIDGE_SCRIPT: &str = r#"
+(() => {
+  if (window !== window.top) return;
   Object.defineProperty(window, 'ipc', {
     value: Object.freeze({
       postMessage: function(message) {
-        console.debug('__SERVO_IPC__:' + String(message));
+        void fetch('turvo-ipc://localhost/', {
+          method: 'POST',
+          body: String(message)
+        }).then(response => {
+          if (!response.ok) throw new Error('Turvo IPC request was rejected');
+        }).catch(error => console.error('Turvo IPC transport failed', error));
       }
     })
   });
+})();
 "#;
 
-fn ipc_message_body(message: &str) -> Option<&str> {
-  message.strip_prefix(IPC_MESSAGE_PREFIX)
+fn ipc_request(current_url: Url, body: String) -> http::Result<http::Request<String>> {
+  http::Request::builder()
+    .uri(current_url.as_str())
+    .body(body)
 }
 
-fn ipc_request(current_url: Option<Url>, body: String) -> http::Request<String> {
-  let uri = current_url
-    .as_ref()
-    .map(Url::as_str)
-    .unwrap_or("about:blank")
-    .parse::<http::Uri>()
-    .unwrap_or_else(|_| http::Uri::from_static("/"));
+fn initialization_script(script: InitializationScript) -> String {
+  if script.for_main_frame_only {
+    format!("if (window === window.top) {{\n{}\n}}", script.script)
+  } else {
+    script.script
+  }
+}
 
-  http::Request::builder()
-    .uri(uri)
-    .body(body)
-    .expect("the fallback IPC request URI is valid")
+fn ipc_queue(
+  waker: &EmbedderWaker,
+  enabled: bool,
+) -> (Option<BridgeSink>, mpsc::Receiver<BridgeMessage>) {
+  let (sender, receiver) = mpsc::channel();
+  let sink = enabled.then(|| {
+    let waker = waker.clone();
+    BridgeSink {
+      sender,
+      wake: Box::new(move || waker.wake()),
+    }
+  });
+  (sink, receiver)
 }
 
 #[derive(Clone)]
@@ -96,6 +115,7 @@ struct EngineDelegate {
 
 impl ServoDelegate for EngineDelegate {
   fn load_web_resource(&self, load: WebResourceLoad) {
+    self.protocols.sources.observe_load(load.request());
     if cfg!(windows) {
       self.protocols.load_web_resource(load);
     }
@@ -127,6 +147,7 @@ struct Delegate {
   frame_ready: Cell<bool>,
   closed: Cell<bool>,
   ipc_handler: Option<Box<dyn Fn(http::Request<String>)>>,
+  ipc_receiver: mpsc::Receiver<BridgeMessage>,
   navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
   document_title_changed_handler: Option<Box<dyn Fn(String)>>,
   on_page_load_handler: Option<Box<dyn Fn(PageLoadEvent, String)>>,
@@ -134,6 +155,20 @@ struct Delegate {
 }
 
 impl Delegate {
+  fn dispatch_ipc(&self) {
+    for message in self.ipc_receiver.try_iter() {
+      if !self.protocols.sources.is_current(&message.source) {
+        continue;
+      }
+      if let (Some(handler), Ok(request)) = (
+        self.ipc_handler.as_ref(),
+        ipc_request(message.source.url, message.body),
+      ) {
+        handler(request);
+      }
+    }
+  }
+
   fn request_repaint(&self) {
     self.frame_ready.set(true);
     if let Some(window) = &self.window {
@@ -146,9 +181,14 @@ impl Delegate {
 
 impl WebViewDelegate for Delegate {
   fn load_web_resource(&self, _webview: ServoWebView, load: WebResourceLoad) {
+    self.protocols.sources.observe_load(load.request());
     if cfg!(windows) {
       self.protocols.load_web_resource(load);
     }
+  }
+
+  fn notify_url_changed(&self, _webview: ServoWebView, url: Url) {
+    self.protocols.sources.observe_url(&url);
   }
 
   fn notify_page_title_changed(&self, _webview: ServoWebView, title: Option<String>) {
@@ -189,19 +229,6 @@ impl WebViewDelegate for Delegate {
   fn notify_closed(&self, _webview: ServoWebView) {
     self.closed.set(true);
     self.waker.wake();
-  }
-
-  fn show_console_message(
-    &self,
-    webview: ServoWebView,
-    _level: servo::ConsoleLogLevel,
-    message: String,
-  ) {
-    let (Some(handler), Some(body)) = (self.ipc_handler.as_ref(), ipc_message_body(&message))
-    else {
-      return;
-    };
-    handler(ipc_request(webview.url(), body.to_owned()));
   }
 }
 
@@ -547,16 +574,22 @@ impl Embedder {
         eprintln!("Servo failed to wake the Tao event loop: {error}");
       }
     });
+    let (bridge, ipc_receiver) = ipc_queue(&waker, ipc_handler.is_some());
     let delegate = Rc::new(Delegate {
       window: Some(window.clone()),
       waker: waker.clone(),
       frame_ready: Cell::new(false),
       closed: Cell::new(false),
       ipc_handler,
+      ipc_receiver,
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
-      protocols: Arc::new(ProtocolRouter::new(webview_id.clone(), custom_protocols)),
+      protocols: Arc::new(ProtocolRouter::new(
+        webview_id.clone(),
+        custom_protocols,
+        bridge,
+      )),
     });
     let target = RenderingTarget::Window { window, context };
     Self::build(
@@ -603,16 +636,22 @@ impl Embedder {
     let physical_bounds = PhysicalBounds::from_rect(bounds, scale_factor);
     let context = Rc::new(parent_context.offscreen_context(physical_bounds.size));
     let waker = EmbedderWaker::new(wake);
+    let (bridge, ipc_receiver) = ipc_queue(&waker, ipc_handler.is_some());
     let delegate = Rc::new(Delegate {
       window: None,
       waker: waker.clone(),
       frame_ready: Cell::new(false),
       closed: Cell::new(false),
       ipc_handler,
+      ipc_receiver,
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
-      protocols: Arc::new(ProtocolRouter::new(webview_id.clone(), custom_protocols)),
+      protocols: Arc::new(ProtocolRouter::new(
+        webview_id.clone(),
+        custom_protocols,
+        bridge,
+      )),
     });
     let target = RenderingTarget::Child {
       parent_context,
@@ -719,8 +758,8 @@ impl Embedder {
     if delegate.ipc_handler.is_some() {
       user_content_manager.add_script(Rc::new(UserScript::from(IPC_BRIDGE_SCRIPT)));
     }
-    for initialization_script in initialization_scripts {
-      user_content_manager.add_script(Rc::new(UserScript::from(initialization_script.script)));
+    for script in initialization_scripts {
+      user_content_manager.add_script(Rc::new(UserScript::from(initialization_script(script))));
     }
     let webview_builder = ServoWebViewBuilder::new(&servo, target.rendering_context())
       .hidpi_scale_factor(Scale::new(target.scale_factor() as f32))
@@ -752,6 +791,7 @@ impl Embedder {
   }
 
   pub fn handle_user_event(&self) {
+    self.delegate.dispatch_ipc();
     if let Some(text) = self.pending_ime_text.borrow_mut().take() {
       self.commit_ime_text(text);
     }
@@ -785,6 +825,7 @@ impl Embedder {
   }
 
   pub fn handle_window_event(&self, event: &WindowEvent<'_>) {
+    self.delegate.dispatch_ipc();
     self.servo.spin_event_loop();
 
     match event {
@@ -1045,30 +1086,46 @@ mod tests {
   };
 
   use super::{
-    inserted_key_text, ipc_message_body, ipc_request, non_zero_size, point_in_bounds, servo_code,
-    servo_key, servo_location, servo_modifiers, servo_mouse_button, servo_touch_phase,
+    initialization_script, inserted_key_text, ipc_request, non_zero_size, point_in_bounds,
+    servo_code, servo_key, servo_location, servo_modifiers, servo_mouse_button, servo_touch_phase,
     servo_wheel_delta, Delegate, EmbedderWaker, PhysicalBounds, IPC_BRIDGE_SCRIPT,
-    IPC_MESSAGE_PREFIX,
   };
   use crate::Rect;
 
   #[test]
-  fn recognizes_ipc_console_messages() {
-    assert_eq!(ipc_message_body("__SERVO_IPC__:hello"), Some("hello"));
-    assert_eq!(ipc_message_body("ordinary console message"), None);
+  fn ipc_bridge_uses_request_transport_only_from_the_main_frame() {
+    assert!(IPC_BRIDGE_SCRIPT.contains("fetch('turvo-ipc://localhost/'"));
+    assert!(IPC_BRIDGE_SCRIPT.contains("window !== window.top"));
+    assert!(!IPC_BRIDGE_SCRIPT.contains("console.debug"));
+    assert!(!IPC_BRIDGE_SCRIPT.contains("__SERVO_IPC__"));
   }
 
   #[test]
-  fn ipc_bridge_uses_the_embedder_prefix() {
-    assert!(IPC_BRIDGE_SCRIPT.contains(IPC_MESSAGE_PREFIX));
+  fn initialization_scripts_honor_tauris_main_frame_flag() {
+    let script = "window.test = true; // a trailing comment".to_owned();
+    assert_eq!(
+      initialization_script(crate::InitializationScript {
+        script: script.clone(),
+        for_main_frame_only: true,
+      }),
+      format!("if (window === window.top) {{\n{script}\n}}")
+    );
+    assert_eq!(
+      initialization_script(crate::InitializationScript {
+        script: script.clone(),
+        for_main_frame_only: false,
+      }),
+      script
+    );
   }
 
   #[test]
   fn ipc_request_preserves_a_local_page_origin() {
     let request = ipc_request(
-      Some(url::Url::parse("tauri://localhost/index.html?mode=test#probe").unwrap()),
+      url::Url::parse("tauri://localhost/index.html?mode=test#probe").unwrap(),
       "payload".into(),
-    );
+    )
+    .unwrap();
 
     assert_eq!(request.uri().scheme_str(), Some("tauri"));
     assert_eq!(request.uri().authority().unwrap().as_str(), "localhost");
@@ -1082,9 +1139,10 @@ mod tests {
   #[test]
   fn ipc_request_preserves_a_remote_page_origin() {
     let request = ipc_request(
-      Some(url::Url::parse("https://example.com/app/index.html").unwrap()),
+      url::Url::parse("https://example.com/app/index.html").unwrap(),
       "payload".into(),
-    );
+    )
+    .unwrap();
 
     assert_eq!(request.uri().scheme_str(), Some("https"));
     assert_eq!(request.uri().authority().unwrap().as_str(), "example.com");
@@ -1221,12 +1279,14 @@ mod tests {
       frame_ready: Default::default(),
       closed: Default::default(),
       ipc_handler: None,
+      ipc_receiver: std::sync::mpsc::channel().1,
       navigation_handler: None,
       document_title_changed_handler: None,
       on_page_load_handler: None,
       protocols: Arc::new(super::ProtocolRouter::new(
         "test".into(),
         Default::default(),
+        None,
       )),
     };
 

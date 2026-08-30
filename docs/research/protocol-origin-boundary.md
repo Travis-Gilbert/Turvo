@@ -1,8 +1,9 @@
 # Protocol routing and IPC identity
 
-Status: Windows asset adapter implemented; source-authenticated IPC and native
-security proof remain release blockers. This document records source findings,
-not a reproduced native exploit or a completed security assessment.
+Status: Windows asset adapter verified at commit `7813baa`; request-based IPC
+adapter implemented but not yet natively verified. Native security proof
+remains a release blocker. This document records source findings, not a
+reproduced native exploit or a completed security assessment.
 
 ## Verified dependency surface
 
@@ -54,6 +55,44 @@ reuse a sufficient published Servo API or record a public compatibility
 proposal and explicit release blocker. No hardcoded origin or console-derived
 identity fallback is acceptable.
 
+## Candidate request-based transport
+
+The console bridge has been removed. Standard Tauri invokes now use
+`ipc://localhost/` on every desktop platform. The lower-level protocol adapter
+reads actual JSON or binary request-body chunks through `ipc-channel`'s async
+stream support, then forwards the engine-authenticated source to Tauri's
+existing capability checker. Transport failures reject the call; they do not
+fall back to console or metadata-only HTTP IPC.
+
+Tuple origins are kept unchanged and must match the observed current top-level
+origin. For opaque custom-scheme origins, only the exact engine pipeline that
+received the successful main-document response can use its local app URL.
+Nested clients, missing metadata, unresolved origins, and enforced CSP sandbox
+clients are denied. Navigation revokes queued source tokens and late document
+registrations. These are implementation rules requiring native validation,
+not a claim that every engine provenance assumption has been proven.
+
+The optional low-level `window.ipc.postMessage` hook uses the separate
+`turvo-ipc:` fetch endpoint and the same source checks. Its queue wakes the main
+event loop and rechecks the document generation before dispatch. Main-frame
+initialization flags are honored with a `window === window.top` guard. Scripts
+that intentionally share globals should use explicit `window` properties.
+
+The adapter currently limits each custom-protocol request body to 16 MiB,
+checking both advertised and streamed length. Dropping a pending read closes
+its body stream. Applications with a CSP must allow `ipc:` in `connect-src`;
+add `turvo-ipc:` only when using the low-level hook. These allowances enable the
+transport, not permission to execute a command.
+
+`servo-net-traits` is pinned to the same published engine version as `servo`.
+A consumer replacing Servo with a fork must patch both crates to one coherent
+revision; patching `servo` alone would leave incompatible request types from
+two source trees. Turvo's own tests also directly use `servo-base` from that
+engine family. The public Turvo package still has no private-fork dependency.
+
+Focused Rust provenance/body tests and the Node transport tests do not replace
+the required native cases below.
+
 ## Required native cases
 
 1. A bundled local page invokes an allowed command and receives its payload.
@@ -76,3 +115,7 @@ The adapter unit tests and compile matrix are deliberately narrower receipts.
 - [Servo 0.5.0 request interception](https://docs.rs/crate/servo-net/0.5.0/source/request_interceptor.rs)
 - [Servo 0.5.0 fetch ordering](https://docs.rs/crate/servo-net/0.5.0/source/fetch/methods.rs)
 - [Servo 0.5.0 origin representation](https://docs.rs/crate/servo-url/0.5.0/source/origin.rs)
+- [Servo 0.5.0 request provenance and body types](https://docs.rs/crate/servo-net-traits/0.5.0/source/request.rs)
+- [Servo 0.5.0 navigation pipeline assignment](https://docs.rs/crate/servo-script/0.5.0/source/navigation.rs)
+- [Servo 0.5.0 calling-global fetch metadata](https://docs.rs/crate/servo-script/0.5.0/source/fetch.rs)
+- [ipc-channel 0.22 asynchronous streams](https://docs.rs/ipc-channel/0.22.0/ipc_channel/ipc/struct.IpcReceiver.html#method.to_stream)

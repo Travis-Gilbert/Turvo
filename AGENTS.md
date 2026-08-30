@@ -92,7 +92,7 @@ receipts and must not be presented as established project facts.
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | All four baseline jobs green; native smoke pending | CI run 33329627108 |
-| Completion graph | W01/V01 verified; W02 asset routing active; IPC isolation separately gated | `plans/TURVO-1.0-COMPLETION/manifest.md` |
+| Completion graph | W01/V01 and W02/V02 verified; W02I IPC isolation active | `plans/TURVO-1.0-COMPLETION/manifest.md` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |
@@ -114,6 +114,7 @@ cargo fmt --all --check
 cargo metadata --no-deps --locked --format-version 1
 cargo test -p turvo --lib --tests --locked
 cargo clippy -p turvo --lib --tests --locked -- -D warnings
+node --test crates/turvo/tests/invoke_transport.test.mjs
 cargo run -p helloworld --locked
 cargo run -p turvo-api --locked
 ```
@@ -124,7 +125,8 @@ build graph.
 
 ## Next Step
 
-Continue the canonical completion graph at W02. Windows asset routing and
-source-authenticated IPC are separate gates: the imported console bridge
-does not yet prove remote-frame isolation. Native rendering, IPC, DevTools,
+Continue the canonical completion graph at W02I. Windows asset routing passed
+the three-platform compile/test matrix at `7813baa` (run 33330884047). The new
+request-based IPC adapter still requires native source-isolation proof.
+Native rendering, IPC, DevTools,
 window behavior, publication, and Theorem integration remain unverified.

@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
+Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c9db6`
 
 ## Destination
 
@@ -22,7 +22,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 
 ## Opening move
 
-- 1. `W02`: The verified three-platform baseline allows the narrow Windows asset-interception gap to be repaired; source-authenticated IPC remains a separate gate.
+- 1. `W02I`: Asset routing is verified at its declared test level. F08's caller-identity gap now has a published low-level API candidate in F11 that must be proven before native API parity or release.
 
 ## Task board
 
@@ -34,9 +34,9 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 | [D01](nodes/D01.md) | completed | agent | decision.architecture | P01 | O03, O06, O08 |
 | [W01](nodes/W01.md) | completed | agent | work.implementation | D01 | O01, O02, O12 |
 | [V01](nodes/V01.md) | completed | verifier | verify.live | W01 | O01, O02, O12 |
-| [W02](nodes/W02.md) | working | agent | work.implementation | V01 | O03, O04 |
-| [V02](nodes/V02.md) | pending | verifier | verify.local | W02 | O03, O04 |
-| [W02I](nodes/W02I.md) | pending | agent | work.implementation | V02 | O03, O04 |
+| [W02](nodes/W02.md) | completed | agent | work.implementation | V01 | O03, O04 |
+| [V02](nodes/V02.md) | completed | verifier | verify.local | W02 | O03, O04 |
+| [W02I](nodes/W02I.md) | working | agent | work.implementation | V02 | O03, O04 |
 | [V02I](nodes/V02I.md) | pending | verifier | verify.live | W02I | O03, O04 |
 | [W03](nodes/W03.md) | pending | agent | work.external | V02 | O06 |
 | [V03](nodes/V03.md) | pending | verifier | verify.live | W03 | O06 |

@@ -30,6 +30,8 @@ jobs:
           toolchain: 1.94.0
       - name: Check formatting
         run: cargo fmt --all --check
+      - name: Test JavaScript IPC transport
+        run: node --test crates/turvo/tests/invoke_transport.test.mjs
       - name: Check published crate contents
         run: cargo package -p turvo --locked --no-verify
 

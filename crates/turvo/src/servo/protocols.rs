@@ -15,6 +15,11 @@ use url::Url;
 
 use crate::{RequestAsyncResponder, ServoError, ServoResult, WebViewId};
 
+use super::ipc::{
+  read_request_body, AuthenticatedSource, BridgeMessage, BridgeSink, SourceTracker, BRIDGE_SCHEME,
+  MAX_REQUEST_BODY_BYTES,
+};
+
 pub(super) type CustomProtocolHandler =
   Box<dyn Fn(WebViewId, http::Request<Vec<u8>>, RequestAsyncResponder) + Send + Sync>;
 
@@ -22,22 +27,35 @@ pub(super) type CustomProtocolHandler =
 pub(super) struct ProtocolRouter {
   webview_id: String,
   handlers: HashMap<String, CustomProtocolHandler>,
+  pub sources: SourceTracker,
+  bridge: Option<BridgeSink>,
 }
 
 impl ProtocolRouter {
-  pub fn new(webview_id: String, handlers: HashMap<String, CustomProtocolHandler>) -> Self {
+  pub fn new(
+    webview_id: String,
+    handlers: HashMap<String, CustomProtocolHandler>,
+    bridge: Option<BridgeSink>,
+  ) -> Self {
     Self {
       webview_id,
       handlers,
+      sources: SourceTracker::default(),
+      bridge,
     }
   }
 
   pub fn registry(self: &Arc<Self>) -> ServoResult<ProtocolRegistry> {
     let mut registry = ProtocolRegistry::default();
-    for scheme in self.handlers.keys() {
+    let schemes = self
+      .handlers
+      .keys()
+      .cloned()
+      .chain(self.bridge.as_ref().map(|_| BRIDGE_SCHEME.to_owned()));
+    for scheme in schemes {
       registry
         .register(
-          scheme,
+          &scheme,
           CustomProtocol {
             router: self.clone(),
             scheme: scheme.clone(),
@@ -65,6 +83,11 @@ impl ProtocolRouter {
     let Some(handler) = self.handlers.get(scheme) else {
       return Ok(None);
     };
+    // The mapped HTTP interface has no authenticated initiator metadata.
+    // Privileged IPC uses the lower-level ipc custom protocol on every OS.
+    if scheme == "ipc" || scheme == BRIDGE_SCHEME {
+      return Err(http::StatusCode::FORBIDDEN);
+    }
 
     // A registered localhost name must never fall through to an actual server
     // just because credentials or a nonstandard port were added to its URL.
@@ -89,6 +112,7 @@ impl ProtocolRouter {
       &request.url,
       request.method.clone(),
       request.headers.clone(),
+      Vec::new(),
     );
     let Ok(request) = request else {
       complete_load(load, status_response(http::StatusCode::BAD_REQUEST));
@@ -112,14 +136,14 @@ fn protocol_request(
   url: &Url,
   method: http::Method,
   headers: http::HeaderMap,
+  body: Vec<u8>,
 ) -> http::Result<http::Request<Vec<u8>>> {
-  // Servo 0.5's interception API supplies metadata, not request bodies. This
-  // serves assets; it does not establish the source-authenticated IPC path.
-  // In particular, neither the target URL nor a referrer is an Origin header.
+  // Copy headers as supplied. Only the authenticated custom-protocol IPC
+  // adapter may add an engine-derived Origin after this conversion.
   let mut request = http::Request::builder()
     .method(method)
     .uri(url.as_str())
-    .body(Vec::new())?;
+    .body(body)?;
   *request.headers_mut() = headers;
   Ok(request)
 }
@@ -192,31 +216,74 @@ impl ProtocolHandler for CustomProtocol {
   ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ServoResponse> + Send + 'a>> {
     let url = request.current_url();
     let timing_type = request.timing_type();
-    let request = protocol_request(
-      url.as_url(),
-      request.method.clone(),
-      request.headers.clone(),
-    );
-    let Ok(request) = request else {
-      return Box::pin(std::future::ready(ServoResponse::network_error(
-        NetworkError::ResourceLoadError(format!("invalid custom protocol URL: {url}")),
-      )));
+    let method = request.method.clone();
+    let headers = request.headers.clone();
+    let body = request.body.clone();
+    let protected = self.scheme == "ipc" || self.scheme == BRIDGE_SCHEME;
+    let source = if protected {
+      match self.router.sources.authenticate(request) {
+        Ok(source) => Some(source),
+        Err(_) => {
+          return Box::pin(std::future::ready(ServoResponse::network_error(
+            NetworkError::ResourceLoadError("IPC caller has no authenticated document".into()),
+          )));
+        }
+      }
+    } else {
+      None
+    };
+    let document = if protected {
+      None
+    } else {
+      self.router.sources.document_candidate(request)
     };
 
-    let (sender, receiver) = futures_channel::oneshot::channel();
-    (self.router.handlers[&self.scheme])(
-      &self.router.webview_id,
-      request,
-      RequestAsyncResponder {
-        responder: Box::new(move |response| {
-          let _ = sender.send(response);
-        }),
-      },
-    );
-
     Box::pin(async move {
+      let body = match read_request_body(body, MAX_REQUEST_BODY_BYTES).await {
+        Ok(body) => body,
+        Err(error) => return ServoResponse::network_error(error),
+      };
+      let Ok(mut request) = protocol_request(url.as_url(), method, headers, body) else {
+        return ServoResponse::network_error(NetworkError::ResourceLoadError(format!(
+          "invalid custom protocol URL: {url}"
+        )));
+      };
+      if let Some(source) = &source {
+        if !self.router.sources.is_current(source) {
+          return ServoResponse::network_error(NetworkError::ResourceLoadError(
+            "IPC document was superseded during request delivery".into(),
+          ));
+        }
+        let Ok(origin) = http::HeaderValue::from_str(source.url.as_str()) else {
+          return ServoResponse::network_error(NetworkError::ResourceLoadError(
+            "IPC document URL cannot be represented as an origin".into(),
+          ));
+        };
+        request.headers_mut().insert(http::header::ORIGIN, origin);
+      }
+      let (sender, receiver) = futures_channel::oneshot::channel();
+      if self.scheme == BRIDGE_SCHEME {
+        let response = match (self.router.bridge.as_ref(), source) {
+          (Some(bridge), Some(source)) => bridge_response(bridge, source, request.into_body()),
+          _ => status_response(http::StatusCode::FORBIDDEN),
+        };
+        let _ = sender.send(response);
+      } else {
+        (self.router.handlers[&self.scheme])(
+          &self.router.webview_id,
+          request,
+          RequestAsyncResponder {
+            responder: Box::new(move |response| {
+              let _ = sender.send(response);
+            }),
+          },
+        );
+      }
       match receiver.await {
         Ok(response) => {
+          if response.status().is_success() {
+            self.router.sources.accept_document(document);
+          }
           let (parts, body) = response.into_parts();
           let mut response = ServoResponse::new(url, ResourceFetchTiming::new(timing_type));
           response.status = HttpStatus::new_raw(
@@ -248,6 +315,21 @@ impl ProtocolHandler for CustomProtocol {
   }
 }
 
+fn bridge_response(
+  bridge: &BridgeSink,
+  source: AuthenticatedSource,
+  body: Vec<u8>,
+) -> http::Response<Cow<'static, [u8]>> {
+  let Ok(body) = String::from_utf8(body) else {
+    return status_response(http::StatusCode::BAD_REQUEST);
+  };
+  if bridge.sender.send(BridgeMessage { source, body }).is_err() {
+    return status_response(http::StatusCode::SERVICE_UNAVAILABLE);
+  }
+  (bridge.wake)();
+  status_response(http::StatusCode::OK)
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -256,7 +338,7 @@ mod tests {
     let mut handlers: HashMap<String, CustomProtocolHandler> = HashMap::new();
     handlers.insert("tauri".into(), Box::new(|_, _, _| {}));
     handlers.insert("app-assets".into(), Box::new(|_, _, _| {}));
-    ProtocolRouter::new("main".into(), handlers)
+    ProtocolRouter::new("main".into(), handlers, None)
   }
 
   #[test]
@@ -333,7 +415,7 @@ mod tests {
       "https://remote.example".parse().unwrap(),
     );
     headers.insert(http::header::RANGE, "bytes=0-3".parse().unwrap());
-    let request = protocol_request(&url, http::Method::HEAD, headers.clone()).unwrap();
+    let request = protocol_request(&url, http::Method::HEAD, headers.clone(), Vec::new()).unwrap();
 
     assert_eq!(request.uri().to_string(), url.as_str());
     assert_eq!(request.method(), http::Method::HEAD);
@@ -347,6 +429,7 @@ mod tests {
       &Url::parse("http://tauri.localhost/").unwrap(),
       http::Method::GET,
       http::HeaderMap::new(),
+      Vec::new(),
     )
     .unwrap();
     assert!(!request.headers().contains_key(http::header::ORIGIN));
@@ -383,5 +466,17 @@ mod tests {
     assert!(registry.get("app-assets").is_some());
     assert!(registry.get("http").is_none());
     assert!(registry.get("https").is_none());
+  }
+
+  #[test]
+  fn mapped_http_ipc_cannot_bypass_source_authentication() {
+    let mut router = router();
+    router.handlers.insert("ipc".into(), Box::new(|_, _, _| {}));
+    for url in ["http://ipc.localhost/test", "https://ipc.localhost/test"] {
+      assert!(matches!(
+        router.mapped_handler(&Url::parse(url).unwrap()),
+        Err(http::StatusCode::FORBIDDEN)
+      ));
+    }
   }
 }

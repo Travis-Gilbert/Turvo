@@ -4,12 +4,9 @@
 
 // Invoke system for the Servo runtime, derived from tauri's ipc-protocol.js.
 //
-// Servo does not expose custom protocol request bodies to embedders, so the
-// custom protocol IPC path used by the default invoke system cannot carry
-// invoke payloads. This script always routes invokes through the
-// `window.ipc.postMessage` bridge provided by Turvo, except for
-// the channel data fetch command which carries its arguments in request
-// headers (no body needed) and requires a response.
+// The lower-level Servo protocol handler supplies the real body stream and
+// authenticated initiating document. Use ipc:// on every OS so Windows does
+// not fall back to the metadata-only HTTP resource interception interface.
 
 ;(function () {
   /**
@@ -28,7 +25,7 @@
     ) {
       return {
         contentType: 'application/octet-stream',
-        data: message
+        data: Array.isArray(message) ? new Uint8Array(message) : message
       }
     } else {
       const data = JSON.stringify(message, (_k, val) => {
@@ -61,69 +58,45 @@
     }
   }
 
-  const fetchChannelDataCommand = 'plugin:__TAURI_CHANNEL__|fetch'
-  let customProtocolIpcFailed = false
-
   function sendIpcMessage(message) {
     const { cmd, callback, error, payload, options } = message
+    const { contentType, data } = processIpcMessage(payload)
+    const headers = new Headers((options && options.headers) || {})
+    headers.set('Content-Type', contentType)
+    headers.set('Tauri-Callback', callback)
+    headers.set('Tauri-Error', error)
+    headers.set('Tauri-Invoke-Key', __TAURI_INVOKE_KEY__)
 
-    if (!customProtocolIpcFailed && cmd === fetchChannelDataCommand) {
-      // the channel data fetch passes its arguments via headers and needs the
-      // response body, so it is the one command that keeps using the custom
-      // protocol
-      const { contentType, data } = processIpcMessage(payload)
-
-      const headers = new Headers((options && options.headers) || {})
-      headers.set('Content-Type', contentType)
-      headers.set('Tauri-Callback', callback)
-      headers.set('Tauri-Error', error)
-      headers.set('Tauri-Invoke-Key', __TAURI_INVOKE_KEY__)
-
-      fetch(window.__TAURI_INTERNALS__.convertFileSrc(cmd, 'ipc'), {
-        method: 'POST',
-        body: data,
-        headers
+    fetch('ipc://localhost/' + encodeURIComponent(cmd), {
+      method: 'POST',
+      body: data,
+      headers
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Turvo IPC request was rejected: ' + response.status)
+        }
+        const callbackId =
+          response.headers.get('Tauri-Response') === 'ok' ? callback : error
+        const contentType = (response.headers.get('content-type') || '')
+          .split(';')[0].trim().toLowerCase()
+        switch (contentType) {
+          case 'application/json':
+            return response.json().then((r) => [callbackId, r])
+          case 'text/plain':
+            return response.text().then((r) => [callbackId, r])
+          default:
+            return response.arrayBuffer().then((r) => [callbackId, r])
+        }
       })
-        .then((response) => {
-          const callbackId =
-            response.headers.get('Tauri-Response') === 'ok' ? callback : error
-          switch ((response.headers.get('content-type') || '').split(',')[0]) {
-            case 'application/json':
-              return response.json().then((r) => [callbackId, r])
-            case 'text/plain':
-              return response.text().then((r) => [callbackId, r])
-            default:
-              return response.arrayBuffer().then((r) => [callbackId, r])
-          }
-        })
-        .then(
-          ([callbackId, data]) => {
-            window.__TAURI_INTERNALS__.runCallback(callbackId, data)
-          },
-          (e) => {
-            console.warn(
-              'IPC custom protocol failed, Tauri will now use the postMessage interface instead',
-              e
-            )
-            customProtocolIpcFailed = true
-            sendIpcMessage(message)
-          }
-        )
-    } else {
-      // `window.ipc.postMessage` is provided by Turvo's IPC bridge
-      const { data } = processIpcMessage({
-        cmd,
-        callback,
-        error,
-        options: {
-          ...options,
-          customProtocolIpcBlocked: customProtocolIpcFailed
+      .then(
+        ([callbackId, data]) => {
+          window.__TAURI_INTERNALS__.runCallback(callbackId, data)
         },
-        payload,
-        __TAURI_INVOKE_KEY__
-      })
-      window.ipc.postMessage(data)
-    }
+        (e) => {
+          window.__TAURI_INTERNALS__.runCallback(error, e instanceof Error ? e.message : String(e))
+        }
+      )
   }
 
   Object.defineProperty(window.__TAURI_INTERNALS__, 'postMessage', {

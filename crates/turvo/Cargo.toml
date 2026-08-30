@@ -27,16 +27,21 @@ features = ["devtools", "tracing"]
 # Exact pins are intentional. Turvo's public promise is that a release selects
 # one Servo/Tauri pair instead of allowing Cargo to float the renderer.
 servo = "=0.5.0"
+# Request provenance and body streams are part of the same pinned engine set.
+servo-net-traits = "=0.5.0"
 tauri.workspace = true
 tao = { version = "=0.37.0", default-features = false, features = ["rwh_06"] }
 tauri-runtime = "=2.11.3"
 tauri-utils = "=2.9.3"
 
 cookie = "0.18"
+content-security-policy = "0.8"
 dpi = "0.1"
 euclid = "0.22"
 futures-channel = "0.3"
+futures-util = "0.3"
 http = "1"
+ipc-channel = { version = "0.22", features = ["async"] }
 keyboard-types = "0.8.3"
 log = "0.4.21"
 percent-encoding = "2.3"
@@ -95,3 +100,6 @@ patched-servo = []
 tracing = ["dep:tracing"]
 unstable = []
 x11 = ["tao/x11"]
+
+[dev-dependencies]
+servo-base = "=0.5.0"

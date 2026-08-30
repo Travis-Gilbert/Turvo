@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
+Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c9db6`
 
 Generation: `2`
 
 ## Resume here
 
-- `W02` (working): Route only Tauri-owned Windows localhost traffic to the registered asset protocol while preserving local and remote origins.
+- `W02I` (working): Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.
 
 ## Completed receipts
 
@@ -16,6 +16,8 @@ Generation: `2`
 - `D01`: ADR01-ADR03 sealed in canonical board.
 - `W01`: 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed all four jobs in https://github.com/Travis-Gilbert/Turvo/actions/runs/33329627108. Windows runtime tests, Clippy, and both examples passed after manifest and native icon repairs.
 - `V01`: Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.; Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof.
+- `W02`: 7813baa3529e6db53113e30adfc4242de65ee276 passed all jobs in run 33330884047, including seven protocol routing/header/response tests on Linux, macOS, and Windows. The adapter is Windows-only, shares registered handlers, rejects ambiguous authorities, and fails closed on a dropped response. Native asset rendering and IPC authentication are not discharged here.
+- `V02`: Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations.
 
 ## Parked work
 

@@ -126,6 +126,14 @@
     {
       "id": "F09",
       "text": "Commit 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed CI run 33329627108: format/package job 99305763884, macOS 99305763947, Linux 99305763979, Windows 99305763986. Every desktop job passed runtime tests, Clippy, hello-world, and API-example builds. Tracked next was created from that verified commit. Native application behavior remains unverified."
+    },
+    {
+      "id": "F10",
+      "text": "Commit 7813baa3529e6db53113e30adfc4242de65ee276 passed run 33330884047: jobs 99309104737, 99309104910, 99309104920, 99309104928. All desktop targets passed 31 unit tests (including seven new protocol tests), two public API tests, Clippy, and both examples. Next independently passed its baseline run 33330599055."
+    },
+    {
+      "id": "F11",
+      "text": "Servo 0.5.0 navigation.rs sets each document request's pipeline_id from the new engine pipeline; fetch.rs assigns fetches the calling global's pipeline_id and client. The lower-level published protocol Request also has the actual Origin and a body stream. This is a candidate source-authenticated IPC path, not a native security receipt; opaque and sandboxed documents and consumer fork type coherence require explicit tests."
     }
   ],
   "decisions": [
@@ -156,6 +164,13 @@
       "choice": "No. Refine the protocol work into asset routing and a separate source-authenticated IPC implementation with remote-frame and navigation-race native tests. Preserve the full O03/O04 release gate and never promote console-derived top-level URLs to trusted sender identity.",
       "reversibility_class": "reversible",
       "retraction_path": "Recombine the nodes only when the same engine-authenticated request surface and native receipts prove both boundaries."
+    },
+    {
+      "id": "ADR05",
+      "question": "Which published Servo surface can preserve bodies and authenticate privileged IPC without a console or origin fallback?",
+      "choice": "Use the pinned lower-level custom ProtocolHandler Request with engine Origin, client, and pipeline metadata. Read its body through ipc-channel's existing async stream adapter, reject nested and enforced-sandbox clients, bind opaque local identity to the served main-document pipeline, and revoke queued calls on navigation. Standard Tauri invokes use ipc:// on every OS; mapped HTTP never dispatches IPC. Native adversarial receipts remain required.",
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Remove the candidate adapter if native tests invalidate its provenance assumptions and propose a public Servo embedding API change. Never restore console-derived source identity. Consumer forks must patch servo and servo-net-traits coherently."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
@@ -207,16 +222,16 @@
   "opening_moves": [
     {
       "rank": 1,
-      "node": "W02",
-      "why": "The verified three-platform baseline allows the narrow Windows asset-interception gap to be repaired; source-authenticated IPC remains a separate gate.",
+      "node": "W02I",
+      "why": "Asset routing is verified at its declared test level. F08's caller-identity gap now has a published low-level API candidate in F11 that must be proven before native API parity or release.",
       "value_vector": {
-        "success": {"value": "high", "evidence": "F03 and the pinned Servo WebResourceLoad API"},
-        "cost": {"value": "medium", "evidence": "Shared protocol handlers and focused regression tests"},
-        "latency": {"value": "bounded", "evidence": "Hosted baseline dependencies are now cached on all three platforms"},
+        "success": {"value": "uncertain", "evidence": "F11 supplies engine metadata but native IPC behavior is not yet observed"},
+        "cost": {"value": "high", "evidence": "Body-stream adaptation, authenticated source mapping, and adversarial native probes"},
+        "latency": {"value": "bounded-probe", "evidence": "Pinned source and hosted native runners can test the candidate"},
         "reversibility": {"value": "high", "evidence": "Focused source and workflow repairs are ordinary commits"},
-        "verification_coverage": {"value": "focused", "evidence": "Mapped URL, pass-through, rejection, and response-preservation tests"},
-        "information_gain": {"value": "high", "evidence": "Windows bundled assets currently have no HTTP interception path"},
-        "optionality": {"value": "high", "evidence": "Asset delivery is reusable by IPC and native example probes"}
+        "verification_coverage": {"value": "critical", "evidence": "Actual local, remote, iframe, opaque-origin, and navigation identity"},
+        "information_gain": {"value": "highest", "evidence": "Determines whether public Servo is sufficient for privileged app IPC"},
+        "optionality": {"value": "high", "evidence": "A working public API adapter avoids an engine fork requirement"}
       }
     }
   ],
@@ -362,7 +377,7 @@
       "id": "W02",
       "label": "Implement Windows app-protocol interception",
       "type": "work.implementation",
-      "status": "working",
+      "status": "completed",
       "controller": "agent",
       "depends_on": ["V01"],
       "scope": ["crates/turvo/src/servo protocol interception, protocol-origin tests, and docs/research/protocol-origin-boundary.md"],
@@ -377,7 +392,7 @@
       "substitution_allowed": false,
       "live_oracle_required": false,
       "proof_commands": ["cargo test -p turvo --lib --tests --locked", "cargo clippy -p turvo --lib --tests --locked -- -D warnings"],
-      "discharge_evidence": [],
+      "discharge_evidence": ["7813baa3529e6db53113e30adfc4242de65ee276 passed all jobs in run 33330884047, including seven protocol routing/header/response tests on Linux, macOS, and Windows. The adapter is Windows-only, shares registered handlers, rejects ambiguous authorities, and fails closed on a dropped response. Native asset rendering and IPC authentication are not discharged here."],
       "retraction_path": "Remove the narrow HTTP adapter and restore protocol-registry-only routing.",
       "verify_sibling": "V02"
     },
@@ -385,7 +400,7 @@
       "id": "V02",
       "label": "Verify protocol routing and origin separation",
       "type": "verify.local",
-      "status": "pending",
+      "status": "completed",
       "controller": "verifier",
       "depends_on": ["W02"],
       "scope": ["read-only W02 diff and local-versus-remote protocol receipts"],
@@ -400,20 +415,20 @@
       "substitution_allowed": false,
       "live_oracle_required": false,
       "proof_commands": ["rg -n 'Origin|tauri\\.localhost|load_web_resource' crates/turvo/src crates/turvo/tests", "cargo test -p turvo --lib --tests --locked"],
-      "discharge_evidence": [],
+      "discharge_evidence": ["Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations."],
       "retraction_path": "Return W02 to frontier with the failing security case."
     },
     {
       "id": "W02I",
       "label": "Replace console-derived privileged IPC identity",
       "type": "work.implementation",
-      "status": "pending",
+      "status": "working",
       "controller": "agent",
       "depends_on": ["V02"],
-      "scope": ["Turvo IPC transport, initialization-script frame scope, source-identity tests, and public Servo API research or isolated patch"],
+      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI, and public Servo API research or isolated patch"],
       "obligations": ["O03", "O04"],
       "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
-      "consumes": ["V02 asset routing", "F08", "ADR04"],
+      "consumes": ["V02 asset routing", "F08", "ADR04", "ADR05"],
       "produces": ["source-authenticated IPC adapter", "main-frame initialization handling", "native origin regression probes"],
       "blueprint": ["Research and reuse the pinned engine request surface before introducing a transport; never trust a page-supplied origin, top-level URL substitution, or a hardcoded Origin header.", "Preserve payloads, callbacks, binary responses, and channel fetches; honor Tauri main-frame initialization flags.", "Require real local success, remote top-level denial, remote iframe denial, opaque-origin denial, and navigation-race denial. If the published engine lacks a sufficient API, produce a public compatibility proposal and retain an explicit release blocker."],
       "oracle_class": "source-authenticated IPC and native adversarial origin behavior",

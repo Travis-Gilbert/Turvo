@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
+Canonical SHA-256: `301c8d5c2c478ede9e60f9a3506cc7d0d94d1c9798e8436c6385a4f5fa0c9db6`
 
 ## Current facts
 
@@ -13,6 +13,8 @@ Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e71879305
 - `F07`: CI run 33328684442 confirmed the Turvo-owned manifest fix: Windows runtime unit tests, public_api integration tests, and Clippy all passed. Its hello-world build then exposed the separate missing ICO requirement in tauri-build; Ubuntu and macOS remained fully green.
 - `F08`: Pinned-source audit found that the bootstrap console IPC callback substitutes the top-level WebView URL for the unknown sending frame, and ignores initialization-script main-frame flags. Servo 0.5.0 WebResourceRequest exposes neither request origin nor body and interception precedes HTTP Origin-header insertion. Asset routing tests cannot discharge the IPC source-authentication obligation; W02I and V02I now own that separate gate. This is source evidence, not a reproduced native exploit.
 - `F09`: Commit 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed CI run 33329627108: format/package job 99305763884, macOS 99305763947, Linux 99305763979, Windows 99305763986. Every desktop job passed runtime tests, Clippy, hello-world, and API-example builds. Tracked next was created from that verified commit. Native application behavior remains unverified.
+- `F10`: Commit 7813baa3529e6db53113e30adfc4242de65ee276 passed run 33330884047: jobs 99309104737, 99309104910, 99309104920, 99309104928. All desktop targets passed 31 unit tests (including seven new protocol tests), two public API tests, Clippy, and both examples. Next independently passed its baseline run 33330599055.
+- `F11`: Servo 0.5.0 navigation.rs sets each document request's pipeline_id from the new engine pipeline; fetch.rs assigns fetches the calling global's pipeline_id and client. The lower-level published protocol Request also has the actual Origin and a body stream. This is a candidate source-authenticated IPC path, not a native security receipt; opaque and sandboxed documents and consumer fork type coherence require explicit tests.
 
 ## Explicit exclusions
 
