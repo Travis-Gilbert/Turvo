@@ -178,6 +178,18 @@
     {
       "id": "F22",
       "text": "After the native F19 failure, a second pinned-source/API review found no supported tuple-origin custom-scheme registration in Servo 0.5.0. Ordinary non-fetchable custom schemes fail safe but do not provide normal fetch/module behavior. Switching Windows URLs to tauri:// also fails Tauri 2.11.5's OS-selected local-origin classification. The maintained HTTP fetch path already owns CORS, preflight, tainting, and response policy; a standards-preserving fix needs a public engine transport hook and/or an accepted runtime-neutral URL/origin seam, not invented metadata or a permissive flag. See docs/research/protocol-origin-boundary.md for the attempted alternatives and external gate."
+    },
+    {
+      "id": "F23",
+      "text": "Servo 0.5.0 CreateNewWebViewRequest exposes builder(rendering_context) over its engine handle and one-shot responder, but no requested target URL or geometry. The Tauri proposal can safely carry a reference to that real request; it does not manufacture the metadata expected by Tauri's URL-bearing on_new_window callback. Full Servo-adapter sufficiency therefore remains unverified pending a validated public engine design or metadata API. No parent URL or synthetic about:blank substitution is accepted as proof, and no future two-phase design is ruled out without testing."
+    },
+    {
+      "id": "F24",
+      "text": "Tauri opener proposal run 33336218434 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 passed all three jobs: Linux 99323466184, macOS 99323466208, Windows 99323466234. Each ran four runtime token tests, no-default-feature core compilation, and two MockRuntime contract tests; existing core tests passed 55/56/57 respectively. The exact proposal SHA-256 remains 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public Tauri base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. This proves the Tauri API proposal, not Servo popup behavior or upstream approval."
+    },
+    {
+      "id": "F25",
+      "text": "Latest runtime run 33336218455 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 again passed format/package, Linux native job 99323466341, and macOS native job 99323466358. Windows job 99323466401 passed 49 unit tests, two API tests, Clippy and all example builds, staged current ANGLE DLLs, then repeated the remote bundled-asset read and blocked_app_asset_requested=true native failure. Repetition confirms the named policy blocker remains open; no release or full-plan completion is claimed."
     }
   ],
   "decisions": [
@@ -285,22 +297,7 @@
     "live_provider_authority": "GitHub through the authenticated Travis-Gilbert gh session. crates.io only if existing local authentication succeeds at W09; never print or inspect secret values.",
     "protected_state": "Credentials, unrelated dirty worktrees, existing user commits, production systems, private Servo patches, and any history already pushed. No force push or destructive cleanup."
   },
-  "opening_moves": [
-    {
-      "rank": 1,
-      "node": "W03",
-      "why": "W02I is parked on the witnessed public-engine origin/policy gap (F19/F22). W03's Unix compatibility checks passed; its Windows validation needs the bounded checkout line-ending repair identified in F21.",
-      "value_vector": {
-        "success": {"value": "high", "evidence": "The exact Windows failure is CRLF checkout conversion before compilation; Unix patch tests already pass"},
-        "cost": {"value": "low", "evidence": "Configure the disposable checkout to preserve LF and rerun the unchanged oracle"},
-        "latency": {"value": "hosted-build", "evidence": "Windows Rust compatibility tests still require execution"},
-        "reversibility": {"value": "high", "evidence": "Focused source and workflow repairs are ordinary commits"},
-        "verification_coverage": {"value": "critical", "evidence": "Cross-platform native API compatibility and safe runtime opener forwarding"},
-        "information_gain": {"value": "high", "evidence": "A real Windows build can now test the proposed API"},
-        "optionality": {"value": "high", "evidence": "The proposal remains outside Turvo's released dependency graph"}
-      }
-    }
-  ],
+  "opening_moves": [],
   "terminal_node": "V11",
   "render_command": "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check",
   "tasks": [
@@ -506,6 +503,8 @@
       "live_oracle_required": true,
       "proof_commands": ["cargo test -p turvo --lib --tests --locked", "native IPC source-authentication suite"],
       "discharge_evidence": [],
+      "progress_evidence": ["F17/F25: all nine native IPC/security cases pass on Linux and macOS, with exact native command/event payloads and clean shutdown.", "F19/F25: Windows ANGLE startup and ordinary JSON/raw/binary/channel IPC run, but remote asset disclosure and CSP handler dispatch fail the fixed native security oracle.", "The public API alternatives and repair ladder are recorded in docs/research/protocol-origin-boundary.md; no private-fork requirement has been adopted."],
+      "non_conclusions": ["Unix fixture success is not normal custom-origin fetch/module compatibility or full production security proof.", "Windows compilation and startup are not native security acceptance."],
       "retraction_path": "Revert the transport adapter and keep privileged IPC release-blocked; do not reinstate an untrusted identity fallback.",
       "verify_sibling": "V02I"
     },
@@ -535,7 +534,9 @@
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "working",
+      "status": "parked",
+      "park_reason": "The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06.",
+      "resume_condition": "An accepted public engine API or validated design supplies the real popup metadata and responder lifecycle, or the user explicitly authorizes a patched-engine development lane. Re-enter V03 verification before adopting a public Tauri revision; do not invent popup metadata.",
       "controller": "agent",
       "depends_on": ["V02"],
       "scope": ["external Tauri clean worktree, patches/tauri, docs/research/tauri-new-window.md, and a scoped upstream-patch validation workflow"],
@@ -551,6 +552,8 @@
       "live_oracle_required": true,
       "proof_commands": ["cargo test -p tauri-runtime --lib --locked", "cargo check -p tauri --no-default-features --lib --locked", "cargo test -p tauri --lib --tests --features test --locked"],
       "discharge_evidence": [],
+      "progress_evidence": ["Public proposal commit d4c8b2bba0c6213e2e7e3c7638dc9da2c9321994 contains the exact pinned Tauri patch and integration note; bc4946982bfa385a39f25a62bbaa7b5340a1d497 fixes only the hosted checkout line-ending issue.", "Run 33336218434 passed all three declared proof commands on Linux, macOS, and Windows; F24 names the jobs and test counts.", "A separate read-only source pass checked native constructor/accessor compatibility, default rejection, private builder storage, and the actual Servo creation request. It found F23, so full Servo-adapter sufficiency is not claimed; no independent-agent or maintainer approval is represented."],
+      "non_conclusions": ["No Servo window.open integration, upstream approval, MSRV/mobile matrix, or native Wry popup parity is established by these compile/mock tests.", "Turvo still resolves the published Tauri and Servo crates; the proposal is not silently adopted."],
       "retraction_path": "Close the PR or revise the versioned proposal and retain Turvo's documented blocked behavior if the design is rejected.",
       "verify_sibling": "V03"
     },

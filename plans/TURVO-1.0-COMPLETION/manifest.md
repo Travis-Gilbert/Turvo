@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
+Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
 
 ## Destination
 
@@ -22,7 +22,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 
 ## Opening move
 
-- 1. `W03`: W02I is parked on the witnessed public-engine origin/policy gap (F19/F22). W03's Unix compatibility checks passed; its Windows validation needs the bounded checkout line-ending repair identified in F21.
+No active move.
 
 ## Task board
 
@@ -38,7 +38,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 | [V02](nodes/V02.md) | completed | verifier | verify.local | W02 | O03, O04 |
 | [W02I](nodes/W02I.md) | parked | agent | work.implementation | V02 | O03, O04 |
 | [V02I](nodes/V02I.md) | pending | verifier | verify.live | W02I | O03, O04 |
-| [W03](nodes/W03.md) | working | agent | work.external | V02 | O06 |
+| [W03](nodes/W03.md) | parked | agent | work.external | V02 | O06 |
 | [V03](nodes/V03.md) | pending | verifier | verify.live | W03 | O06 |
 | [E01](nodes/E01.md) | pending | world | weather | V03 | O06 |
 | [W04](nodes/W04.md) | pending | agent | work.implementation | E01 | O06 |

@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
+Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
 
 Generation: `3`
 
 ## Resume here
 
-- `W03` (working): Implement and propose an additive Tauri API that lets non-Wry runtimes process window.open safely.
+The board has no active frontier; recompute before mutation.
 
 ## Completed receipts
 
@@ -22,6 +22,7 @@ Generation: `3`
 ## Parked work
 
 - `W02I`: Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established. Resume: A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.
+- `W03`: The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06. Resume: An accepted public engine API or validated design supplies the real popup metadata and responder lifecycle, or the user explicitly authorizes a patched-engine development lane. Re-enter V03 verification before adopting a public Tauri revision; do not invent popup metadata.
 
 ## Invariants
 

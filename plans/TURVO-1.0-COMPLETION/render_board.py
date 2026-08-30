@@ -136,6 +136,11 @@ def validate(plan: dict[str, Any]) -> list[str]:
             errors.append(f"{task_id}: live oracle cannot allow substitution")
         if task.get("status") == "completed" and not task.get("discharge_evidence"):
             errors.append(f"{task_id}: completed task has no discharge evidence")
+        if task.get("status") == "parked":
+            for field in ("park_reason", "resume_condition"):
+                value = task.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"{task_id}: parked task needs {field}")
 
     indegree = {task_id: 0 for task_id in tasks}
     successors: dict[str, list[str]] = defaultdict(list)
@@ -314,6 +319,19 @@ def render_manifest(plan: dict[str, Any], digest: str) -> str:
 
 def render_node(plan: dict[str, Any], task: dict[str, Any], digest: str) -> str:
     commands = [inline_code(command) for command in task["proof_commands"]]
+    park_section = ""
+    if task["status"] == "parked":
+        park_section = (
+            "## Park and resume condition\n\n"
+            f"{task['park_reason']}\n\n"
+            f"Resume: {task['resume_condition']}\n\n"
+        )
+    progress_section = ""
+    if task.get("progress_evidence"):
+        progress_section = (
+            "## Partial receipts (not discharge)\n\n"
+            f"{bullets(task['progress_evidence'])}\n\n"
+        )
     fields = [
         f"- Status: {inline_code(task['status'])}",
         f"- Controller: {inline_code(task['controller'])}",
@@ -333,6 +351,7 @@ def render_node(plan: dict[str, Any], task: dict[str, Any], digest: str) -> str:
         + "\n\n"
         "## Gist\n\n"
         f"{task['gist']}\n\n"
+        f"{park_section}"
         "## Scope\n\n"
         f"{bullets(task['scope'])}\n\n"
         "## Consumes\n\n"
@@ -345,6 +364,7 @@ def render_node(plan: dict[str, Any], task: dict[str, Any], digest: str) -> str:
         f"{bullets(commands, 'No command-based proof; use the declared oracle.')}\n\n"
         "## Discharge evidence\n\n"
         f"{bullets(task['discharge_evidence'], 'Not yet discharged.')}\n\n"
+        f"{progress_section}"
         "## Non-conclusions\n\n"
         f"{bullets(task.get('non_conclusions', []))}\n\n"
         "## Retraction path\n\n"
@@ -484,7 +504,12 @@ def render_lessons(plan: dict[str, Any], digest: str) -> str:
 def render_replay(plan: dict[str, Any], digest: str) -> str:
     lines = []
     for task in plan["tasks"]:
-        evidence = "; ".join(task["discharge_evidence"]) or "awaiting execution"
+        evidence = (
+            "; ".join(task["discharge_evidence"])
+            or task.get("park_reason")
+            or "; ".join(task.get("progress_evidence", []))
+            or "awaiting execution"
+        )
         lines.append(
             f"- [{task_mark(task)}] {inline_code(task['id'])} "
             f"{task['status']}: {evidence}"

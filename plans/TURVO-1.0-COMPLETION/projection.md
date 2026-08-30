@@ -1,6 +1,6 @@
 # Dependency projection
 
-Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
+Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
 
 ```mermaid
 flowchart TD
@@ -69,7 +69,6 @@ flowchart TD
   classDef parked fill:#e9d8fd,stroke:#6b46c1,color:#322659
   classDef failed fill:#fed7d7,stroke:#c53030,color:#3b0d0d
   class P00,D00,P01,D01,W01,V01,W02,V02 done
-  class W02I parked
+  class W02I,W03 parked
   class V02I,V03,E01,W04,V04,W05,V05,W06,V06,W07,V07,W08,V08,W09,V09,W10,V10,W11,V11 pending
-  class W03 working
 ```

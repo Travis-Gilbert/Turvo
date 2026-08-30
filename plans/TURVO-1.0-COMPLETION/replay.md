@@ -1,6 +1,6 @@
 # Execution replay
 
-Canonical SHA-256: `45f3a69aa2080d109044dbd824c7da2b6a74622059606d37e7a5a1f88fb48035`
+Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
 
 This is a generated status replay. Durable proof lives in each node's discharge evidence and the referenced external artifacts.
 
@@ -12,9 +12,9 @@ This is a generated status replay. Durable proof lives in each node's discharge 
 - [x] `V01` completed: Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.; Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof.
 - [x] `W02` completed: 7813baa3529e6db53113e30adfc4242de65ee276 passed all jobs in run 33330884047, including seven protocol routing/header/response tests on Linux, macOS, and Windows. The adapter is Windows-only, shares registered handlers, rejects ambiguous authorities, and fails closed on a dropped response. Native asset rendering and IPC authentication are not discharged here.
 - [x] `V02` completed: Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations.
-- [p] `W02I` parked: awaiting execution
+- [p] `W02I` parked: Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established.
 - [ ] `V02I` pending: awaiting execution
-- [~] `W03` working: awaiting execution
+- [p] `W03` parked: The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06.
 - [ ] `V03` pending: awaiting execution
 - [ ] `E01` pending: awaiting execution
 - [ ] `W04` pending: awaiting execution

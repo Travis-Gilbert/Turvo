@@ -53,15 +53,31 @@ enable Wry. They exercise a **mock runtime**, not a Wry-free test binary. A
 separate `cargo check -p tauri --no-default-features --lib --locked` checks the
 no-Wry library configuration. Neither check proves Servo child-window behavior.
 
-Local formatting and patch whitespace checks pass. At `d4c8b2b`,
-[run 33335848522](https://github.com/Travis-Gilbert/Turvo/actions/runs/33335848522)
-passed every check on Linux and macOS. Windows stopped at formatting because
-its checkout converted upstream files to CRLF; the workflow now preserves LF
-before either checkout. Windows compilation is still pending. MSRV/mobile coverage, positive Servo
-opener consumption, opener navigation/close races, and visual/native child
-window behavior are not discharged by these tests.
+Local formatting and patch whitespace checks pass. At `bc49469`,
+[run 33336218434](https://github.com/Travis-Gilbert/Turvo/actions/runs/33336218434)
+passed all three platforms. Each ran the four token tests, no-Wry core
+compilation, and two MockRuntime contract tests. Existing Tauri core tests
+passed 55 on Linux, 56 on macOS, and 57 on Windows. Jobs are 99323466184,
+99323466208, and 99323466234 respectively.
+
+The first Windows attempt in run 33335848522 stopped at formatting because its
+checkout converted upstream files to CRLF. Preserving LF before checkout fixed
+that environment defect without changing the patch. MSRV/mobile coverage,
+positive Servo opener consumption, opener navigation/close races, and
+visual/native child-window behavior are not discharged by these tests.
 
 ## Integration and external gate
+
+The exact Servo `0.5.0` source adds another integration constraint:
+`CreateNewWebViewRequest` contains an engine handle and a one-shot responder,
+and its public method is `builder(rendering_context)`. It does **not** expose
+the requested target URL, position, or size. The token can retain that real
+creation request on the engine thread, but it cannot manufacture missing
+callback metadata. Full compatibility with Tauri's URL-bearing
+`on_new_window` callback needs a validated engine design or an accepted public
+metadata API. Passing the parent URL or an invented `about:blank` value is
+not a verified substitute. This source finding is not proof that a particular
+future two-phase or navigation-based design cannot work.
 
 Turvo must not create fake native handles or silently treat `window.open` as a
 fresh unrelated webview. Once a public revision is approved, its adapter must
@@ -74,3 +90,12 @@ content before submission and prohibits AI-written review replies except
 translations. This run therefore prepares a reviewable patch and tests it in
 Turvo's public CI; it does not impersonate human review or submit an upstream PR.
 E01 still requires an accepted release or explicitly approved public revision.
+W03 remains parked, with these partial receipts retained, until the complete
+Servo-sufficiency review can pass. A separate read-only source pass found the
+metadata gap above; this is not an independent-agent or maintainer approval.
+
+Source anchors:
+
+- [Servo 0.5.0 creation request and delegate](https://docs.rs/crate/servo/0.5.0/source/webview_delegate.rs)
+- [Servo 0.5.0 responder-backed webview builder](https://docs.rs/crate/servo/0.5.0/source/webview.rs)
+- [Pinned Tauri native opener contract](https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri-runtime/src/webview.rs)

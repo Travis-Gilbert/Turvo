@@ -91,8 +91,8 @@ receipts and must not be presented as established project facts.
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | macOS/Linux native green; Windows ANGLE boots but native asset CORS/CSP tests fail | CI run 33334815996 |
-| Completion graph | W01/V01 and W02/V02 verified; W02I parked on public engine API, W03 opener proposal under test | `plans/TURVO-1.0-COMPLETION/manifest.md` |
-| Tauri opener proposal | Versioned public patch; Unix compatibility green, Windows checkout correction in progress | CI run 33335848522; `patches/tauri` |
+| Completion graph | W01/V01 and W02/V02 verified; W02I/W03 parked on engine/API integration gates | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
+| Tauri opener proposal | All three compatibility jobs green; not adopted, full Servo popup sufficiency remains unverified | CI run 33336218434; `patches/tauri` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |
@@ -125,11 +125,8 @@ build graph.
 
 ## Next Step
 
-Continue the canonical completion graph at W03's versioned Tauri proposal.
-W02I is parked: Windows now boots with ANGLE, but native mapped-asset CORS/CSP
-checks fail. The public Servo API also lacks the required ordinary app-origin
-fetch/module semantics; see `docs/research/protocol-origin-boundary.md` for the
-repair ladder and resume condition. Do not introduce a private-fork dependency
-or claim release readiness. The Tauri patch needs all-platform verification and
-an accepted revision before adoption. Visual rendering, DevTools, full window
-behavior, publication, and Theorem integration remain open.
+The board is parked, not complete. Read its `CONTINUITY.md` and Record 001.
+W02I needs engine origin/policy support; W03 retains the popup API/design gap.
+Resume on a suitable public revision or explicit authorization for an isolated
+public patched-engine development lane. Do not silently replace the published
+engine requirement or weaken native, packaging, release, and consumer gates.

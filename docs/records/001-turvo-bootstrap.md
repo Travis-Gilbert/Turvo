@@ -28,14 +28,14 @@ for the first working window.
 
 | ID | Observable requirement | Current state | Required proof |
 |---|---|---|---|
-| A1 | Bundled hello-world renders through Servo on Linux, Windows, macOS | Turvo-tip example builds pass on all three platforms; native launch pending | Launch and capture on each native platform |
-| A2 | JS invoke returns a Rust command result; events cross both directions | API probe wired; unrun | Native smoke receipts plus repeatable automation |
-| A3 | Local scheme is local and remote content is remote for Tauri capabilities | Request-based IPC and frame guards pass unit tests; native isolation and asset-policy checks remain open | Positive local and negative remote, iframe, opaque-origin, and navigation-race tests per platform |
+| A1 | Bundled hello-world renders through Servo on Linux, Windows, macOS | Examples build and the security fixture boots on all three; hello-world visual proof remains open | Launch and capture on each native platform |
+| A2 | JS invoke returns a Rust command result; events cross both directions | Native security fixture proves command/event payloads on Unix and initial calls on Windows; API parity example remains unrun | Native smoke receipts plus repeatable automation |
+| A3 | Local scheme is local and remote content is remote for Tauri capabilities | Nine-case Unix native suite passes; Windows asset CORS/CSP fails; ordinary fetch/modules unresolved | Positive local and negative remote, iframe, opaque-origin, and navigation-race tests per platform |
 | A4 | Firefox connects to a configured devtools port | Secure token/approval API implemented; unrun | Native connection receipt and inspected page |
-| A5 | Create/retitle/resize/close multi-window; `window.open` is runtime-managed | Command path wired; `window.open` blocked by Tauri opener types | Native command test plus Tauri upstream change or approved patch |
-| A6 | `main` CI green on three platforms; monthly `next` migration PR opens | Compile CI green at `aa63966`; tracked `next` exists; native smoke and migration PR pending | Public-repo Actions receipts and one demonstrated migration PR |
+| A5 | Create/retitle/resize/close multi-window; `window.open` is runtime-managed | Tauri opener proposal passes three-platform tests, but Servo callback metadata/integration and native windows remain open | Native command test plus Tauri upstream change or approved patch |
+| A6 | `main` CI green on three platforms; monthly `next` migration PR opens | Compile/lint/example checks pass; main remains red on Windows native security; migration PR pending | Public-repo Actions receipts and one demonstrated migration PR |
 | A7 | `turvo` 0.1.0 is published; existing app swaps in two edits | API and docs wired; unpublished | crates.io release and clean consumer smoke |
-| A8 | TheoremWeb desktop boots with its Servo fork via consumer `[patch]` | Out of this repository's bootstrap scope | Exact-revision Theorem build and native boot receipt |
+| A8 | TheoremWeb desktop boots with its Servo fork via consumer `[patch]` | Pending downstream release gate; no Theorem checkout modified | Exact-revision Theorem build and native boot receipt |
 
 ## Implementation slices
 
@@ -57,9 +57,10 @@ for the first working window.
   attributed source import.
 - Chose: attributed source import because it reuses proven code while keeping
   Servo migration ownership inside Turvo.
-- Deferred: `turvo-build`; Servo 0.5.0 bakes resources into the crate and the
-  current Windows graph compiles without a separate Verso binary. Add build
-  helpers only when a clean-machine bundle test demonstrates a resource gap.
+- Deferred from bootstrap, not removed from v1: `turvo-build`. ANGLE native
+  tests now establish that Windows needs `libEGL.dll` and `libGLESv2.dll` staged
+  from the current engine build. Test-executable staging exists; bundler-resource
+  helpers and clean-machine package proof remain required by W06/V06.
 - Isolated: the monthly coding agent receives a static prompt, prefetched
   dependencies, workspace writes, and no GitHub token or shell network. It
   emits a scope-checked patch; a secret-free job validates it before a separate
