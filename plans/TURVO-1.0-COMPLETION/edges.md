@@ -1,6 +1,6 @@
 # Dependency edges
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
 | From | To | Condition |
 |---|---|---|
@@ -12,12 +12,14 @@ Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c5
 | W01 | V01 | W01 completed |
 | V01 | W02 | V01 completed |
 | W02 | V02 | W02 completed |
+| V02 | W02I | V02 completed |
+| W02I | V02I | W02I completed |
 | V02 | W03 | V02 completed |
 | W03 | V03 | W03 completed |
 | V03 | E01 | V03 completed |
 | E01 | W04 | E01 completed |
 | W04 | V04 | W04 completed |
-| V02 | W05 | V02 completed |
+| V02I | W05 | V02I completed |
 | W05 | V05 | W05 completed |
 | V04 | W06 | V04 completed |
 | V05 | W06 | V05 completed |

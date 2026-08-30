@@ -24,11 +24,19 @@ Turvo is pre-release software. The repository currently contains:
 - compile/test CI definitions for Linux, Windows, and macOS.
 
 Cross-platform compilation is not the same as cross-platform runtime proof.
+Privileged IPC source isolation is still an open release gate; do not load
+untrusted remote pages or frames into an app with this experimental bootstrap.
+The [protocol audit](https://github.com/Travis-Gilbert/Turvo/blob/main/docs/research/protocol-origin-boundary.md)
+records the engine API limitations and required negative tests.
+
 The acceptance matrix in
 [Record 001](https://github.com/Travis-Gilbert/Turvo/blob/main/docs/records/001-turvo-bootstrap.md)
 tracks which behaviors are wired, compiled, and actually observed.
 
 ## Quickstart
+
+Turvo 0.1.0 is not published yet. The two edits below describe the release
+interface; until publication, use the checked-out examples in this repository.
 
 Disable Tauri's default Wry runtime and add Turvo:
 

@@ -18,17 +18,13 @@ use keyboard_types::{
 };
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use servo::{
-  protocol_handler::{
-    DoneChannel, FetchContext, HttpStatus, NetworkError, ProtocolHandler, ProtocolRegistry,
-    Request as ServoRequest, ResourceFetchTiming, Response as ServoResponse, ResponseBody,
-  },
   AllowOrDenyRequest, DevicePoint, EventLoopWaker, ImeEvent, InputEvent, KeyboardEvent, LoadStatus,
   MouseButtonAction, MouseButtonEvent, MouseLeftViewportEvent, MouseMoveEvent, NavigationRequest,
   OffscreenRenderingContext, Preferences, RenderingContext, Servo, ServoBuilder, ServoDelegate,
   ServoError as EngineError, Theme as ServoTheme, TouchEvent, TouchEventType, TouchId,
-  TouchPointerType, UrlRequest, UserContentManager, UserScript, WebView as ServoWebView,
-  WebViewBuilder as ServoWebViewBuilder, WebViewDelegate, WheelDelta, WheelEvent, WheelMode,
-  WindowRenderingContext,
+  TouchPointerType, UrlRequest, UserContentManager, UserScript, WebResourceLoad,
+  WebView as ServoWebView, WebViewBuilder as ServoWebViewBuilder, WebViewDelegate, WheelDelta,
+  WheelEvent, WheelMode, WindowRenderingContext,
 };
 use tao::{
   dpi::{PhysicalPosition, PhysicalSize},
@@ -39,13 +35,10 @@ use tao::{
 };
 use url::Url;
 
+use super::protocols::{CustomProtocolHandler, ProtocolRouter};
 use crate::{
-  InitializationScript, PageLoadEvent, Rect, RequestAsyncResponder, ServoError as Error,
-  ServoResult as Result, WebViewId,
+  InitializationScript, PageLoadEvent, Rect, ServoError as Error, ServoResult as Result,
 };
-
-type CustomProtocolHandler =
-  Box<dyn Fn(WebViewId, http::Request<Vec<u8>>, RequestAsyncResponder) + Send + Sync>;
 
 const IPC_MESSAGE_PREFIX: &str = "__SERVO_IPC__:";
 const IPC_BRIDGE_SCRIPT: &str = r#"
@@ -76,79 +69,6 @@ fn ipc_request(current_url: Option<Url>, body: String) -> http::Request<String> 
     .expect("the fallback IPC request URI is valid")
 }
 
-struct CustomProtocol {
-  webview_id: String,
-  handler: CustomProtocolHandler,
-}
-
-impl ProtocolHandler for CustomProtocol {
-  fn load<'a>(
-    &'a self,
-    request: &'a mut ServoRequest,
-    _done_chan: &mut DoneChannel,
-    _context: &FetchContext,
-  ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ServoResponse> + Send + 'a>> {
-    let url = request.current_url();
-    let timing_type = request.timing_type();
-    let method = request.method.clone();
-    let headers = request.headers.clone();
-    let request = http::Request::builder()
-      .method(method)
-      .uri(url.as_str())
-      .body(Vec::new());
-
-    let Ok(mut request) = request else {
-      return Box::pin(std::future::ready(ServoResponse::network_error(
-        NetworkError::ResourceLoadError(format!("invalid custom protocol URL: {url}")),
-      )));
-    };
-    *request.headers_mut() = headers;
-
-    let (sender, receiver) = futures_channel::oneshot::channel();
-    (self.handler)(
-      &self.webview_id,
-      request,
-      RequestAsyncResponder {
-        responder: Box::new(move |response| {
-          let _ = sender.send(response);
-        }),
-      },
-    );
-
-    Box::pin(async move {
-      match receiver.await {
-        Ok(response) => {
-          let (parts, body) = response.into_parts();
-          let mut response = ServoResponse::new(url, ResourceFetchTiming::new(timing_type));
-          response.status = HttpStatus::new_raw(
-            parts.status.as_u16(),
-            parts
-              .status
-              .canonical_reason()
-              .unwrap_or_default()
-              .as_bytes()
-              .to_vec(),
-          );
-          response.headers = parts.headers;
-          *response.body.lock() = ResponseBody::Done(body.into_owned());
-          response
-        }
-        Err(_) => ServoResponse::network_error(NetworkError::ResourceLoadError(
-          "custom protocol response channel closed".into(),
-        )),
-      }
-    })
-  }
-
-  fn is_fetchable(&self) -> bool {
-    true
-  }
-
-  fn is_secure(&self) -> bool {
-    true
-  }
-}
-
 #[derive(Clone)]
 struct EmbedderWaker(Arc<dyn Fn() + Send + Sync>);
 
@@ -171,9 +91,16 @@ impl EventLoopWaker for EmbedderWaker {
 struct EngineDelegate {
   options: crate::TurvoOptions,
   webview_id: String,
+  protocols: Arc<ProtocolRouter>,
 }
 
 impl ServoDelegate for EngineDelegate {
+  fn load_web_resource(&self, load: WebResourceLoad) {
+    if cfg!(windows) {
+      self.protocols.load_web_resource(load);
+    }
+  }
+
   fn notify_error(&self, error: EngineError) {
     log::error!("Servo engine error: {error:?}");
   }
@@ -203,6 +130,7 @@ struct Delegate {
   navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
   document_title_changed_handler: Option<Box<dyn Fn(String)>>,
   on_page_load_handler: Option<Box<dyn Fn(PageLoadEvent, String)>>,
+  protocols: Arc<ProtocolRouter>,
 }
 
 impl Delegate {
@@ -217,6 +145,12 @@ impl Delegate {
 }
 
 impl WebViewDelegate for Delegate {
+  fn load_web_resource(&self, _webview: ServoWebView, load: WebResourceLoad) {
+    if cfg!(windows) {
+      self.protocols.load_web_resource(load);
+    }
+  }
+
   fn notify_page_title_changed(&self, _webview: ServoWebView, title: Option<String>) {
     if let Some(handler) = &self.document_title_changed_handler {
       handler(title.unwrap_or_default());
@@ -622,6 +556,7 @@ impl Embedder {
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
+      protocols: Arc::new(ProtocolRouter::new(webview_id.clone(), custom_protocols)),
     });
     let target = RenderingTarget::Window { window, context };
     Self::build(
@@ -633,7 +568,6 @@ impl Embedder {
       initial_headers,
       background_color,
       initialization_scripts,
-      custom_protocols,
     )
   }
 
@@ -678,6 +612,7 @@ impl Embedder {
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
+      protocols: Arc::new(ProtocolRouter::new(webview_id.clone(), custom_protocols)),
     });
     let target = RenderingTarget::Child {
       parent_context,
@@ -695,7 +630,6 @@ impl Embedder {
       initial_headers,
       background_color,
       initialization_scripts,
-      custom_protocols,
     )
   }
 
@@ -709,7 +643,6 @@ impl Embedder {
     initial_headers: Option<http::HeaderMap>,
     background_color: Option<[f64; 4]>,
     initialization_scripts: Vec<InitializationScript>,
-    custom_protocols: HashMap<String, CustomProtocolHandler>,
   ) -> Result<Self> {
     target
       .rendering_context()
@@ -759,22 +692,7 @@ impl Embedder {
     // Thin master's spacing.
     preferences.layout_variable_fonts_enabled = true;
 
-    let mut protocol_registry = ProtocolRegistry::default();
-    for (scheme, handler) in custom_protocols {
-      protocol_registry
-        .register(
-          &scheme,
-          CustomProtocol {
-            webview_id: webview_id.clone(),
-            handler,
-          },
-        )
-        .map_err(|error| {
-          Error::Servo(format!(
-            "failed to register custom protocol {scheme}: {error:?}"
-          ))
-        })?;
-    }
+    let protocol_registry = delegate.protocols.registry()?;
 
     // Claim the process-wide configuration only after every recoverable setup
     // step has succeeded. A protocol-registration error must not make a later
@@ -793,6 +711,7 @@ impl Embedder {
     servo.set_delegate(Rc::new(EngineDelegate {
       options: runtime_options,
       webview_id,
+      protocols: delegate.protocols.clone(),
     }));
     servo.setup_logging();
 
@@ -1305,6 +1224,10 @@ mod tests {
       navigation_handler: None,
       document_title_changed_handler: None,
       on_page_load_handler: None,
+      protocols: Arc::new(super::ProtocolRouter::new(
+        "test".into(),
+        Default::default(),
+      )),
     };
 
     delegate.request_repaint();

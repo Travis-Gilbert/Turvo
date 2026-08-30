@@ -1,7 +1,7 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 1,
+  "generation": 2,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
@@ -118,6 +118,14 @@
     {
       "id": "F07",
       "text": "CI run 33328684442 confirmed the Turvo-owned manifest fix: Windows runtime unit tests, public_api integration tests, and Clippy all passed. Its hello-world build then exposed the separate missing ICO requirement in tauri-build; Ubuntu and macOS remained fully green."
+    },
+    {
+      "id": "F08",
+      "text": "Pinned-source audit found that the bootstrap console IPC callback substitutes the top-level WebView URL for the unknown sending frame, and ignores initialization-script main-frame flags. Servo 0.5.0 WebResourceRequest exposes neither request origin nor body and interception precedes HTTP Origin-header insertion. Asset routing tests cannot discharge the IPC source-authentication obligation; W02I and V02I now own that separate gate. This is source evidence, not a reproduced native exploit."
+    },
+    {
+      "id": "F09",
+      "text": "Commit 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed CI run 33329627108: format/package job 99305763884, macOS 99305763947, Linux 99305763979, Windows 99305763986. Every desktop job passed runtime tests, Clippy, hello-world, and API-example builds. Tracked next was created from that verified commit. Native application behavior remains unverified."
     }
   ],
   "decisions": [
@@ -141,6 +149,13 @@
       "choice": "First establish current-tip behavior tests, then extract modules without behavior changes; make turvo-build stage only resources demonstrated necessary by clean-machine bundle evidence.",
       "reversibility_class": "reversible",
       "retraction_path": "Recombine a module or remove an unnecessary staging rule while retaining the behavior tests."
+    },
+    {
+      "id": "ADR04",
+      "question": "Can the Windows asset-routing tests also prove privileged IPC source authentication?",
+      "choice": "No. Refine the protocol work into asset routing and a separate source-authenticated IPC implementation with remote-frame and navigation-race native tests. Preserve the full O03/O04 release gate and never promote console-derived top-level URLs to trusted sender identity.",
+      "reversibility_class": "reversible",
+      "retraction_path": "Recombine the nodes only when the same engine-authenticated request surface and native receipts prove both boundaries."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
@@ -192,16 +207,16 @@
   "opening_moves": [
     {
       "rank": 1,
-      "node": "W01",
-      "why": "The pushed bootstrap must compile at its exact public tip before runtime behavior, packaging, or publication work can inherit a trustworthy base.",
+      "node": "W02",
+      "why": "The verified three-platform baseline allows the narrow Windows asset-interception gap to be repaired; source-authenticated IPC remains a separate gate.",
       "value_vector": {
-        "success": {"value": "high", "evidence": "F01 and the already-running hosted matrix"},
-        "cost": {"value": "medium", "evidence": "Servo compile surface is large but already cached on hosted runners"},
-        "latency": {"value": "weather-bound", "evidence": "GitHub Actions run 33326854324"},
+        "success": {"value": "high", "evidence": "F03 and the pinned Servo WebResourceLoad API"},
+        "cost": {"value": "medium", "evidence": "Shared protocol handlers and focused regression tests"},
+        "latency": {"value": "bounded", "evidence": "Hosted baseline dependencies are now cached on all three platforms"},
         "reversibility": {"value": "high", "evidence": "Focused source and workflow repairs are ordinary commits"},
-        "verification_coverage": {"value": "high", "evidence": "Three operating systems, tests, Clippy, examples, and package"},
-        "information_gain": {"value": "highest", "evidence": "No Turvo-tip compile receipt exists yet"},
-        "optionality": {"value": "high", "evidence": "Every downstream implementation rests on this baseline"}
+        "verification_coverage": {"value": "focused", "evidence": "Mapped URL, pass-through, rejection, and response-preservation tests"},
+        "information_gain": {"value": "high", "evidence": "Windows bundled assets currently have no HTTP interception path"},
+        "optionality": {"value": "high", "evidence": "Asset delivery is reusable by IPC and native example probes"}
       }
     }
   ],
@@ -302,7 +317,7 @@
       "id": "W01",
       "label": "Stabilize the pushed compile baseline",
       "type": "work.implementation",
-      "status": "working",
+      "status": "completed",
       "controller": "agent",
       "depends_on": ["D01"],
       "scope": ["Turvo Cargo manifests, baseline runtime repairs, README command corrections, and .github/workflows/ci.yml"],
@@ -317,7 +332,7 @@
       "substitution_allowed": false,
       "live_oracle_required": true,
       "proof_commands": ["cargo fmt --all --check", "cargo metadata --locked --format-version 1", "gh run watch --exit-status"],
-      "discharge_evidence": [],
+      "discharge_evidence": ["750d6422f7781f408bcc2f7759b942d0f57b2d1c passed all four jobs in https://github.com/Travis-Gilbert/Turvo/actions/runs/33329627108. Windows runtime tests, Clippy, and both examples passed after manifest and native icon repairs."],
       "retraction_path": "Revert focused repair commits while retaining the public bootstrap history.",
       "verify_sibling": "V01"
     },
@@ -325,7 +340,7 @@
       "id": "V01",
       "label": "Verify compile baseline at the published tip",
       "type": "verify.live",
-      "status": "pending",
+      "status": "completed",
       "controller": "verifier",
       "depends_on": ["W01"],
       "scope": ["read-only W01 diff, dependency graph, package contents, and GitHub Actions receipts"],
@@ -340,25 +355,25 @@
       "substitution_allowed": false,
       "live_oracle_required": true,
       "proof_commands": ["cargo tree -p turvo --locked", "cargo package -p turvo --locked --allow-dirty --list", "gh run view --log-failed"],
-      "discharge_evidence": [],
+      "discharge_evidence": ["Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.", "Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof."],
       "retraction_path": "Return W01 to frontier with the failed job and exact commit."
     },
     {
       "id": "W02",
-      "label": "Implement secure Windows app-protocol interception",
+      "label": "Implement Windows app-protocol interception",
       "type": "work.implementation",
-      "status": "pending",
+      "status": "working",
       "controller": "agent",
       "depends_on": ["V01"],
-      "scope": ["crates/turvo/src/servo protocol interception and crates/turvo protocol-origin tests"],
+      "scope": ["crates/turvo/src/servo protocol interception, protocol-origin tests, and docs/research/protocol-origin-boundary.md"],
       "obligations": ["O03", "O04"],
       "gist": "Route only Tauri-owned Windows localhost traffic to the registered asset protocol while preserving local and remote origins.",
       "consumes": ["V01 baseline", "ADR01"],
-      "produces": ["HTTP interception adapter", "capability-origin tests"],
-      "blueprint": ["Use Servo WebResourceLoad rather than rewriting Origin headers.", "Test tauri.localhost routing, unrelated HTTP pass-through, local capability success, and remote denial."],
-      "oracle_class": "focused security tests plus native Windows behavior",
+      "produces": ["HTTP interception adapter", "mapped-URL and response-preservation tests"],
+      "blueprint": ["Use Servo WebResourceLoad rather than rewriting Origin headers.", "Test exact registered localhost routing, unrelated HTTP pass-through, and unchanged URL, headers, status, and response body. Source-authenticated capability success and remote denial remain mandatory in W02I/V02I and the native suite."],
+      "oracle_class": "focused asset-routing tests; native delivery remains a downstream O03 gate",
       "implementation_mode": "real",
-      "evidence_class": "unit tests and Windows smoke receipt",
+      "evidence_class": "unit tests and three-platform compile receipts; not native capability proof",
       "substitution_allowed": false,
       "live_oracle_required": false,
       "proof_commands": ["cargo test -p turvo --lib --tests --locked", "cargo clippy -p turvo --lib --tests --locked -- -D warnings"],
@@ -375,9 +390,9 @@
       "depends_on": ["W02"],
       "scope": ["read-only W02 diff and local-versus-remote protocol receipts"],
       "obligations": ["O03", "O04"],
-      "gist": "Prove app assets are intercepted narrowly and capability identity is never widened to remote pages.",
+      "gist": "Prove app assets are intercepted narrowly without rewriting request origins; do not mistake this for source-authenticated IPC proof.",
       "consumes": ["W02 implementation"],
-      "produces": ["origin-security verification receipt"],
+      "produces": ["asset-routing verification receipt and explicit IPC non-conclusions"],
       "blueprint": ["Run positive, negative, and pass-through cases and audit for hardcoded Origin headers."],
       "oracle_class": "independent security verification",
       "implementation_mode": "independent_verification",
@@ -387,6 +402,51 @@
       "proof_commands": ["rg -n 'Origin|tauri\\.localhost|load_web_resource' crates/turvo/src crates/turvo/tests", "cargo test -p turvo --lib --tests --locked"],
       "discharge_evidence": [],
       "retraction_path": "Return W02 to frontier with the failing security case."
+    },
+    {
+      "id": "W02I",
+      "label": "Replace console-derived privileged IPC identity",
+      "type": "work.implementation",
+      "status": "pending",
+      "controller": "agent",
+      "depends_on": ["V02"],
+      "scope": ["Turvo IPC transport, initialization-script frame scope, source-identity tests, and public Servo API research or isolated patch"],
+      "obligations": ["O03", "O04"],
+      "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
+      "consumes": ["V02 asset routing", "F08", "ADR04"],
+      "produces": ["source-authenticated IPC adapter", "main-frame initialization handling", "native origin regression probes"],
+      "blueprint": ["Research and reuse the pinned engine request surface before introducing a transport; never trust a page-supplied origin, top-level URL substitution, or a hardcoded Origin header.", "Preserve payloads, callbacks, binary responses, and channel fetches; honor Tauri main-frame initialization flags.", "Require real local success, remote top-level denial, remote iframe denial, opaque-origin denial, and navigation-race denial. If the published engine lacks a sufficient API, produce a public compatibility proposal and retain an explicit release blocker."],
+      "oracle_class": "source-authenticated IPC and native adversarial origin behavior",
+      "implementation_mode": "real",
+      "evidence_class": "focused tests and native positive/negative capability receipts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": ["cargo test -p turvo --lib --tests --locked", "native IPC source-authentication suite"],
+      "discharge_evidence": [],
+      "retraction_path": "Revert the transport adapter and keep privileged IPC release-blocked; do not reinstate an untrusted identity fallback.",
+      "verify_sibling": "V02I"
+    },
+    {
+      "id": "V02I",
+      "label": "Verify actual IPC sender isolation",
+      "type": "verify.live",
+      "status": "pending",
+      "controller": "verifier",
+      "depends_on": ["W02I"],
+      "scope": ["read-only IPC source-identity diff, engine provenance, and native adversarial receipts"],
+      "obligations": ["O03", "O04"],
+      "gist": "Verify the caller identity cannot be widened by a child frame, opaque origin, forged message, or document navigation.",
+      "consumes": ["W02I transport and native probes"],
+      "produces": ["IPC source-authentication verification receipt"],
+      "blueprint": ["Audit trusted metadata provenance and independently replay local success plus remote, iframe, opaque-origin, and navigation-race denials."],
+      "oracle_class": "independent native IPC security verification",
+      "implementation_mode": "independent_verification",
+      "evidence_class": "exact-commit native positive and negative security receipts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": ["native IPC source-authentication suite"],
+      "discharge_evidence": [],
+      "retraction_path": "Return W02I to frontier with the failing sender-isolation case."
     },
     {
       "id": "W03",
@@ -506,11 +566,11 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V02"],
+      "depends_on": ["V02I"],
       "scope": ["examples/api, examples/helloworld, and crates/turvo/tests public behavior probes"],
       "obligations": ["O03", "O04", "O06", "O07", "O12"],
       "gist": "Make examples exercise invoke, both event directions, plugin, tray, multi-window, window.open, and literal quickstart behavior with automatable receipts.",
-      "consumes": ["V02 protocol implementation"],
+      "consumes": ["V02I source-authenticated protocol implementation"],
       "produces": ["complete examples", "self-reporting smoke mode"],
       "blueprint": ["Use existing Tauri plugin and tray primitives rather than bespoke substitutes.", "Emit deterministic smoke markers and exit codes suitable for hosted native runners."],
       "oracle_class": "example integration tests and native behavior",

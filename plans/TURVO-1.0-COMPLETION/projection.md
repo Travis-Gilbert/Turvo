@@ -1,6 +1,6 @@
 # Dependency projection
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
 ```mermaid
 flowchart TD
@@ -10,8 +10,10 @@ flowchart TD
   D01["D01 Seal runtime repair strategy"]
   W01["W01 Stabilize the pushed compile baseline"]
   V01["V01 Verify compile baseline at the published tip"]
-  W02["W02 Implement secure Windows app-protocol interception"]
+  W02["W02 Implement Windows app-protocol interception"]
   V02["V02 Verify protocol routing and origin separation"]
+  W02I["W02I Replace console-derived privileged IPC identity"]
+  V02I["V02I Verify actual IPC sender isolation"]
   W03["W03 Create a runtime-neutral upstream new-window seam"]
   V03["V03 Verify the upstream opener seam"]
   E01["E01 Wait for a consumable Tauri opener revision"]
@@ -38,12 +40,14 @@ flowchart TD
   W01 --> V01
   V01 --> W02
   W02 --> V02
+  V02 --> W02I
+  W02I --> V02I
   V02 --> W03
   W03 --> V03
   V03 --> E01
   E01 --> W04
   W04 --> V04
-  V02 --> W05
+  V02I --> W05
   W05 --> V05
   V04 --> W06
   V05 --> W06
@@ -64,7 +68,7 @@ flowchart TD
   classDef pending fill:#edf2f7,stroke:#718096,color:#1a202c
   classDef parked fill:#e9d8fd,stroke:#6b46c1,color:#322659
   classDef failed fill:#fed7d7,stroke:#c53030,color:#3b0d0d
-  class P00,D00,P01,D01 done
-  class W01 working
-  class V01,W02,V02,W03,V03,E01,W04,V04,W05,V05,W06,V06,W07,V07,W08,V08,W09,V09,W10,V10,W11,V11 pending
+  class P00,D00,P01,D01,W01,V01 done
+  class W02 working
+  class V02,W02I,V02I,W03,V03,E01,W04,V04,W05,V05,W06,V06,W07,V07,W08,V08,W09,V09,W10,V10,W11,V11 pending
 ```

@@ -14,6 +14,7 @@ use crate::{WebViewAttributes, WebViewBuilder};
 use self::embedder::Embedder;
 
 pub mod embedder;
+mod protocols;
 
 fn parse_url(url: &str, description: &str) -> Result<Url> {
   Url::parse(url).map_err(|error| Error::Servo(format!("invalid {description}: {error}")))

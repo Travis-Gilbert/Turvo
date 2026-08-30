@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -27,3 +27,11 @@ Choice: First establish current-tip behavior tests, then extract modules without
 Reversibility: `reversible`
 
 Retraction: Recombine a module or remove an unnecessary staging rule while retaining the behavior tests.
+
+## ADR04: Can the Windows asset-routing tests also prove privileged IPC source authentication?
+
+Choice: No. Refine the protocol work into asset routing and a separate source-authenticated IPC implementation with remote-frame and navigation-race native tests. Preserve the full O03/O04 release gate and never promote console-derived top-level URLs to trusted sender identity.
+
+Reversibility: `reversible`
+
+Retraction: Recombine the nodes only when the same engine-authenticated request surface and native receipts prove both boundaries.

@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
-Generation: `1`
+Generation: `2`
 
 ## Resume here
 
-- `W01` (working): Drive the exact public bootstrap tip to green tests, Clippy, packages, and example builds on all three operating systems.
+- `W02` (working): Route only Tauri-owned Windows localhost traffic to the registered asset protocol while preserving local and remote origins.
 
 ## Completed receipts
 
@@ -14,6 +14,8 @@ Generation: `1`
 - `D00`: Authority and protected state recorded in canonical board.
 - `P01`: F03-F04 established from exact pinned source; Record 001 and upstream audit preserve the findings.
 - `D01`: ADR01-ADR03 sealed in canonical board.
+- `W01`: 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed all four jobs in https://github.com/Travis-Gilbert/Turvo/actions/runs/33329627108. Windows runtime tests, Clippy, and both examples passed after manifest and native icon repairs.
+- `V01`: Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.; Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof.
 
 ## Parked work
 

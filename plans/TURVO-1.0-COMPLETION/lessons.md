@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
 ## Current facts
 
@@ -11,6 +11,8 @@ Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c5
 - `F05`: The configured Cargo target volume was 99 percent utilized with approximately 9 GiB free at charting, so hosted CI outranks a fresh local Servo build until storage is made safe.
 - `F06`: CI run 33327853233 made format/package plus complete Ubuntu and macOS jobs green; Windows passed all 24 Turvo unit tests but the downstream public_api test still lacked the Common Controls v6 manifest, proving the fix must be emitted by Turvo's own build script.
 - `F07`: CI run 33328684442 confirmed the Turvo-owned manifest fix: Windows runtime unit tests, public_api integration tests, and Clippy all passed. Its hello-world build then exposed the separate missing ICO requirement in tauri-build; Ubuntu and macOS remained fully green.
+- `F08`: Pinned-source audit found that the bootstrap console IPC callback substitutes the top-level WebView URL for the unknown sending frame, and ignores initialization-script main-frame flags. Servo 0.5.0 WebResourceRequest exposes neither request origin nor body and interception precedes HTTP Origin-header insertion. Asset routing tests cannot discharge the IPC source-authentication obligation; W02I and V02I now own that separate gate. This is source evidence, not a reproduced native exploit.
+- `F09`: Commit 750d6422f7781f408bcc2f7759b942d0f57b2d1c passed CI run 33329627108: format/package job 99305763884, macOS 99305763947, Linux 99305763979, Windows 99305763986. Every desktop job passed runtime tests, Clippy, hello-world, and API-example builds. Tracked next was created from that verified commit. Native application behavior remains unverified.
 
 ## Explicit exclusions
 

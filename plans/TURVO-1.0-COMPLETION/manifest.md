@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `016761279bad1e3338f54061260553cc5cb9eef3ce0b1969d9013736a4c50ca2`
+Canonical SHA-256: `fc87252da42bb7f283798fafd9ba3359b7f1e3be1a4f5eb6ea6e718793057eab`
 
 ## Destination
 
@@ -22,7 +22,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 
 ## Opening move
 
-- 1. `W01`: The pushed bootstrap must compile at its exact public tip before runtime behavior, packaging, or publication work can inherit a trustworthy base.
+- 1. `W02`: The verified three-platform baseline allows the narrow Windows asset-interception gap to be repaired; source-authenticated IPC remains a separate gate.
 
 ## Task board
 
@@ -32,16 +32,18 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 | [D00](nodes/D00.md) | completed | agent | decision.architecture | P00 | O01, O10, O11, O12 |
 | [P01](nodes/P01.md) | completed | agent | probe.research | D00 | O03, O05, O06, O08 |
 | [D01](nodes/D01.md) | completed | agent | decision.architecture | P01 | O03, O06, O08 |
-| [W01](nodes/W01.md) | working | agent | work.implementation | D01 | O01, O02, O12 |
-| [V01](nodes/V01.md) | pending | verifier | verify.live | W01 | O01, O02, O12 |
-| [W02](nodes/W02.md) | pending | agent | work.implementation | V01 | O03, O04 |
+| [W01](nodes/W01.md) | completed | agent | work.implementation | D01 | O01, O02, O12 |
+| [V01](nodes/V01.md) | completed | verifier | verify.live | W01 | O01, O02, O12 |
+| [W02](nodes/W02.md) | working | agent | work.implementation | V01 | O03, O04 |
 | [V02](nodes/V02.md) | pending | verifier | verify.local | W02 | O03, O04 |
+| [W02I](nodes/W02I.md) | pending | agent | work.implementation | V02 | O03, O04 |
+| [V02I](nodes/V02I.md) | pending | verifier | verify.live | W02I | O03, O04 |
 | [W03](nodes/W03.md) | pending | agent | work.external | V02 | O06 |
 | [V03](nodes/V03.md) | pending | verifier | verify.live | W03 | O06 |
 | [E01](nodes/E01.md) | pending | world | weather | V03 | O06 |
 | [W04](nodes/W04.md) | pending | agent | work.implementation | E01 | O06 |
 | [V04](nodes/V04.md) | pending | verifier | verify.live | W04 | O06 |
-| [W05](nodes/W05.md) | pending | agent | work.implementation | V02 | O03, O04, O06, O07, O12 |
+| [W05](nodes/W05.md) | pending | agent | work.implementation | V02I | O03, O04, O06, O07, O12 |
 | [V05](nodes/V05.md) | pending | verifier | verify.live | W05 | O03, O04, O06, O07, O12 |
 | [W06](nodes/W06.md) | pending | agent | work.implementation | V04, V05 | O08, O12 |
 | [V06](nodes/V06.md) | pending | verifier | verify.local | W06 | O08, O12 |
