@@ -21,6 +21,9 @@
     ]
   },
   "bundle": {
-    "active": false
+    "active": false,
+    "icon": [
+      "../../assets/icons/512x512.png"
+    ]
   }
 }

@@ -93,7 +93,7 @@
   "facts": [
     {
       "id": "F01",
-      "text": "Bootstrap tip a54063aed480922cc0b636371d041a674d158fc4 is public on Travis-Gilbert/Turvo main; CI run 33326854324 started from that tip."
+      "text": "Bootstrap tip a54063aed480922cc0b636371d041a674d158fc4 is public on Travis-Gilbert/Turvo main; CI run 33326854324 proved Linux and macOS runtime tests and lint, then exposed missing example icons plus Tauri's known Windows test-manifest entry-point failure."
     },
     {
       "id": "F02",
@@ -294,7 +294,7 @@
       "id": "W01",
       "label": "Stabilize the pushed compile baseline",
       "type": "work.implementation",
-      "status": "frontier",
+      "status": "working",
       "controller": "agent",
       "depends_on": ["D01"],
       "scope": ["Turvo Cargo manifests, baseline runtime repairs, README command corrections, and .github/workflows/ci.yml"],

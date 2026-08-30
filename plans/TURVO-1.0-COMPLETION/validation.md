@@ -1,6 +1,6 @@
 # Board validation
 
-Canonical SHA-256: `13e1eb23cc113380065dc2a0f29957978d859bb8dac12bac2f301935b2b65e1d`
+Canonical SHA-256: `12804b7efa144e33e238652cbb92d64128f23fc954164a91c3de0af49a7fc9e4`
 
 - Canonical JSON parses.
 - Required fields, palettes, controllers, and statuses validate.

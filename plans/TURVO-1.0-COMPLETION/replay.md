@@ -1,6 +1,6 @@
 # Execution replay
 
-Canonical SHA-256: `13e1eb23cc113380065dc2a0f29957978d859bb8dac12bac2f301935b2b65e1d`
+Canonical SHA-256: `12804b7efa144e33e238652cbb92d64128f23fc954164a91c3de0af49a7fc9e4`
 
 This is a generated status replay. Durable proof lives in each node's discharge evidence and the referenced external artifacts.
 
@@ -8,7 +8,7 @@ This is a generated status replay. Durable proof lives in each node's discharge 
 - [x] `D00` completed: Authority and protected state recorded in canonical board.
 - [x] `P01` completed: F03-F04 established from exact pinned source; Record 001 and upstream audit preserve the findings.
 - [x] `D01` completed: ADR01-ADR03 sealed in canonical board.
-- [>] `W01` frontier: awaiting execution
+- [~] `W01` working: awaiting execution
 - [ ] `V01` pending: awaiting execution
 - [ ] `W02` pending: awaiting execution
 - [ ] `V02` pending: awaiting execution

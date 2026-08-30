@@ -50,9 +50,8 @@ fn main() {
 }
 ```
 
-For Firefox remote debugging, configure a loopback port before the first
-webview starts. Port `0` asks the operating system to choose an available
-port.
+For Firefox remote debugging, configure a non-zero loopback port before the
+first webview starts.
 
 ```rust
 fn main() {
@@ -83,7 +82,7 @@ the embedder.
 ## Example
 
 ```sh
-cargo run -p turvo-helloworld
+cargo run -p helloworld
 cargo run -p turvo-api
 ```
 

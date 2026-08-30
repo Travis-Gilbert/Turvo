@@ -90,7 +90,7 @@ jobs:
         run: cargo clippy -p turvo --lib --tests --locked --target ${{ matrix.platform.target }} -- -D warnings
 
       - name: Build hello-world example
-        run: cargo build -p turvo-helloworld --locked --target ${{ matrix.platform.target }}
+        run: cargo build -p helloworld --locked --target ${{ matrix.platform.target }}
 
       - name: Build API parity example
         run: cargo build -p turvo-api --locked --target ${{ matrix.platform.target }}

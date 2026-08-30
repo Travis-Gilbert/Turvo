@@ -24,7 +24,7 @@ instructions.
 5. Run `cargo fmt --all --check`,
    `cargo test -p turvo --lib --tests --locked --offline`,
    `cargo clippy -p turvo --lib --tests --locked --offline -- -D warnings`,
-   `cargo build -p turvo-helloworld --locked --offline`, and
+   `cargo build -p helloworld --locked --offline`, and
    `cargo build -p turvo-api --locked --offline`. A failed command is evidence
    to preserve in the migration note, not permission to skip or disguise it.
 6. Changes may touch only `Cargo.toml`, `Cargo.lock`, `crates/turvo/**`,

@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `13e1eb23cc113380065dc2a0f29957978d859bb8dac12bac2f301935b2b65e1d`
+Canonical SHA-256: `12804b7efa144e33e238652cbb92d64128f23fc954164a91c3de0af49a7fc9e4`
 
 Generation: `1`
 
 ## Resume here
 
-- `W01` (frontier): Drive the exact public bootstrap tip to green tests, Clippy, packages, and example builds on all three operating systems.
+- `W01` (working): Drive the exact public bootstrap tip to green tests, Clippy, packages, and example builds on all three operating systems.
 
 ## Completed receipts
 

@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `13e1eb23cc113380065dc2a0f29957978d859bb8dac12bac2f301935b2b65e1d`
+Canonical SHA-256: `12804b7efa144e33e238652cbb92d64128f23fc954164a91c3de0af49a7fc9e4`
 
 ## Destination
 
@@ -32,7 +32,7 @@ The user explicitly requested the bootstrap push, graph computation, and executi
 | [D00](nodes/D00.md) | completed | agent | decision.architecture | P00 | O01, O10, O11, O12 |
 | [P01](nodes/P01.md) | completed | agent | probe.research | D00 | O03, O05, O06, O08 |
 | [D01](nodes/D01.md) | completed | agent | decision.architecture | P01 | O03, O06, O08 |
-| [W01](nodes/W01.md) | frontier | agent | work.implementation | D01 | O01, O02, O12 |
+| [W01](nodes/W01.md) | working | agent | work.implementation | D01 | O01, O02, O12 |
 | [V01](nodes/V01.md) | pending | verifier | verify.live | W01 | O01, O02, O12 |
 | [W02](nodes/W02.md) | pending | agent | work.implementation | V01 | O03, O04 |
 | [V02](nodes/V02.md) | pending | verifier | verify.local | W02 | O03, O04 |

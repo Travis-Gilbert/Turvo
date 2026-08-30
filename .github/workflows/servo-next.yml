@@ -214,7 +214,7 @@ jobs:
           cargo fmt --all --check
           cargo test -p turvo --lib --tests --locked
           cargo clippy -p turvo --lib --tests --locked -- -D warnings
-          cargo build -p turvo-helloworld --locked
+          cargo build -p helloworld --locked
           cargo build -p turvo-api --locked
 
   open-pr:
