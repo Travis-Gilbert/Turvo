@@ -137,7 +137,7 @@
     },
     {
       "id": "F12",
-      "text": "Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and base despite package names servo-net-traits and servo-base; imports were corrected from that exact diagnostic. Native proof is still pending."
+      "text": "Run 33332319128 at 51237b74cf85108ec78600527ff735cc81630a49 passed format/package and five Node transport tests. All Rust targets stopped at an unresolved servo_net_traits import before runtime tests. Pinned manifests declare library names net_traits and servo_base for packages servo-net-traits and servo-base respectively; imports were corrected from those exact declarations. Native proof is still pending."
     }
   ],
   "decisions": [

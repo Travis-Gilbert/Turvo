@@ -212,10 +212,6 @@ pub(super) async fn read_request_body(
 #[cfg(test)]
 mod tests {
   use super::*;
-  use base::{
-    generic_channel::GenericSharedMemory,
-    id::{PipelineId, PipelineNamespace, PipelineNamespaceId},
-  };
   use content_security_policy::{CspList, PolicySource};
   use net_traits::{
     blob_url_store::UrlWithBlobClaim,
@@ -226,6 +222,10 @@ mod tests {
     },
   };
   use servo::ServoUrl;
+  use servo_base::{
+    generic_channel::GenericSharedMemory,
+    id::{PipelineId, PipelineNamespace, PipelineNamespaceId},
+  };
 
   fn request(origin: &str, nested: bool) -> Request {
     let origin = ServoUrl::parse(origin).unwrap().origin();
