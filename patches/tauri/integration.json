@@ -1,0 +1,17 @@
+{
+  "upstream_repository": "tauri-apps/tauri",
+  "base_revision": "7cd71369c00978a3783b6ae3e9972358abbe4ae6",
+  "repository": "Travis-Gilbert/tauri",
+  "revision": "e84733018d84c8004645e04cbc8fea8511ae36b1",
+  "branch": "turvo/integration-2.11.5",
+  "patches": [
+    {
+      "path": "0001-runtime-owned-new-window-opener.patch",
+      "sha256": "6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a"
+    },
+    {
+      "path": "0002-runtime-http-app-origins.patch",
+      "sha256": "46f4dbf6c76719216e9f195e81a9d568e800ce2a0667d3a0ac30400a26af521b"
+    }
+  ]
+}

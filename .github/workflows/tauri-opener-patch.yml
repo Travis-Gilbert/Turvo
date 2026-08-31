@@ -54,7 +54,11 @@ jobs:
         run: |
           git apply --check ../patches/tauri/0001-runtime-owned-new-window-opener.patch
           git apply ../patches/tauri/0001-runtime-owned-new-window-opener.patch
+          git apply --check ../patches/tauri/0002-runtime-http-app-origins.patch
+          git apply ../patches/tauri/0002-runtime-http-app-origins.patch
           git diff --check
+      - name: Test runtime-driven JavaScript URL mapping
+        run: node --test crates/tauri/scripts/core.test.mjs
       - name: Install Linux prerequisites
         if: runner.os == 'Linux'
         run: |
@@ -77,3 +81,5 @@ jobs:
         run: cargo check -p tauri --no-default-features --lib --locked
       - name: Test default Wry compatibility and mock-runtime rejection
         run: cargo test -p tauri --lib --tests --features test --locked
+      - name: Test runtime URL contracts with isolation enabled
+        run: cargo test -p tauri --no-default-features --features test,isolation --lib --test runtime_custom_protocol --locked
