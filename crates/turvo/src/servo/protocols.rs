@@ -27,6 +27,7 @@ pub(super) type CustomProtocolHandler =
 pub(super) struct ProtocolRouter {
   webview_id: String,
   handlers: HashMap<String, CustomProtocolHandler>,
+  use_https_scheme: bool,
   pub sources: SourceTracker,
   bridge: Option<BridgeSink>,
 }
@@ -36,13 +37,50 @@ impl ProtocolRouter {
     webview_id: String,
     handlers: HashMap<String, CustomProtocolHandler>,
     bridge: Option<BridgeSink>,
+    use_https_scheme: bool,
   ) -> Self {
     Self {
       webview_id,
       handlers,
+      use_https_scheme,
       sources: SourceTracker::default(),
       bridge,
     }
+  }
+
+  /// Normalize runtime-owned navigation without changing the handler-facing URL contract.
+  pub fn browser_url(&self, url: Url) -> ServoResult<Url> {
+    if url.scheme() == "ipc" || url.scheme() == BRIDGE_SCHEME {
+      return Err(ServoError::Servo(
+        "IPC endpoints cannot be navigated".into(),
+      ));
+    }
+    self
+      .mapped_handler(&url)
+      .map_err(|_| ServoError::Servo("invalid mapped application URL authority".into()))?;
+    if !self.handlers.contains_key(url.scheme()) {
+      return Ok(url);
+    }
+    if url.host_str() != Some("localhost")
+      || !url.username().is_empty()
+      || url.password().is_some()
+      || url.port().is_some()
+    {
+      return Err(ServoError::Servo(
+        "custom application URLs require an unqualified localhost authority".into(),
+      ));
+    }
+    let transport = if self.use_https_scheme {
+      "https"
+    } else {
+      "http"
+    };
+    Url::parse(&format!(
+      "{transport}://{}.localhost{}",
+      url.scheme(),
+      &url[url::Position::BeforePath..]
+    ))
+    .map_err(|error| ServoError::Servo(format!("invalid mapped application URL: {error}")))
   }
 
   pub fn registry(self: &Arc<Self>) -> ServoResult<ProtocolRegistry> {
@@ -111,6 +149,12 @@ impl ProtocolRouter {
       }
     };
     let request = load.request();
+    if request.has_body {
+      // Asset interception has no upload stream. Reject before calling application code;
+      // returning an error after dispatch cannot undo handler side effects.
+      complete_load(load, status_response(http::StatusCode::METHOD_NOT_ALLOWED));
+      return;
+    }
     let Ok(handler_url) = mapped_protocol_url(scheme, &request.url) else {
       complete_load(load, status_response(http::StatusCode::BAD_REQUEST));
       return;
@@ -166,10 +210,22 @@ fn protocol_request(
 }
 
 fn resource_response(
+  method: &http::Method,
   url: Url,
   response: http::Response<Cow<'static, [u8]>>,
 ) -> (WebResourceResponse, Cow<'static, [u8]>) {
   let (parts, body) = response.into_parts();
+  let body = if method == http::Method::HEAD
+    || matches!(
+      parts.status,
+      http::StatusCode::NO_CONTENT
+        | http::StatusCode::RESET_CONTENT
+        | http::StatusCode::NOT_MODIFIED
+    ) {
+    Cow::Borrowed(&[] as &[u8])
+  } else {
+    body
+  };
   let response = WebResourceResponse::new(url)
     .status_code(parts.status)
     .status_message(
@@ -191,10 +247,12 @@ fn status_response(status: http::StatusCode) -> http::Response<Cow<'static, [u8]
 }
 
 fn complete_load(load: WebResourceLoad, response: http::Response<Cow<'static, [u8]>>) {
-  let (response, body) = resource_response(load.request().url.clone(), response);
+  let (response, body) =
+    resource_response(&load.request().method, load.request().url.clone(), response);
   let mut intercepted = load.intercept(response);
-  // Send even an empty chunk so Servo finalizes the body as Done(empty).
-  intercepted.send_body_data(body.into_owned());
+  if !body.is_empty() {
+    intercepted.send_body_data(body.into_owned());
+  }
   intercepted.finish();
 }
 
@@ -365,7 +423,61 @@ mod tests {
     let mut handlers: HashMap<String, CustomProtocolHandler> = HashMap::new();
     handlers.insert("tauri".into(), Box::new(|_, _, _| {}));
     handlers.insert("app-assets".into(), Box::new(|_, _, _| {}));
-    ProtocolRouter::new("main".into(), handlers, None)
+    ProtocolRouter::new("main".into(), handlers, None, false)
+  }
+
+  #[test]
+  fn maps_custom_navigation_preserving_path_query_and_fragment() {
+    let mut router = router();
+    let url =
+      Url::parse("tauri://localhost/app%20file.js?next=tauri://localhost/#section").unwrap();
+    assert_eq!(
+      router.browser_url(url.clone()).unwrap().as_str(),
+      "http://tauri.localhost/app%20file.js?next=tauri://localhost/#section"
+    );
+    router.use_https_scheme = true;
+    assert_eq!(
+      router.browser_url(url).unwrap().as_str(),
+      "https://tauri.localhost/app%20file.js?next=tauri://localhost/#section"
+    );
+  }
+
+  #[test]
+  fn rejects_ambiguous_custom_navigation_and_ipc() {
+    let router = router();
+    for url in [
+      "tauri://remote.example/",
+      "tauri://user@localhost/",
+      "tauri://localhost:80/",
+      "http://tauri.localhost:8080/",
+      "https://user@tauri.localhost/",
+      "ipc://localhost/action",
+      "turvo-ipc://localhost/",
+    ] {
+      assert!(
+        router.browser_url(Url::parse(url).unwrap()).is_err(),
+        "{url}"
+      );
+    }
+  }
+
+  #[test]
+  fn preserves_browser_urls_outside_custom_navigation() {
+    let router = router();
+    for url in [
+      "http://tauri.localhost/",
+      "https://example.com/",
+      "about:blank",
+      "data:text/html,hello",
+    ] {
+      assert_eq!(
+        router
+          .browser_url(Url::parse(url).unwrap())
+          .unwrap()
+          .as_str(),
+        url
+      );
+    }
   }
 
   #[test]
@@ -497,7 +609,7 @@ mod tests {
       .header(http::header::CONTENT_RANGE, "bytes 0-3/20")
       .body(Cow::Owned(body.clone()))
       .unwrap();
-    let (response, received_body) = resource_response(url.clone(), response);
+    let (response, received_body) = resource_response(&http::Method::GET, url.clone(), response);
 
     assert_eq!(response.url, url);
     assert_eq!(response.status_code, http::StatusCode::PARTIAL_CONTENT);
@@ -511,7 +623,31 @@ mod tests {
   }
 
   #[test]
-  fn keeps_the_custom_scheme_registry_for_non_windows_loading() {
+  fn suppresses_head_and_bodyless_payloads_without_changing_headers() {
+    for (method, status) in [
+      (http::Method::HEAD, http::StatusCode::OK),
+      (http::Method::GET, http::StatusCode::NO_CONTENT),
+      (http::Method::GET, http::StatusCode::RESET_CONTENT),
+      (http::Method::GET, http::StatusCode::NOT_MODIFIED),
+    ] {
+      let response = http::Response::builder()
+        .status(status)
+        .header(http::header::CONTENT_TYPE, "text/plain")
+        .body(Cow::Borrowed(&b"handler representation"[..]))
+        .unwrap();
+      let (response, body) = resource_response(
+        &method,
+        Url::parse("http://tauri.localhost/asset.txt").unwrap(),
+        response,
+      );
+      assert_eq!(response.status_code, status);
+      assert_eq!(response.headers[http::header::CONTENT_TYPE], "text/plain");
+      assert!(body.is_empty());
+    }
+  }
+
+  #[test]
+  fn keeps_the_custom_scheme_registry_without_a_fetch_policy_exemption() {
     let router = Arc::new(router());
     let registry = router.registry().unwrap();
     assert!(registry.get("tauri").is_some());

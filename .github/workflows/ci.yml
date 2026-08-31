@@ -38,7 +38,9 @@ jobs:
         run: python3 plans/TURVO-1.0-COMPLETION/render_board.py --check
       - name: Test completion graph receipt gates
         run: python3 -B -m unittest discover -s plans/TURVO-1.0-COMPLETION -p 'test_*.py'
-      - name: Check published crate contents
+      - name: Check exact public integration source families
+        run: python3 scripts/check_integration.py
+      - name: Check source package contents (not registry release proof)
         run: cargo package -p turvo --locked --no-verify
 
   build:

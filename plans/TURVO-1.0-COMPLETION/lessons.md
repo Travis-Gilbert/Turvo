@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
+Canonical SHA-256: `2823f8c5ed0356356367d36661bbc6c374a028fae198fa9b3013b1460f9c99af`
 
 ## Current facts
 
@@ -31,6 +31,9 @@ Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8
 - `F25`: Latest runtime run 33336218455 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 again passed format/package, Linux native job 99323466341, and macOS native job 99323466358. Windows job 99323466401 passed 49 unit tests, two API tests, Clippy and all example builds, staged current ANGLE DLLs, then repeated the remote bundled-asset read and blocked_app_asset_requested=true native failure. Repetition confirms the named policy blocker remains open; no release or full-plan completion is claimed.
 - `F26`: The user authorized the proposed public version-pinned patched Servo/Tauri integration branch with 'of course, no need to ask' and explicitly deferred Windows on 2026-08-30. This resumes implementation without treating the prior Windows failure as success or removing the published-engine release requirement.
 - `F27`: Catchup found clean Turvo main at dbfc503281b784b4313fe0af86f95ae8632d4148. Servo 0.5.0 records public source commit 77fccacc1f1fdce10498d50173aafaa09d02879e in .cargo_vcs_info.json; GitHub confirms it exists. Travis-Gilbert/servo is public and its theorem/v0.4.0 branch is protected unrelated state. A new public Travis-Gilbert/tauri fork is available for isolated integration revisions.
+- `F28`: Public integration revisions are Servo 8d45326e4a414afb3fe8b7afba98492e320d42f6 and Tauri e84733018d84c8004645e04cbc8fea8511ae36b1, on isolated Turvo-specific fork branches. Versioned patches and digests are in patches/servo and patches/tauri. Turvo opts into HTTP app URLs on Linux/macOS and preserves custom handler URLs; IPC keeps its authenticated body stream. Development pins are adopted explicitly; committed-lockfile, engine-test and new native-module receipts remain pending.
+- `F29`: A separate source reviewer identified a post-interception cancellation completion-channel race and incomplete HTTP framing validation. Both were fixed and re-reviewed without remaining source blockers. The engine suite has 42 focused tests including framing and bounded completion/cancellation stress; source review and test construction do not establish execution. Turvo suppresses HEAD/null-status payloads and uses engine has_body metadata to reject uploads before asset handler dispatch.
+- `F30`: Tauri compatibility run 33357076684 at Turvo e9ed69a78b029326e194cfb4c79addfd002d1661 passed Linux/macOS after applying both versioned patches: runtime/core tests, no-Wry compilation, default Wry compatibility, five JavaScript mapping tests and isolation-mode tests. This verifies the public Tauri patch tree, not Servo popup behavior, native HTTP origin security, registry publication or Windows.
 
 ## Explicit exclusions
 

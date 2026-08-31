@@ -6,14 +6,15 @@
   "build": {
     "frontendDist": [
       "index.html", "probe.js", "attacker.html", "attacker.js",
-      "sandbox.html", "restore.html", "restore.js", "private.txt", "csp-canary.svg"
+      "sandbox.html", "restore.html", "restore.js", "private.txt", "csp-canary.svg",
+      "static-module.js", "module-leaf.js", "dynamic-module.js"
     ]
   },
   "app": {
     "withGlobalTauri": true,
     "windows": [],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' tauri: http://127.0.0.1:*; connect-src 'self' ipc: turvo-ipc: http://127.0.0.1:*; frame-src 'self' tauri: http://127.0.0.1:* data:; img-src 'none'"
+      "csp": "default-src 'self'; script-src 'self' http://127.0.0.1:*; connect-src 'self' ipc: turvo-ipc: http://127.0.0.1:*; frame-src 'self' http://127.0.0.1:* data:; img-src 'none'"
     }
   },
   "bundle": {

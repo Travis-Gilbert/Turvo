@@ -43,3 +43,39 @@ provides bundled bytes. This is a design choice to validate, not native proof.
 The canonical graph records implementation, verification, deferred Windows,
 and the published-release gate separately. Update its JSON and regenerate its
 projections; do not hand-edit generated status pages.
+
+## Implemented integration and proof boundaries
+
+- Public Tauri revision `e84733018d84c8004645e04cbc8fea8511ae36b1` adds the
+  runtime HTTP-origin opt-in and retains the versioned runtime-opener seam.
+  Run [33357076684](https://github.com/Travis-Gilbert/Turvo/actions/runs/33357076684)
+  passed Linux/macOS formatting, JavaScript mapping, runtime/core tests,
+  no-Wry compilation, default Wry compatibility, and isolation-mode tests.
+- Public Servo revision `8d45326e4a414afb3fe8b7afba98492e320d42f6` moves
+  interception into HTTP transport, adds cancellable bounded accumulation and
+  framing validation, and reports upload presence before application dispatch.
+  Forty-two new networking tests are written; their execution is pending.
+- A separate source reviewer found a completion-channel cancellation race and
+  incomplete HTTP framing validation. Both were corrected and re-reviewed.
+  This is a source review receipt, not native or exhaustive concurrency proof.
+- Turvo maps app URLs on Linux/macOS, rejects ambiguous authorities, preserves
+  handler-facing custom URLs, suppresses HEAD/null-status bodies, and rejects
+  uploads before invoking mapped asset handlers. IPC retains its real body stream.
+- Native coverage now requires normal CSP `'self'`, same-origin fetch and HEAD,
+  static and dynamic modules, no-CORS opacity, and zero upload-handler dispatch.
+  All prior negative capability/CSP/navigation assertions remain required.
+
+The lockfile candidate job has read-only GitHub permissions and never commits.
+Its output must be reviewed, committed, and rerun with `--locked`. No cold build
+is attempted on the nearly full workstation. Engine and native hosted receipts
+remain open until their exact pinned revisions pass.
+
+The encoded-response cap does not bound the embedder queue, decoded body, or
+renderer memory. Cache hits skip per-webview interception; dynamic handlers need
+appropriate cache policy. Synthetic transport does not fabricate TLS handshakes
+or network timings. Tauri's initial-window-origin asset ACAO behavior is retained,
+including the documented remote-first-window caveat.
+
+Servo's upstream policy prohibits AI-generated submissions, so no upstream
+issue, comment, or PR is submitted. The authorized public fork does not discharge
+the separately tracked published-engine release requirement.

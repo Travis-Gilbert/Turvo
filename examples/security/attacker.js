@@ -31,12 +31,16 @@
       }
     }
     if (!await attempt('')) throw new Error('untrusted command reached Rust')
-    if (caseName === 'remote-frame') {
+    if (caseName === 'remote-frame' || caseName === 'remote-top') {
       let exposed = false
       try {
         exposed = (await (await fetch(config.localAsset)).text()).includes('turvo-cross-origin-asset-canary')
       } catch (_) {}
-      if (exposed) throw new Error('remote frame read a cross-origin bundled asset')
+      if (exposed) throw new Error('remote document read a cross-origin bundled asset')
+      const opaque = await fetch(config.localAsset, { mode: 'no-cors' })
+      if (opaque.type !== 'opaque' || opaque.status !== 0 || (await opaque.text()) !== '') {
+        throw new Error('no-cors bundled response exposed its status or body')
+      }
     }
     if (caseName === 'opaque-top') {
       // Queue calls from this opaque document immediately before Rust restores

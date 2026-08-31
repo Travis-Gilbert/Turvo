@@ -18,9 +18,11 @@ The application has a 120-second deadline and the runner has an independent
 
 - real JSON, raw-protocol, binary, and large-channel round trips;
 - Tauri events in both directions;
+- same-origin bundled fetch, static modules with imports, and dynamic imports
+  under CSP `'self'`, plus the runtime-specific `convertFileSrc` mapping;
 - local document layout and CSP-blocked network and bundled image requests;
 - rejected commands from remote, local-child, sandboxed, and opaque frames;
-- rejection of cross-origin bundled-asset reads;
+- rejection of cross-origin bundled-asset reads and opaque no-CORS responses;
 - rejected remote, sandboxed-local, and opaque top-level callers; and
 - restored local IPC with no extra native calls from the old document's
   queued requests during navigation.
@@ -30,16 +32,17 @@ unit tests; it does not claim exhaustive coverage of every possible scheduling
 interleaving. Layout and animation callbacks are not pixel/screenshot proof.
 Native smoke receipts and visual-rendering receipts remain separate gates.
 
-Servo 0.5.0 treats `tauri://` origins as opaque, so this fixture explicitly
-allows `tauri:` scripts and frames. A passing IPC receipt therefore does not
-prove that an existing Tauri application's `'self'` policy works unchanged.
-That compatibility gap remains a release blocker, not a recommended product
-CSP adjustment. The `img-src 'none'` canaries must still block both network
-and intercepted bundled assets before their handlers are reached.
+The public integration uses an in-process HTTP response provider at
+`http://tauri.localhost` on Linux/macOS. The CSP contains no `tauri:` exception:
+local classic scripts, static module dependencies, dynamic imports, and fetch
+must work under `'self'`. The loopback script/connect/frame allowances are only
+for the adversarial test server. The `img-src 'none'` canaries must still block
+both network and intercepted bundled assets before their handlers are reached.
 Ordinary custom protocols are intentionally not marked fetchable: Servo's
-flag bypasses CORS rather than enabling a same-origin policy. Local `fetch()`
-and module-script compatibility consequently need an engine-level solution;
-the authenticated IPC protocols are the only callers of that exemption.
+flag bypasses CORS rather than enabling a same-origin policy. The authenticated
+IPC protocols are the only callers of that exemption. Passing this fixture on
+the patched engine is Unix integration proof, not published-engine or Windows
+release proof; see Record 002.
 
 All negative calls carry the same valid test key used by a successful local
 positive control. The test checks actual Rust handler counts independently of

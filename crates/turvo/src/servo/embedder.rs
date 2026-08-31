@@ -116,9 +116,7 @@ struct EngineDelegate {
 impl ServoDelegate for EngineDelegate {
   fn load_web_resource(&self, load: WebResourceLoad) {
     self.protocols.sources.observe_load(load.request());
-    if cfg!(windows) {
-      self.protocols.load_web_resource(load);
-    }
+    self.protocols.load_web_resource(load);
   }
 
   fn notify_error(&self, error: EngineError) {
@@ -182,9 +180,7 @@ impl Delegate {
 impl WebViewDelegate for Delegate {
   fn load_web_resource(&self, _webview: ServoWebView, load: WebResourceLoad) {
     self.protocols.sources.observe_load(load.request());
-    if cfg!(windows) {
-      self.protocols.load_web_resource(load);
-    }
+    self.protocols.load_web_resource(load);
   }
 
   fn notify_url_changed(&self, _webview: ServoWebView, url: Url) {
@@ -555,6 +551,7 @@ impl Embedder {
     initialization_scripts: Vec<InitializationScript>,
     ipc_handler: Option<Box<dyn Fn(http::Request<String>)>>,
     custom_protocols: HashMap<String, CustomProtocolHandler>,
+    use_https_scheme: bool,
     navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
     document_title_changed_handler: Option<Box<dyn Fn(String)>>,
     on_page_load_handler: Option<Box<dyn Fn(PageLoadEvent, String)>>,
@@ -589,6 +586,7 @@ impl Embedder {
         webview_id.clone(),
         custom_protocols,
         bridge,
+        use_https_scheme,
       )),
     });
     let target = RenderingTarget::Window { window, context };
@@ -616,6 +614,7 @@ impl Embedder {
     initialization_scripts: Vec<InitializationScript>,
     ipc_handler: Option<Box<dyn Fn(http::Request<String>)>>,
     custom_protocols: HashMap<String, CustomProtocolHandler>,
+    use_https_scheme: bool,
     navigation_handler: Option<Box<dyn Fn(String) -> bool>>,
     document_title_changed_handler: Option<Box<dyn Fn(String)>>,
     on_page_load_handler: Option<Box<dyn Fn(PageLoadEvent, String)>>,
@@ -651,6 +650,7 @@ impl Embedder {
         webview_id.clone(),
         custom_protocols,
         bridge,
+        use_https_scheme,
       )),
     });
     let target = RenderingTarget::Child {
@@ -683,6 +683,7 @@ impl Embedder {
     background_color: Option<[f64; 4]>,
     initialization_scripts: Vec<InitializationScript>,
   ) -> Result<Self> {
+    let initial_url = delegate.protocols.browser_url(initial_url)?;
     target
       .rendering_context()
       .make_current()
@@ -788,6 +789,10 @@ impl Embedder {
       pending_key_event: Cell::new(false),
       focused: Cell::new(false),
     })
+  }
+
+  pub fn browser_url(&self, url: Url) -> Result<Url> {
+    self.delegate.protocols.browser_url(url)
   }
 
   pub fn handle_user_event(&self) {
@@ -1287,6 +1292,7 @@ mod tests {
         "test".into(),
         Default::default(),
         None,
+        false,
       )),
     };
 
