@@ -55,6 +55,8 @@ projections; do not hand-edit generated status pages.
   interception into HTTP transport, adds cancellable bounded accumulation and
   framing validation, and reports upload presence before application dispatch.
   Forty-two new networking tests are written; their execution is pending.
+  Follow-up `1dfbf13a15b2b37d93b6740024a6892b7ed5e96f` adds the missing
+  `tokio-util -> futures-util` lockfile edge and is the current engine pin.
 - A separate source reviewer found a completion-channel cancellation race and
   incomplete HTTP framing validation. Both were corrected and re-reviewed.
   This is a source review receipt, not native or exhaustive concurrency proof.
@@ -69,6 +71,14 @@ The lockfile candidate job has read-only GitHub permissions and never commits.
 Its output must be reviewed, committed, and rerun with `--locked`. No cold build
 is attempted on the nearly full workstation. Engine and native hosted receipts
 remain open until their exact pinned revisions pass.
+
+Lockfile candidate run
+[33357839687](https://github.com/Travis-Gilbert/Turvo/actions/runs/33357839687)
+succeeded. Review confirmed the same 996 packages and no package-version changes;
+63 packages changed to the intended public Git source families. The imported
+candidate advances the engine source ID through the lockfile-only follow-up.
+The initial engine test run stopped at `--locked` before compilation; its missing
+feature edge was fixed, not bypassed by dropping the locked requirement.
 
 The encoded-response cap does not bound the embedder queue, decoded body, or
 renderer memory. Cache hits skip per-webview interception; dynamic handlers need

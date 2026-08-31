@@ -2,12 +2,16 @@
   "upstream_repository": "servo/servo",
   "base_revision": "77fccacc1f1fdce10498d50173aafaa09d02879e",
   "repository": "Travis-Gilbert/servo",
-  "revision": "8d45326e4a414afb3fe8b7afba98492e320d42f6",
+  "revision": "1dfbf13a15b2b37d93b6740024a6892b7ed5e96f",
   "branch": "turvo/integration-0.5.0",
   "patches": [
     {
       "path": "0001-policy-preserving-http-interception.patch",
       "sha256": "01f812fd1bd6e67fd75494edb6ad9dc09e03204d5dad0eb64dbb183a158ae61b"
+    },
+    {
+      "path": "0002-cancellation-feature-lockfile.patch",
+      "sha256": "dc729e247fd4e0e57e01430985a27a25cb793819422ca73fdb65f843f10f8267"
     }
   ]
 }

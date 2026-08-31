@@ -1,9 +1,12 @@
 # Public Servo HTTP integration
 
-The exact source and patch digest are in `integration.json`. The patch applies
+The exact source and patch digests are in `integration.json`. The patches apply
 to published Servo 0.5.0's recorded commit
 `77fccacc1f1fdce10498d50173aafaa09d02879e` and is published on the isolated
 `Travis-Gilbert/servo:turvo/integration-0.5.0` branch. Theorem branches are untouched.
+The second patch locks the added Tokio cancellation feature's existing
+`futures-util` dependency. The current public revision is
+`1dfbf13a15b2b37d93b6740024a6892b7ed5e96f`.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,

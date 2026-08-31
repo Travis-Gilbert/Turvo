@@ -57,7 +57,9 @@ jobs:
             tests/capi
       - name: Verify the versioned patch is present
         working-directory: pinned-servo
-        run: git apply --reverse --check ../patches/servo/0001-policy-preserving-http-interception.patch
+        run: |
+          git apply --reverse --check ../patches/servo/0002-cancellation-feature-lockfile.patch
+          git apply --reverse --check ../patches/servo/0001-policy-preserving-http-interception.patch
       - name: Install Linux networking test prerequisites
         if: runner.os == 'Linux'
         run: |

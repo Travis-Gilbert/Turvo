@@ -6645,8 +6645,7 @@ dependencies = [
 [[package]]
 name = "servo"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "331e15df72165ca15b3945970c6870c4b7367be116ded058fda4f41190b265b8"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "arboard",
@@ -6710,8 +6709,7 @@ dependencies = [
 [[package]]
 name = "servo-allocator"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f756693f74caaa2afac2d39d2d2df48edda3dcec5e7688a7992f31586b5a3ad"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "libc",
  "tikv-jemalloc-sys",
@@ -6722,8 +6720,7 @@ dependencies = [
 [[package]]
 name = "servo-background-hang-monitor"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f72d6a646423e2f968e8d1cd2fb19bd973aa7e6b562b9b941047af971a1864fd"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "backtrace",
  "crossbeam-channel",
@@ -6738,8 +6735,7 @@ dependencies = [
 [[package]]
 name = "servo-background-hang-monitor-api"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70d4e78e2edd0fd7804733afd7bc55fe0eafa018a8fd6d3a59a6829b73b46f9c"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "serde",
  "servo-base",
@@ -6748,8 +6744,7 @@ dependencies = [
 [[package]]
 name = "servo-base"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36bee2de751c3abcd0cceb6996dd3cb6cd78613b6cad35767af3dcc8e7eba351"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "crossbeam-channel",
@@ -6774,8 +6769,7 @@ dependencies = [
 [[package]]
 name = "servo-canvas"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "094bfc67439cd13a1ddb8cf3cf9d5a8a1bccaf1fe54ae39167f1218e40933180"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "bytemuck",
  "crossbeam-channel",
@@ -6800,8 +6794,7 @@ dependencies = [
 [[package]]
 name = "servo-canvas-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99c653bb513f20f79e194a89b06550c776636645e23b976790c981bd3bb9405b"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "crossbeam-channel",
  "euclid",
@@ -6823,8 +6816,7 @@ dependencies = [
 [[package]]
 name = "servo-config"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9b8e4cba32b754a3baf779d886fd7ecbfd25a37c31289570db4a897fff8001c"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "num_enum",
  "serde",
@@ -6837,8 +6829,7 @@ dependencies = [
 [[package]]
 name = "servo-config-macro"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b37d8f114e791666a17e4c579b0a50168ed30512f39c13e14dc9c85bbe6e1f71"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6849,8 +6840,7 @@ dependencies = [
 [[package]]
 name = "servo-constellation"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a199d590e0e1d48a4600f4af08b50bce1ab1e65cadc0e5c5da50c007a66c7b96"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "backtrace",
@@ -6894,8 +6884,7 @@ dependencies = [
 [[package]]
 name = "servo-constellation-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bec16a1b36573b42bf45a45071a8cfcf31edd566a4c4fcc3f5fe6ea92841217"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "base64 0.23.1",
  "content-security-policy",
@@ -6930,8 +6919,7 @@ dependencies = [
 [[package]]
 name = "servo-default-resources"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f470d1617e82d567c132699b85d01182f68a78120a68032c5eeb4127b212d6"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "servo-embedder-traits",
 ]
@@ -6939,8 +6927,7 @@ dependencies = [
 [[package]]
 name = "servo-deny-public-fields"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7dc5c1a840c611b158dacf1c339997b7939c124c9130013e03ffcaefdf5a349"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -6950,8 +6937,7 @@ dependencies = [
 [[package]]
 name = "servo-devtools"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdec62f4fdef1bff35e63b5dc12bf5f1bde5a91296f6a26a814775deda19b129"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "atomic_refcell",
  "base64 0.23.1",
@@ -6981,8 +6967,7 @@ dependencies = [
 [[package]]
 name = "servo-devtools-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d81d89cef214fd4249dfdb1e54c59b596a2e902055c0fa2239fe033feb9316df"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "http 1.5.0",
  "malloc_size_of_derive",
@@ -6999,8 +6984,7 @@ dependencies = [
 [[package]]
 name = "servo-dom-struct"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05a962482f2ab5a4671d7e2b5e3aa78361026302edebd1266db8dc6798f1d1dc"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "prettyplease",
  "proc-macro2",
@@ -7011,8 +6995,7 @@ dependencies = [
 [[package]]
 name = "servo-embedder-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "262b40ba0b2c8266ef9df8326e81b4aecdac77365dfffdbd26aa9c6b76f2c001"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "bitflags 2.13.1",
@@ -7046,8 +7029,7 @@ dependencies = [
 [[package]]
 name = "servo-fonts"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6c277c0c2f24758455fd3aea4138938c699f70614c11e31ed7320c3329d9e99"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -7106,8 +7088,7 @@ dependencies = [
 [[package]]
 name = "servo-fonts-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ba5f1036b064af4bf66eec70a7f449ff1b3440a7720402f814da7dd2b5aedfc"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "atomic_refcell",
  "dwrote",
@@ -7132,8 +7113,7 @@ dependencies = [
 [[package]]
 name = "servo-geometry"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "823b5350914272be4f6bc0a150dd7014e58b331986eeb0addd31d741599ba66d"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "app_units",
  "euclid",
@@ -7146,8 +7126,7 @@ dependencies = [
 [[package]]
 name = "servo-hyper-serde"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a81ba4486d404ac386e8b57eef9285dbf7cf37927587001c99ebbdc56274a616"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "cookie 0.18.2",
  "headers",
@@ -7161,8 +7140,7 @@ dependencies = [
 [[package]]
 name = "servo-jstraceable-derive"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db22afdffa963cc7ec273f08dfa71d43200ea2a0f3bf78fead7ff2be17d4a380"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "proc-macro2",
  "syn 2.0.119",
@@ -7172,8 +7150,7 @@ dependencies = [
 [[package]]
 name = "servo-layout"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bc3d99eb98a36e50e5696e86079a1637769f60f6aaae6d8163e599ae1aa8573"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "app_units",
@@ -7232,8 +7209,7 @@ dependencies = [
 [[package]]
 name = "servo-layout-api"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b16dbe97f725ee55c20cf2efa7142736b62d4fc8ef0fb64b4aee8faf5089206"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -7267,8 +7243,7 @@ dependencies = [
 [[package]]
 name = "servo-malloc-size-of"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9864f56a9f96a9bfb6972439614494a1726db9a093d4f65aa68b41a9180509d"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -7311,8 +7286,7 @@ dependencies = [
 [[package]]
 name = "servo-media"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac74698f02e83966db6d70b23da73eef3c1cee0936951ad9e556be2c5b1e562f"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "servo-base",
  "servo-media-audio",
@@ -7325,8 +7299,7 @@ dependencies = [
 [[package]]
 name = "servo-media-audio"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22af364ec90d7d3e2f086358cb298f7f834510a51161c70e943996cea0483735"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "byte-slice-cast",
  "euclid",
@@ -7350,8 +7323,7 @@ dependencies = [
 [[package]]
 name = "servo-media-derive"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "766d3c107f04c554001a3f00b6982b4df70779733065395b058d19c4e7c4919f"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7361,8 +7333,7 @@ dependencies = [
 [[package]]
 name = "servo-media-dummy"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a7319be6d4b10f75943a8f842a06e046cf436422b462021b54129dcd231a113"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "servo-base",
  "servo-media",
@@ -7376,8 +7347,7 @@ dependencies = [
 [[package]]
 name = "servo-media-ohos"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ba039e43e4393c02d7bd4b43667c869f4355720aeb0c6bc672ddd03b8b84906"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "crossbeam-channel",
  "libc",
@@ -7400,8 +7370,7 @@ dependencies = [
 [[package]]
 name = "servo-media-player"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c4f85a0f086b2bdcde37d6c5a423f33a689b806cde707381146b858b385be87"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "malloc_size_of_derive",
  "serde",
@@ -7414,8 +7383,7 @@ dependencies = [
 [[package]]
 name = "servo-media-streams"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33024fccf051f160bfd4cf33e2e649a647a2d46c2da47528ab144c5fead99824"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "malloc_size_of_derive",
  "servo-malloc-size-of",
@@ -7425,8 +7393,7 @@ dependencies = [
 [[package]]
 name = "servo-media-thread"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a75ee5432548e9d6de6aeba7c749e7ff7075063cee68f4612a81af075431028"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "euclid",
  "ipc-channel",
@@ -7445,8 +7412,7 @@ dependencies = [
 [[package]]
 name = "servo-media-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df425c285c682dfe49b428fdc8cb2860ada9e3f4b5f10455931e52164a9b68d4"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "malloc_size_of_derive",
  "servo-malloc-size-of",
@@ -7455,8 +7421,7 @@ dependencies = [
 [[package]]
 name = "servo-media-webrtc"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf80209718a3821c5c07c70d0f5c0a6fcdc73cb4e4612c455ef8de6602c1e06f"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "log",
  "servo-media-streams",
@@ -7466,8 +7431,7 @@ dependencies = [
 [[package]]
 name = "servo-metrics"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2b5e902345644d96f49f9a2422b1afecd320fdaa3ff129b8bbc6906c662763e"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "malloc_size_of_derive",
  "servo-base",
@@ -7482,8 +7446,7 @@ dependencies = [
 [[package]]
 name = "servo-net"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64afa122aa4c8b0344eca816dc19dc93837e5a71af4c3087fa6e1a88aa651ae3"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "async-compression",
  "async-recursion",
@@ -7555,8 +7518,7 @@ dependencies = [
 [[package]]
 name = "servo-net-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c94d0595c3031774e44beeb1dc95211316434fb98e42c47d84c409e1b0be6f0"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "content-security-policy",
  "cookie 0.18.2",
@@ -7597,8 +7559,7 @@ dependencies = [
 [[package]]
 name = "servo-paint"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f9c50ad86465b904d70ba184e013e6d1ac3a9b8c789d52acc6cf07ce7fa16c4"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "bitflags 2.13.1",
  "crossbeam-channel",
@@ -7635,8 +7596,7 @@ dependencies = [
 [[package]]
 name = "servo-paint-api"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64daf862ff2cb3f648d20f5b7f3e2a4fa4efa3c56ddd3f44752a09da102e0069"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "bitflags 2.13.1",
  "crossbeam-channel",
@@ -7671,8 +7631,7 @@ dependencies = [
 [[package]]
 name = "servo-pixels"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a862498e365271b3091ff061b94ac983cf1b480c9c51327950998fac43110a70"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "euclid",
  "image",
@@ -7687,8 +7646,7 @@ dependencies = [
 [[package]]
 name = "servo-profile"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "792818b000de5ac00c55e5d4ad513a0c9262677944152f8678c35a4f4e058686"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "libc",
  "log",
@@ -7706,8 +7664,7 @@ dependencies = [
 [[package]]
 name = "servo-profile-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdd65c4c009fe12b3fb2f899acc1ba4bbe989a20ce9f47585476560ff4f3eaf3"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "crossbeam-channel",
  "ipc-channel",
@@ -7723,8 +7680,7 @@ dependencies = [
 [[package]]
 name = "servo-script"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65dfbd7f70531ea07597cc8d6594668ee5bb31bd81888ad18eb807d9764e869f"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -7867,8 +7823,7 @@ dependencies = [
 [[package]]
 name = "servo-script-bindings"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f649d23df2bcf9f46284b98d5fecd8dc1c2d579bb65f04e2d7a8d50c8e9ef9c"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "atomic_refcell",
  "bitflags 2.13.1",
@@ -7908,8 +7863,7 @@ dependencies = [
 [[package]]
 name = "servo-script-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "392873254f49d65cfc9a0168b655d215a556d989b2d96bb4d57084854d2dc194"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "accesskit",
  "crossbeam-channel",
@@ -7943,8 +7897,7 @@ dependencies = [
 [[package]]
 name = "servo-storage"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96803839259126fc8bd3f7c9e18b25c681c1783c8521178914c380f6753f3d0a"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "libc",
  "log",
@@ -7969,8 +7922,7 @@ dependencies = [
 [[package]]
 name = "servo-storage-traits"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f785a6ed098ad8af9df69f67fd5fe1f8519f54d76cd5cacb539f3a03411d9e62"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "malloc_size_of_derive",
  "serde",
@@ -7984,8 +7936,7 @@ dependencies = [
 [[package]]
 name = "servo-timers"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57fa15201f913faa8742fe5d6f874b2b063dcdab589c999de4e3894951517998"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "crossbeam-channel",
  "malloc_size_of_derive",
@@ -7995,8 +7946,7 @@ dependencies = [
 [[package]]
 name = "servo-tracing"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1125218edcd644630205725092669d93baf1ef48a458dffaaf618f16e2b306bf"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8006,8 +7956,7 @@ dependencies = [
 [[package]]
 name = "servo-url"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c57426fae1226e2099b134a7e5367a8eaa78364ee237ba794857c740c3903fb8"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "encoding_rs",
  "malloc_size_of_derive",
@@ -8021,8 +7970,7 @@ dependencies = [
 [[package]]
 name = "servo-wakelock"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb5d38c0042547aaca704d02a3caab1eb6e6204c30d4d424b4fa69596f0b713b"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "serde",
  "servo-embedder-traits",
@@ -8031,8 +7979,7 @@ dependencies = [
 [[package]]
 name = "servo-webgl"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb062ff955f4ff562808ab1dd408845c9a9c8854d0c31b40da2b3ecb545cb290"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "bitflags 2.13.1",
  "byteorder",
@@ -8056,8 +8003,7 @@ dependencies = [
 [[package]]
 name = "servo-webvtt"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ece9dfb88e31895c8376f64ef7a8e66bb604ae98f948f169c47bde45962d8dab"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "html5ever 0.39.0",
  "markup5ever 0.39.0",
@@ -8067,8 +8013,7 @@ dependencies = [
 [[package]]
 name = "servo-webxr-api"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c6af8432785adff60b5d7d3f3b904167de1ef128e403e73bb1512593347fbdb"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "euclid",
  "ipc-channel",
@@ -8084,8 +8029,7 @@ dependencies = [
 [[package]]
 name = "servo-xpath"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8d5b3ef14ed8ce3dc9520be7856c909ce46ae605c3329aa6dd5b66b0fba4f4e"
+source = "git+https://github.com/Travis-Gilbert/servo?rev=1dfbf13a15b2b37d93b6740024a6892b7ed5e96f#1dfbf13a15b2b37d93b6740024a6892b7ed5e96f"
 dependencies = [
  "log",
  "malloc_size_of_derive",
@@ -8887,8 +8831,7 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 [[package]]
 name = "tauri"
 version = "2.11.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "667b20e2726d572dea2de7370da16e188eb06008faf9a92fab7cdc46791190b5"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "anyhow",
  "bytes",
@@ -8936,8 +8879,7 @@ dependencies = [
 [[package]]
 name = "tauri-build"
 version = "2.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc9ce40b16101cb6ea63d3e221567affd1c3a9205f95d7bc574941a10636b632"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "anyhow",
  "cargo_toml",
@@ -8957,8 +8899,7 @@ dependencies = [
 [[package]]
 name = "tauri-codegen"
 version = "2.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08279169ff42f8fc45a1dbc9dcae888893ba95288142e5880c59b93a26d2cfc5"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "base64 0.22.1",
  "ico",
@@ -8983,8 +8924,7 @@ dependencies = [
 [[package]]
 name = "tauri-macros"
 version = "2.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8b394794f399a421811d06966343e7933fcae92d59f5180b9388d1174497a45"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -8997,8 +8937,7 @@ dependencies = [
 [[package]]
 name = "tauri-runtime"
 version = "2.11.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0b4bc95aed361b0019067d189a1174a603d460d0f6c72606512d59fc9c12ec8"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "cookie 0.18.2",
  "dpi",
@@ -9022,8 +8961,7 @@ dependencies = [
 [[package]]
 name = "tauri-runtime-wry"
 version = "2.11.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e6fac707727b7a2f48e4ded90976324267371073edbb415ffb73bb0458d203f"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "gtk",
  "http 1.5.0",
@@ -9048,8 +8986,7 @@ dependencies = [
 [[package]]
 name = "tauri-utils"
 version = "2.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e176a18e67764923c4f1ce66f25ae4abe5f688384d5eb1a0fa6c77f3d90f887"
+source = "git+https://github.com/Travis-Gilbert/tauri?rev=e84733018d84c8004645e04cbc8fea8511ae36b1#e84733018d84c8004645e04cbc8fea8511ae36b1"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -9075,7 +9012,7 @@ dependencies = [
  "serde_with",
  "swift-rs",
  "thiserror 2.0.20",
- "toml 1.1.4+spec-1.1.0",
+ "toml 0.9.12+spec-1.1.0",
  "url",
  "urlpattern",
  "uuid",
@@ -9394,6 +9331,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "libc",
  "pin-project-lite",
  "tokio",
