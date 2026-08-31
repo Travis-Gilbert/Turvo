@@ -54,9 +54,13 @@ projections; do not hand-edit generated status pages.
 - Public Servo revision `8d45326e4a414afb3fe8b7afba98492e320d42f6` moves
   interception into HTTP transport, adds cancellable bounded accumulation and
   framing validation, and reports upload presence before application dispatch.
-  Forty-two new networking tests are written; their execution is pending.
+  All forty-two new networking tests passed Linux/macOS in run 33358290552.
   Follow-up `1dfbf13a15b2b37d93b6740024a6892b7ed5e96f` adds the missing
-  `tokio-util -> futures-util` lockfile edge and is the current engine pin.
+  `tokio-util -> futures-util` lockfile edge. The full run had 431 successes and
+  one existing file-manager test failure: that test tried to initialize a
+  second process-wide runtime. Test-only follow-up
+  `c9f01133e338ceabc6657a5f7ae9b1c772bbb21d` reuses the shared helper and is
+  the current engine pin. Both isolated and full-suite reruns remain required.
 - A separate source reviewer found a completion-channel cancellation race and
   incomplete HTTP framing validation. Both were corrected and re-reviewed.
   This is a source review receipt, not native or exhaustive concurrency proof.
@@ -79,6 +83,17 @@ succeeded. Review confirmed the same 996 packages and no package-version changes
 candidate advances the engine source ID through the lockfile-only follow-up.
 The initial engine test run stopped at `--locked` before compilation; its missing
 feature edge was fixed, not bypassed by dropping the locked requirement.
+
+Run [33358290540](https://github.com/Travis-Gilbert/Turvo/actions/runs/33358290540)
+at Turvo `918ad410cbf182a7b9ef88d99786b75fcc77071a` passed 53 runtime tests,
+two API tests, Clippy, example builds, and source-package checks on Linux/macOS.
+Both native runs passed ordinary app assets/modules, local IPC/events and all
+four hostile-frame cases, then timed out at the sandboxed top-level document:
+CSP correctly blocked its relative script because its origin was opaque.
+The fixture now loads that script from its already-allowed generated loopback
+source while retaining the sandbox header, app CSP, mandatory reports and
+negative Rust-call counters. A separate source reviewer checked this correction.
+It is not full native acceptance until the repaired exact-tip rerun passes.
 
 The encoded-response cap does not bound the embedder queue, decoded body, or
 renderer memory. Cache hits skip per-webview interception; dynamic handlers need

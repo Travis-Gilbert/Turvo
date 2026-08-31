@@ -2,11 +2,13 @@
 
 The exact source and patch digests are in `integration.json`. The patches apply
 to published Servo 0.5.0's recorded commit
-`77fccacc1f1fdce10498d50173aafaa09d02879e` and is published on the isolated
+`77fccacc1f1fdce10498d50173aafaa09d02879e` and are published on the isolated
 `Travis-Gilbert/servo:turvo/integration-0.5.0` branch. Theorem branches are untouched.
 The second patch locks the added Tokio cancellation feature's existing
-`futures-util` dependency. The current public revision is
-`1dfbf13a15b2b37d93b6740024a6892b7ed5e96f`.
+`futures-util` dependency. The third patch makes the file-manager test reuse
+the networking suite's shared runtime instead of initializing and dropping its
+own process-wide runtime. The current public revision is
+`c9f01133e338ceabc6657a5f7ae9b1c772bbb21d`.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,

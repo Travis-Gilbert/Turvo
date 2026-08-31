@@ -86,13 +86,14 @@ receipts and must not be presented as established project facts.
 
 | Area | Status | Evidence |
 |---|---|---|
-| Runtime bootstrap | Three-platform compilation; full native security suite passes on macOS/Linux at `a0b50fb` | CI run 33334311977; Record 001 |
+| Runtime bootstrap | Published-engine baseline passes native macOS/Linux; public integration passes 53 runtime tests plus 2 API tests on both targets | CI run 33358290540; Records 001/002 |
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | Linux/macOS required for current integration; Windows explicitly deferred with failing security receipts retained | Record 002; graph O13/WX1 |
 | Completion graph | Resumed on `integration/servo-0.5-unix`; W02I active for public engine/framework integration | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
-| Tauri opener proposal | All three compatibility jobs green; not adopted, full Servo popup sufficiency remains unverified | CI run 33336218434; `patches/tauri` |
+| Public integration | Exact public Servo/Tauri pins adopted; ordinary assets/modules and frame denials pass; full native sandbox rerun pending | Record 002; `patches/servo` |
+| Tauri opener proposal | Public opener seam adopted and compatibility green; actual Servo popup metadata and integration remain open | CI run 33357076684; `patches/tauri` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |

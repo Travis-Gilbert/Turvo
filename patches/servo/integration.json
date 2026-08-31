@@ -2,7 +2,7 @@
   "upstream_repository": "servo/servo",
   "base_revision": "77fccacc1f1fdce10498d50173aafaa09d02879e",
   "repository": "Travis-Gilbert/servo",
-  "revision": "1dfbf13a15b2b37d93b6740024a6892b7ed5e96f",
+  "revision": "c9f01133e338ceabc6657a5f7ae9b1c772bbb21d",
   "branch": "turvo/integration-0.5.0",
   "patches": [
     {
@@ -12,6 +12,10 @@
     {
       "path": "0002-cancellation-feature-lockfile.patch",
       "sha256": "dc729e247fd4e0e57e01430985a27a25cb793819422ca73fdb65f843f10f8267"
+    },
+    {
+      "path": "0003-shared-network-test-runtime.patch",
+      "sha256": "1ea3f575d48730645b5052f340e3ca1de26f59d0f2d43e45273b3887f4144aa4"
     }
   ]
 }

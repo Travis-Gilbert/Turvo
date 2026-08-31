@@ -229,6 +229,22 @@
     {
       "id": "F30",
       "text": "Tauri compatibility run 33357076684 at Turvo e9ed69a78b029326e194cfb4c79addfd002d1661 passed Linux/macOS after applying both versioned patches: runtime/core tests, no-Wry compilation, default Wry compatibility, five JavaScript mapping tests and isolation-mode tests. This verifies the public Tauri patch tree, not Servo popup behavior, native HTTP origin security, registry publication or Windows."
+    },
+    {
+      "id": "F31",
+      "text": "Initial engine run 33357839669 stopped at --locked before compilation because tokio-util's rt feature adds futures-util. Public follow-up Servo 1dfbf13a15b2b37d93b6740024a6892b7ed5e96f records only that dependency edge and is the current pin. Lockfile candidate run 33357839687 succeeded; review confirmed 996 unchanged package versions and 63 intended public Git packages. Turvo 918ad410cbf182a7b9ef88d99786b75fcc77071a commits the coherent lockfile; engine/native --locked reruns 33358290552 and33358290540 are pending."
+    },
+    {
+      "id": "F32",
+      "text": "Independent read-only review of Turvo e9ed69a..040ed11 found no blocking URL authority, handler-origin, HEAD/null-body, upload-dispatch, security-oracle or API integration issue. CodeRabbit reported zero issues for the scoped diff. Lockfile repairs are outside this review; all native and engine execution gates remain open."
+    },
+    {
+      "id": "F33",
+      "text": "Engine run 33358290552 at Turvo 918ad410cbf182a7b9ef88d99786b75fcc77071a executed all 432 networking tests on Linux and macOS: 431 passed, including all 42 new interception tests. The sole existing filemanager test directly initialized a second process-wide runtime. Public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d replaces that test-owned initialization with the existing shared helper; production guard and assertions are unchanged. Versioned patch 0003 and the coherent root source family now pin that revision; isolated and full networking reruns are required."
+    },
+    {
+      "id": "F34",
+      "text": "Turvo run 33358290540 at 918ad410cbf182a7b9ef88d99786b75fcc77071a passed 53 runtime tests, two API tests, Clippy, example builds and source-package checks. Both Linux/macOS native runs passed ordinary fetch/HEAD/static and dynamic modules, local IPC/events and all four hostile-frame cases, then timed out because sandbox-top's own relative attacker script was correctly blocked by CSP self against its opaque origin. The fixture correction uses only the generated already-permitted loopback script source, retaining sandbox allow-scripts, app CSP, all mandatory reports and negative call counters. Independent source review confirmed that scope; full native acceptance remains open pending rerun."
     }
   ],
   "decisions": [
@@ -812,14 +828,15 @@
         "cargo test -p turvo --lib --tests --locked",
         "native IPC source-authentication suite",
         "cargo +1.94.0 test -p servo-net --test main --locked in the exact public engine checkout",
-        "python3 scripts/check_integration.py"
+        "python3 scripts/check_integration.py",
+        "cargo +1.94.0 test -p servo-net --test main --locked filemanager_thread::test_filemanager -- --exact"
       ],
       "discharge_evidence": [],
       "progress_evidence": [
         "F17/F25: all nine native IPC/security cases pass on Linux and macOS, with exact native command/event payloads and clean shutdown.",
         "F19/F25: Windows ANGLE startup and ordinary JSON/raw/binary/channel IPC run, but remote asset disclosure and CSP handler dispatch fail the fixed native security oracle.",
         "The public API alternatives and repair ladder are recorded in docs/research/protocol-origin-boundary.md; no private-fork requirement has been adopted.",
-        "F28-F30/ADR10: public engine/runtime integration is implemented; Tauri compatibility passed on Linux/macOS. Expanded native self/fetch/HEAD/module/CORS/CSP and pre-dispatch upload checks await a committed coherent lockfile and hosted execution."
+        "F28-F34/ADR10: coherent public dependency pins, Tauri compatibility and all 42 new networking tests pass their respective checks. Full engine suite and expanded native suite exposed test-initialization/sandbox-script setup failures, now corrected without production guards or negative assertions being weakened. Exact-tip engine/native reruns are pending."
       ],
       "non_conclusions": [
         "Unix fixture success is not normal custom-origin fetch/module compatibility or full production security proof.",

@@ -281,6 +281,7 @@ fn main() {
         let _ = handle.emit("security:ack", "ack-value");
       });
       let assets_state = setup_state.clone();
+      let sandbox_script_url = format!("{base}/attacker.js");
       WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Turvo native security probe")
         .inner_size(800.0, 600.0)
@@ -300,6 +301,16 @@ fn main() {
               tauri::http::header::CONTENT_SECURITY_POLICY,
               tauri::http::HeaderValue::from_static("sandbox allow-scripts"),
             );
+            // Sandbox makes the document origin opaque, so 'self' cannot load
+            // its probe script. Use the already-allowed loopback fixture source.
+            let body = String::from_utf8_lossy(response.body())
+              .replace("__TURVO_TEST_SCRIPT_URL__", &sandbox_script_url)
+              .into_bytes();
+            response.headers_mut().insert(
+              tauri::http::header::CONTENT_LENGTH,
+              tauri::http::HeaderValue::from(body.len()),
+            );
+            *response.body_mut() = body.into();
           }
         })
         .build()?;
