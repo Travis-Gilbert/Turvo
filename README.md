@@ -10,6 +10,11 @@ deliberately deferred until Turvo has a reproducible benchmark suite.
 
 ## Current status
 
+Active integration work is Linux/macOS-first on `integration/servo-0.5-unix`.
+That branch may pin public Servo/Tauri patches; Windows is explicitly deferred,
+not verified. The published-engine release contract remains gated. See
+[Record 002](docs/records/002-unix-public-integration.md) for the current scope.
+
 Turvo is pre-release software. The repository currently contains:
 
 - an in-process Servo 0.5.0 runtime over Tao and `tauri-runtime` 2.11.3;
@@ -21,7 +26,7 @@ Turvo is pre-release software. The repository currently contains:
 - opt-in Firefox remote devtools via `builder_with_options`;
 - a minimal bundled-HTML example;
 - an API probe for invoke, events, and runtime-managed windows; and
-- compile/test CI definitions for Linux, Windows, and macOS.
+- required compile/test CI for Linux and macOS, with Windows deferred.
 
 Cross-platform compilation is not the same as cross-platform runtime proof.
 The native IPC/security fixture passes on Linux and macOS. Windows boots with
@@ -99,7 +104,7 @@ cargo run -p turvo-api
 The first Servo build is large. Keep `MOZJS_FROM_SOURCE` unset so `mozjs_sys`
 can use a prebuilt SpiderMonkey artifact where one is available. Do not start a
 local build without ample free disk space; hosted CI is the authoritative
-three-platform compile lane for this repository.
+compile lane for the active Linux/macOS integration targets.
 
 ## Engine policy
 

@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
 ## Current facts
 
@@ -29,6 +29,8 @@ Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b
 - `F23`: Servo 0.5.0 CreateNewWebViewRequest exposes builder(rendering_context) over its engine handle and one-shot responder, but no requested target URL or geometry. The Tauri proposal can safely carry a reference to that real request; it does not manufacture the metadata expected by Tauri's URL-bearing on_new_window callback. Full Servo-adapter sufficiency therefore remains unverified pending a validated public engine design or metadata API. No parent URL or synthetic about:blank substitution is accepted as proof, and no future two-phase design is ruled out without testing.
 - `F24`: Tauri opener proposal run 33336218434 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 passed all three jobs: Linux 99323466184, macOS 99323466208, Windows 99323466234. Each ran four runtime token tests, no-default-feature core compilation, and two MockRuntime contract tests; existing core tests passed 55/56/57 respectively. The exact proposal SHA-256 remains 6e3bb64896d91b5704a7f06c27cb1638b0168cddf960a0104eba6e572c4c353a on public Tauri base 7cd71369c00978a3783b6ae3e9972358abbe4ae6. This proves the Tauri API proposal, not Servo popup behavior or upstream approval.
 - `F25`: Latest runtime run 33336218455 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 again passed format/package, Linux native job 99323466341, and macOS native job 99323466358. Windows job 99323466401 passed 49 unit tests, two API tests, Clippy and all example builds, staged current ANGLE DLLs, then repeated the remote bundled-asset read and blocked_app_asset_requested=true native failure. Repetition confirms the named policy blocker remains open; no release or full-plan completion is claimed.
+- `F26`: The user authorized the proposed public version-pinned patched Servo/Tauri integration branch with 'of course, no need to ask' and explicitly deferred Windows on 2026-08-30. This resumes implementation without treating the prior Windows failure as success or removing the published-engine release requirement.
+- `F27`: Catchup found clean Turvo main at dbfc503281b784b4313fe0af86f95ae8632d4148. Servo 0.5.0 records public source commit 77fccacc1f1fdce10498d50173aafaa09d02879e in .cargo_vcs_info.json; GitHub confirms it exists. Travis-Gilbert/servo is public and its theorem/v0.4.0 branch is protected unrelated state. A new public Travis-Gilbert/tauri fork is available for isolated integration revisions.
 
 ## Explicit exclusions
 

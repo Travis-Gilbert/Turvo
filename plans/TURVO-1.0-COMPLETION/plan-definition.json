@@ -1,13 +1,21 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 3,
+  "generation": 4,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
   },
   "destination": "Ship Turvo 0.1.0 as a public, deterministic, desktop-only Tauri runtime backed by an in-process pinned Servo engine, with native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, Firefox DevTools, runtime-managed window.open, automated Servo migration, a published two-edit consumer path, and an exact-revision Theorem consumer receipt.",
-  "fixpoint": "O01-O12 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable.",
+  "fixpoint": "O01-O13 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.",
+  "execution_profile": {
+    "branch": "integration/servo-0.5-unix",
+    "required_platforms": ["Linux", "macOS"],
+    "deferred_platforms": ["Windows"],
+    "deferral_reason": "The user explicitly said to skip Windows for now on 2026-08-30. Its failing native receipts remain evidence of unresolved work under O13/WX1/VX1.",
+    "dependency_policy": "The user authorized version-pinned public Servo/Tauri integration branches. Preserve main/next and Theorem-owned branches; test actual source revisions on Linux/macOS.",
+    "release_gate": "E02 retains the published-engine/two-edit consumer requirement; VX1 retains deferred Windows proof. Neither can be discharged by integration-branch CI."
+  },
   "hard_prerequisite": "Never substitute source inspection, inherited upstream CI, metadata, or package listing for current-tip compilation or native behavior. Preserve unrelated repositories and credentials. The crates.io publish node is irreversible and remains held until every prerequisite obligation has a replayable receipt.",
   "scope_exclusions": [
     "No arbitrary third-party web compatibility commitment.",
@@ -20,20 +28,20 @@
     {
       "id": "O01",
       "source": "Desired end state; acceptance 6",
-      "text": "The standalone public repository has tracked main and next branches, an exact source tip, and green current-tip format, test, Clippy, package, and three-platform compile jobs.",
-      "oracle": "Git commit SHA plus GitHub Actions run IDs for Linux, Windows, and macOS; local metadata is not a substitute."
+      "text": "The standalone public repository has tracked main and next branches plus an exact public integration tip with green current-tip format, test, Clippy, package-source, and Linux/macOS compile jobs. Deferred Windows proof is O13.",
+      "oracle": "Git commit SHA plus Linux/macOS GitHub Actions run IDs; local metadata is not a substitute. O13 must pass before claiming three-platform release acceptance."
     },
     {
       "id": "O02",
       "source": "Named choices: engine linkage, Tauri integration, rendering v1",
       "text": "Turvo compiles as an in-process Servo runtime implementing Runtime, RuntimeHandle, window and webview dispatchers on Tao without an active Wry desktop dependency or external engine process.",
-      "oracle": "Current-tip Cargo test/Clippy receipts on all three desktop targets plus dependency-tree and process/source audit."
+      "oracle": "Current-tip Cargo test/Clippy receipts on the active Linux/macOS targets plus dependency-tree and process/source audit; Windows remains O13."
     },
     {
       "id": "O03",
       "source": "Acceptance 1 and 3",
-      "text": "Bundled hello-world assets render through Servo on Linux, Windows, and macOS, including the Windows HTTP localhost mapping, while local capability scope succeeds and a remote origin is denied.",
-      "oracle": "Automated native launch receipts on each OS, positive local and negative remote capability assertions, and captured app output or screenshots."
+      "text": "Bundled hello-world assets render through Servo on Linux/macOS with ordinary same-origin fetch and modules, while local capability scope succeeds and remote, sandboxed, and navigation-raced callers are denied. Windows HTTP mapping and native acceptance remain O13.",
+      "oracle": "Automated Linux/macOS native launch receipts, unchanged positive/negative security assertions, ordinary app fetch/module success, and captured app output or screenshots."
     },
     {
       "id": "O04",
@@ -68,7 +76,7 @@
     {
       "id": "O09",
       "source": "Churn model; acceptance 6",
-      "text": "Main CI runs the real example smoke suite on all three desktop platforms, and servo-next demonstrably creates a reviewed agent-authored migration PR without granting the agent GitHub credentials.",
+      "text": "The active integration CI runs the real example smoke suite on Linux/macOS, and servo-next demonstrably creates a reviewed agent-authored migration PR without granting the agent GitHub credentials. Main release promotion and Windows remain separate gates.",
       "oracle": "Successful workflow run IDs, smoke artifacts, and a real draft migration PR URL against next."
     },
     {
@@ -88,6 +96,12 @@
       "source": "README, positioning, follow-on work",
       "text": "Documentation is internally consistent, the literal quickstart commands work, mobile remains on Wry, provenance and dual licensing remain intact, and separate offscreen, prebuilt-engine, and benchmark follow-on plans exist without premature performance claims.",
       "oracle": "Documentation conformance script, license/package audit, working quickstart, and versioned follow-on records."
+    },
+    {
+      "id": "O13",
+      "source": "Original three-platform acceptance, explicitly deferred by the user on 2026-08-30",
+      "text": "Windows compilation, native asset CORS/CSP isolation, IPC, windows/popups, DevTools, and ANGLE bundle behavior remain required before three-platform release acceptance. Skipping Windows now is not a passing result.",
+      "oracle": "A restored Windows job at the exact integration/release revision, unchanged native positive/negative tests, and a clean-machine packaged launch."
     }
   ],
   "facts": [
@@ -190,6 +204,14 @@
     {
       "id": "F25",
       "text": "Latest runtime run 33336218455 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 again passed format/package, Linux native job 99323466341, and macOS native job 99323466358. Windows job 99323466401 passed 49 unit tests, two API tests, Clippy and all example builds, staged current ANGLE DLLs, then repeated the remote bundled-asset read and blocked_app_asset_requested=true native failure. Repetition confirms the named policy blocker remains open; no release or full-plan completion is claimed."
+    },
+    {
+      "id": "F26",
+      "text": "The user authorized the proposed public version-pinned patched Servo/Tauri integration branch with 'of course, no need to ask' and explicitly deferred Windows on 2026-08-30. This resumes implementation without treating the prior Windows failure as success or removing the published-engine release requirement."
+    },
+    {
+      "id": "F27",
+      "text": "Catchup found clean Turvo main at dbfc503281b784b4313fe0af86f95ae8632d4148. Servo 0.5.0 records public source commit 77fccacc1f1fdce10498d50173aafaa09d02879e in .cargo_vcs_info.json; GitHub confirms it exists. Travis-Gilbert/servo is public and its theorem/v0.4.0 branch is protected unrelated state. A new public Travis-Gilbert/tauri fork is available for isolated integration revisions."
     }
   ],
   "decisions": [
@@ -249,6 +271,14 @@
       "options_considered": ["Submit an upstream PR immediately: no human review receipt exists, contrary to the pinned contribution policy.", "Publish a versioned patch and hosted compatibility tests: preserves reviewability and the original W03 artifact option without implying upstream acceptance."],
       "reversibility_class": "reversible_with_cost",
       "retraction_path": "Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves."
+    },
+    {
+      "id": "ADR09",
+      "question": "How does the user's new authority change the parked graph?",
+      "choice": "Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.",
+      "options_considered": ["Continue waiting for upstream releases: no longer needed for the authorized development branch.", "Silently delete Windows/release obligations: would confuse deferred work with proof.", "Isolate development and retain explicit release/deferred gates: matches the user's authorization and preserves evidence."],
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Revert integration commits or return to the unchanged public main baseline; retain Windows failure receipts and do not rewrite pushed or Theorem-owned history."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
@@ -289,15 +319,30 @@
     }
   },
   "gate": "granted_by_user_request_2026-08-30",
-  "gate_note": "The user explicitly requested the bootstrap push, graph computation, and execution to completion in one instruction. This grants the bounded authority below; no additional scheduled human stop is charted.",
+  "gate_note": "The user requested bootstrap, graph computation, and execution, then explicitly authorized public patched Servo/Tauri integration and deferred Windows on 2026-08-30. No further confirmation is required for reversible implementation choices inside that scope; published-engine and deferred-platform release gates remain explicit.",
   "autonomy_box": {
     "status": "granted",
     "trust_tier": "Repository and public open-source delivery with proof-gated irreversible release effects.",
-    "allowed_external_effects": "Edit, test, commit, and push Turvo; create main/next branches, GitHub Actions runs, issues, and draft pull requests; create isolated upstream Tauri and Theorem worktrees and public PRs; publish turvo 0.1.0 only after O01-O10 prerequisite gates pass.",
+    "allowed_external_effects": "Edit, test, commit, and push Turvo and its public integration branch; create isolated public Servo/Tauri fork branches with exact revision pins and hosted Linux/macOS tests; create GitHub Actions runs, issues, and draft pull requests subject to upstream contribution policies; create isolated Theorem worktrees. Publish turvo 0.1.0 only after the published-engine E02, Windows VX1, and O01-O10 prerequisite gates pass.",
     "live_provider_authority": "GitHub through the authenticated Travis-Gilbert gh session. crates.io only if existing local authentication succeeds at W09; never print or inspect secret values.",
     "protected_state": "Credentials, unrelated dirty worktrees, existing user commits, production systems, private Servo patches, and any history already pushed. No force push or destructive cleanup."
   },
-  "opening_moves": [],
+  "opening_moves": [
+    {
+      "rank": 1,
+      "node": "W02I",
+      "why": "F26 resolves the development authority gate. First provide normal app origins and policy-preserving asset transport while retaining the existing authenticated IPC and native negative suite on Linux/macOS.",
+      "value_vector": {
+        "success": {"value": "uncertain", "evidence": "Pinned source and independent review identify existing HTTP policy machinery to reuse"},
+        "cost": {"value": "high", "evidence": "Requires coherent public engine/framework revisions and native builds"},
+        "latency": {"value": "hosted-build", "evidence": "Local disk is insufficient for a cold Servo build"},
+        "reversibility": {"value": "high", "evidence": "Isolated versioned branches preserve published main"},
+        "verification_coverage": {"value": "critical", "evidence": "Unchanged security negatives plus ordinary local fetch/modules"},
+        "information_gain": {"value": "high", "evidence": "Tests distinguish policy-correct transport from the old bypass"},
+        "optionality": {"value": "high", "evidence": "Public patches can be revised or upstreamed independently of release"}
+      }
+    }
+  ],
   "terminal_node": "V11",
   "render_command": "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check",
   "tasks": [
@@ -483,19 +528,17 @@
     },
     {
       "id": "W02I",
-      "label": "Replace console-derived privileged IPC identity",
+      "label": "Complete authenticated IPC and ordinary app-origin policy",
       "type": "work.implementation",
-      "status": "parked",
-      "park_reason": "Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established.",
-      "resume_condition": "A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.",
+      "status": "working",
       "controller": "agent",
       "depends_on": ["V02"],
-      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI and its observed graphics/shutdown blockers, public Servo API research or isolated patch, and scoped README/AGENTS security status"],
+      "scope": ["Turvo IPC and app-asset transport, dependency manifests, examples/security and CSP fixtures, Linux/macOS native CI, isolated public Servo transport/policy patch, isolated Tauri app-URL contract, and integration policy records"],
       "obligations": ["O03", "O04"],
       "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
       "consumes": ["V02 asset routing", "F08", "ADR04", "ADR05"],
       "produces": ["source-authenticated IPC adapter", "main-frame initialization handling", "native origin regression probes"],
-      "blueprint": ["Research and reuse the pinned engine request surface before introducing a transport; never trust a page-supplied origin, top-level URL substitution, or a hardcoded Origin header.", "Preserve payloads, callbacks, binary responses, and channel fetches; honor Tauri main-frame initialization flags.", "Require real local success, remote top-level denial, remote iframe denial, opaque-origin denial, and navigation-race denial. If the published engine lacks a sufficient API, produce a public compatibility proposal and retain an explicit release blocker."],
+      "blueprint": ["Reuse engine request provenance and existing HTTP origin/fetch/CORS/CSP policy; never trust page-supplied identity or a hardcoded Origin header.", "Preserve payloads, callbacks, binary responses, channels and main-frame script scope. Public source patches are now authorized by ADR09.", "Require Linux/macOS local fetch/modules and real local IPC success plus remote, iframe, opaque/sandboxed, navigation-race and CSP denials. Do not weaken the existing assertions. Windows is separately carried by O13."],
       "oracle_class": "source-authenticated IPC and native adversarial origin behavior",
       "implementation_mode": "real",
       "evidence_class": "focused tests and native positive/negative capability receipts",
@@ -534,17 +577,15 @@
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "parked",
-      "park_reason": "The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06.",
-      "resume_condition": "An accepted public engine API or validated design supplies the real popup metadata and responder lifecycle, or the user explicitly authorizes a patched-engine development lane. Re-enter V03 verification before adopting a public Tauri revision; do not invent popup metadata.",
+      "status": "pending",
       "controller": "agent",
-      "depends_on": ["V02"],
-      "scope": ["external Tauri clean worktree, patches/tauri, docs/research/tauri-new-window.md, and a scoped upstream-patch validation workflow"],
+      "depends_on": ["V02I"],
+      "scope": ["isolated public Tauri opener and Servo popup metadata revisions, patches/tauri, docs/research/tauri-new-window.md, and scoped compatibility tests"],
       "obligations": ["O06"],
       "gist": "Implement and propose an additive Tauri API that lets non-Wry runtimes process window.open safely.",
       "consumes": ["ADR02", "V02 baseline"],
       "produces": ["upstream tests", "public Tauri PR or versioned patch", "Turvo integration note"],
-      "blueprint": ["Preserve Wry behavior and public compatibility.", "Give runtime-neutral embedders enough request information to create or deny a new window without native Wry objects."],
+      "blueprint": ["Preserve Wry behavior and public compatibility; ADR09 authorizes consumable public integration revisions.", "Expose the actual Servo request URL/geometry and one-shot responder lifecycle, without fabricating metadata or native Wry objects. Test compatibility on Linux/macOS."],
       "oracle_class": "upstream compile, tests, and public review artifact",
       "implementation_mode": "real_external_patch",
       "evidence_class": "upstream-source test receipt and public PR URL or versioned proposal commit",
@@ -591,13 +632,13 @@
       "gist": "Resolve when a released or explicitly versioned public Tauri revision exposes the accepted runtime-neutral opener seam.",
       "consumes": ["V03 verified upstream proposal"],
       "produces": ["consumable Tauri revision"],
-      "blueprint": ["Track the public merge and release event; do not hold an executor while unchanged."],
+      "blueprint": ["ADR09 permits the exact tested public fork revision for development; verify its public reachability and pin. Upstream acceptance and published release remain E02."],
       "oracle_class": "external release event",
       "implementation_mode": "weather",
       "evidence_class": "upstream merge commit and published version or approved public revision",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh pr view --json state,mergeCommit,url"],
+      "proof_commands": ["git ls-remote https://github.com/Travis-Gilbert/tauri.git refs/heads/turvo/integration-2.11.5", "gh run view <exact-proposal-run> --log"],
       "discharge_evidence": [],
       "retraction_path": "Return to W03 if upstream requires a redesigned seam."
     },
@@ -738,7 +779,7 @@
     },
     {
       "id": "W07",
-      "label": "Build the three-platform native smoke and DevTools lane",
+      "label": "Build the Linux/macOS native smoke and DevTools lane",
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
@@ -747,9 +788,9 @@
       "obligations": ["O01", "O03", "O04", "O05", "O06", "O07", "O08", "O09"],
       "gist": "Turn cross-platform compilation into observable native behavior and Firefox DevTools proof.",
       "consumes": ["V06 packaged implementation", "W05 smoke probes"],
-      "produces": ["native smoke workflow", "three-platform artifacts", "DevTools receipt"],
+      "produces": ["native smoke workflow", "Linux/macOS artifacts", "DevTools receipt"],
       "blueprint": ["Launch packaged apps on each native runner with bounded timeouts and deterministic receipts.", "Use a virtual display only where the runner requires it; retain screenshots and logs."],
-      "oracle_class": "hosted native three-platform behavior",
+      "oracle_class": "hosted native Linux/macOS behavior; Windows deferred to O13",
       "implementation_mode": "real",
       "evidence_class": "GitHub Actions native smoke artifacts",
       "substitution_allowed": false,
@@ -761,7 +802,7 @@
     },
     {
       "id": "V07",
-      "label": "Verify native behavior on Linux, Windows, and macOS",
+      "label": "Verify native behavior on Linux and macOS",
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
@@ -770,7 +811,7 @@
       "obligations": ["O01", "O03", "O04", "O05", "O06", "O07", "O08", "O09"],
       "gist": "Confirm every native receipt is bound to the exact commit and represents real behavior rather than process startup.",
       "consumes": ["W07 workflow run and artifacts"],
-      "produces": ["three-platform acceptance receipt"],
+      "produces": ["Linux/macOS acceptance receipt; no Windows discharge"],
       "blueprint": ["Inspect each OS artifact, exact payload, screenshot, exit reason, and DevTools page identity."],
       "oracle_class": "independent hosted native verification",
       "implementation_mode": "independent_verification",
@@ -791,7 +832,7 @@
       "scope": [".github/workflows/servo-next.yml, .github/prompts/servo-next.md, next branch, and migration records"],
       "obligations": ["O09"],
       "gist": "Exercise servo-next end to end and open a real scoped agent-authored draft PR against next.",
-      "consumes": ["V07 green main lane"],
+      "consumes": ["V07 green Linux/macOS integration lane"],
       "produces": ["next branch", "migration workflow run", "draft migration PR"],
       "blueprint": ["Add a controlled target override if necessary to demonstrate the lane without lying about latest stable.", "Keep the agent credentialless and validate its patch in fresh jobs before PR creation."],
       "oracle_class": "live GitHub automation and PR",
@@ -827,12 +868,83 @@
       "retraction_path": "Return W08 to frontier with the permission, scope, or PR defect."
     },
     {
+      "id": "WX1",
+      "label": "Restore Windows native and packaging acceptance",
+      "type": "work.implementation",
+      "status": "parked",
+      "park_reason": "Windows is explicitly deferred by the user in F26. Previous cross-origin asset and CSP failures remain unresolved, not passed.",
+      "resume_condition": "Windows returns to active project scope; restore its CI target and fix the unchanged native and clean-machine packaging oracles.",
+      "controller": "agent",
+      "depends_on": ["V07"],
+      "scope": ["Windows-only native integration, ANGLE packaging, and restored Windows CI target"],
+      "obligations": ["O13"],
+      "gist": "Retain the deferred Windows acceptance work outside the active Unix development path.",
+      "consumes": ["V07 Linux/macOS implementation", "F19/F25 failed Windows receipts"],
+      "produces": ["Windows implementation and restored native CI"],
+      "blueprint": ["Restore the Windows target and reuse the same security assertions, including remote-asset and CSP handler canaries.", "Verify ANGLE libraries and clean-machine bundles before claiming Windows support."],
+      "oracle_class": "Windows native security and packaged behavior",
+      "implementation_mode": "real",
+      "evidence_class": "exact-commit Windows native and bundle receipts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": ["Windows native security and packaged smoke suite"],
+      "discharge_evidence": [],
+      "retraction_path": "Return Windows to deferred status with the exact failed receipt; do not claim three-platform acceptance.",
+      "verify_sibling": "VX1"
+    },
+    {
+      "id": "VX1",
+      "label": "Verify restored Windows acceptance",
+      "type": "verify.live",
+      "status": "pending",
+      "controller": "verifier",
+      "depends_on": ["WX1"],
+      "scope": ["read-only restored Windows CI, security and package receipts"],
+      "obligations": ["O13"],
+      "gist": "Only real Windows receipts discharge the deferred platform obligation.",
+      "consumes": ["WX1 exact-revision artifacts"],
+      "produces": ["Windows verification receipt"],
+      "blueprint": ["Independently check the original negative security assertions, native window behavior, and ANGLE bundle launch."],
+      "oracle_class": "independent Windows native verification",
+      "implementation_mode": "independent_verification",
+      "evidence_class": "Windows hosted and clean-machine artifacts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": ["Windows native security and packaged smoke suite"],
+      "discharge_evidence": [],
+      "retraction_path": "Reopen WX1 on any failed or missing Windows receipt."
+    },
+    {
+      "id": "E02",
+      "label": "Require a published-engine release graph",
+      "type": "weather",
+      "status": "parked",
+      "park_reason": "The integration branch may use public Git revisions, but no published Servo/Tauri versions provide these new integration APIs yet.",
+      "resume_condition": "Published dependency versions contain the required APIs and the unpatched two-edit consumer passes the native acceptance suite.",
+      "controller": "world",
+      "depends_on": ["V07"],
+      "scope": ["read-only published Servo/Tauri versions and clean release dependency graph"],
+      "obligations": ["O10"],
+      "gist": "Keep development authority separate from the original published-engine release requirement.",
+      "consumes": ["V07 tested public integration revisions"],
+      "produces": ["consumable published release dependency graph"],
+      "blueprint": ["Verify actual registry versions and package contents; public Git branches alone do not satisfy this gate."],
+      "oracle_class": "published dependency availability",
+      "implementation_mode": "weather",
+      "evidence_class": "registry package versions and clean consumer build/native proof",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": ["cargo publish -p turvo --dry-run --locked", "clean two-edit consumer native suite without workspace patches"],
+      "discharge_evidence": [],
+      "retraction_path": "Keep W09 closed if the registry graph loses the required APIs or native proof."
+    },
+    {
       "id": "W09",
       "label": "Publish Turvo 0.1.0 and prove a clean consumer",
       "type": "work.release",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V08"],
+      "depends_on": ["V08", "VX1", "E02"],
       "scope": ["Turvo release metadata, crates.io turvo 0.1.0, Git tag and release, and isolated consumer fixture"],
       "obligations": ["O10", "O12"],
       "gist": "Publish the independently verified crate and exercise the documented two-edit migration in a clean Tauri app.",
@@ -949,7 +1061,7 @@
       "scope": ["read-only complete Turvo and Theorem receipts, public artifacts, spec, and board"],
       "obligations": ["O12"],
       "gist": "Independently prove all obligations are discharged at their required evidence class and no rewrite remains.",
-      "consumes": ["W11 conformance record", "O01-O12 receipts"],
+      "consumes": ["W11 conformance record", "O01-O13 receipts"],
       "produces": ["fixpoint receipt"],
       "blueprint": ["Re-run the full conformance checker, inspect public artifacts, and refuse closure for any substituted or stale receipt."],
       "oracle_class": "independent full-destination verification",

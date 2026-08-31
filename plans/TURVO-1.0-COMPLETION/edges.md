@@ -1,6 +1,6 @@
 # Dependency edges
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
 | From | To | Condition |
 |---|---|---|
@@ -14,7 +14,7 @@ Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b
 | W02 | V02 | W02 completed |
 | V02 | W02I | V02 completed |
 | W02I | V02I | W02I completed |
-| V02 | W03 | V02 completed |
+| V02I | W03 | V02I completed |
 | W03 | V03 | W03 completed |
 | V03 | E01 | V03 completed |
 | E01 | W04 | E01 completed |
@@ -28,7 +28,12 @@ Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b
 | W07 | V07 | W07 completed |
 | V07 | W08 | V07 completed |
 | W08 | V08 | W08 completed |
+| V07 | WX1 | V07 completed |
+| WX1 | VX1 | WX1 completed |
+| V07 | E02 | V07 completed |
 | V08 | W09 | V08 completed |
+| VX1 | W09 | VX1 completed |
+| E02 | W09 | E02 completed |
 | W09 | V09 | W09 completed |
 | V09 | W10 | V09 completed |
 | W10 | V10 | W10 completed |

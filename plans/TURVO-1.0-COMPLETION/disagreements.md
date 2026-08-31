@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -67,3 +67,11 @@ Choice: Use the versioned-public-patch path already allowed by W03, pinned to ex
 Reversibility: `reversible_with_cost`
 
 Retraction: Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves.
+
+## ADR09: How does the user's new authority change the parked graph?
+
+Choice: Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Revert integration commits or return to the unchanged public main baseline; retain Windows failure receipts and do not rewrite pushed or Theorem-owned history.

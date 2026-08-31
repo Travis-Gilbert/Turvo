@@ -1,13 +1,13 @@
 # Board validation
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
 - Canonical JSON parses.
 - Required fields, palettes, controllers, and statuses validate.
 - Dependency graph is acyclic and every task feeds the terminal node.
 - Portable binding has at most one active frontier and its dependencies are complete.
-- 12 work nodes have verifier siblings.
-- 12 verifier nodes are independently controlled.
-- 12 obligations have work and verifier coverage.
+- 13 work nodes have verifier siblings.
+- 13 verifier nodes are independently controlled.
+- 13 obligations have work and verifier coverage.
 - Completed nodes carry discharge evidence and live oracles forbid substitution.
 - Parallel work nodes have no exact declared-scope collision.

@@ -1,12 +1,12 @@
 # Continuity
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
-Generation: `3`
+Generation: `4`
 
 ## Resume here
 
-The board has no active frontier; recompute before mutation.
+- `W02I` (working): Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.
 
 ## Completed receipts
 
@@ -21,8 +21,8 @@ The board has no active frontier; recompute before mutation.
 
 ## Parked work
 
-- `W02I`: Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established. Resume: A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.
-- `W03`: The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06. Resume: An accepted public engine API or validated design supplies the real popup metadata and responder lifecycle, or the user explicitly authorizes a patched-engine development lane. Re-enter V03 verification before adopting a public Tauri revision; do not invent popup metadata.
+- `WX1`: Windows is explicitly deferred by the user in F26. Previous cross-origin asset and CSP failures remain unresolved, not passed. Resume: Windows returns to active project scope; restore its CI target and fix the unchanged native and clean-machine packaging oracles.
+- `E02`: The integration branch may use public Git revisions, but no published Servo/Tauri versions provide these new integration APIs yet. Resume: Published dependency versions contain the required APIs and the unpatched two-edit consumer passes the native acceptance suite.
 
 ## Invariants
 

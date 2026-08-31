@@ -1,6 +1,6 @@
 # Dependency projection
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `7af2ed578ba07b057f27605aed5bdde4ea3d90548539e7e329bc17fef3e8b380`
 
 ```mermaid
 flowchart TD
@@ -12,7 +12,7 @@ flowchart TD
   V01["V01 Verify compile baseline at the published tip"]
   W02["W02 Implement Windows app-protocol interception"]
   V02["V02 Verify protocol routing and origin separation"]
-  W02I["W02I Replace console-derived privileged IPC identity"]
+  W02I["W02I Complete authenticated IPC and ordinary app-origin policy"]
   V02I["V02I Verify actual IPC sender isolation"]
   W03["W03 Create a runtime-neutral upstream new-window seam"]
   V03["V03 Verify the upstream opener seam"]
@@ -23,10 +23,13 @@ flowchart TD
   V05["V05 Verify complete example behavior"]
   W06["W06 Extract runtime modules and implement turvo-build"]
   V06["V06 Verify module and package boundaries"]
-  W07["W07 Build the three-platform native smoke and DevTools lane"]
-  V07["V07 Verify native behavior on Linux, Windows, and macOS"]
+  W07["W07 Build the Linux/macOS native smoke and DevTools lane"]
+  V07["V07 Verify native behavior on Linux and macOS"]
   W08["W08 Demonstrate the monthly Servo migration lane"]
   V08["V08 Verify migration isolation and PR behavior"]
+  WX1["WX1 Restore Windows native and packaging acceptance"]
+  VX1["VX1 Verify restored Windows acceptance"]
+  E02["E02 Require a published-engine release graph"]
   W09["W09 Publish Turvo 0.1.0 and prove a clean consumer"]
   V09["V09 Verify the published crate and two-edit consumer"]
   W10["W10 Integrate Turvo into Theorem desktop and browser hosts"]
@@ -42,7 +45,7 @@ flowchart TD
   W02 --> V02
   V02 --> W02I
   W02I --> V02I
-  V02 --> W03
+  V02I --> W03
   W03 --> V03
   V03 --> E01
   E01 --> W04
@@ -56,7 +59,12 @@ flowchart TD
   W07 --> V07
   V07 --> W08
   W08 --> V08
+  V07 --> WX1
+  WX1 --> VX1
+  V07 --> E02
   V08 --> W09
+  VX1 --> W09
+  E02 --> W09
   W09 --> V09
   V09 --> W10
   W10 --> V10
@@ -69,6 +77,7 @@ flowchart TD
   classDef parked fill:#e9d8fd,stroke:#6b46c1,color:#322659
   classDef failed fill:#fed7d7,stroke:#c53030,color:#3b0d0d
   class P00,D00,P01,D01,W01,V01,W02,V02 done
-  class W02I,W03 parked
-  class V02I,V03,E01,W04,V04,W05,V05,W06,V06,W07,V07,W08,V08,W09,V09,W10,V10,W11,V11 pending
+  class W02I working
+  class V02I,W03,V03,E01,W04,V04,W05,V05,W06,V06,W07,V07,W08,V08,VX1,W09,V09,W10,V10,W11,V11 pending
+  class WX1,E02 parked
 ```
