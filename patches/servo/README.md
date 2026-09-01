@@ -7,8 +7,10 @@ to published Servo 0.5.0's recorded commit
 The second patch locks the added Tokio cancellation feature's existing
 `futures-util` dependency. The third patch makes the file-manager test reuse
 the networking suite's shared runtime instead of initializing and dropping its
-own process-wide runtime. The current public revision is
-`c9f01133e338ceabc6657a5f7ae9b1c772bbb21d`.
+own process-wide runtime. The fourth patch marks engine request clients by
+global kind so workers cannot inherit a document's protected IPC privilege.
+The current public revision is
+`526e95cf47ba81485225660fe1a14dc000ffd4b7`.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,
@@ -31,10 +33,13 @@ do not fabricate TLS handshake metadata or network connection timing.
 
 Forty-two focused tests cover policy, status/headers, cookies/cache, decoding,
 framing, cancellation, upload rejection and fallback. The cancellation-completion
-race test is bounded stress coverage, not exhaustive scheduling proof. Run:
+race test is bounded stress coverage, not exhaustive scheduling proof. Four
+request-client tests cover caller-kind serialization, fail-closed compatibility,
+and builder propagation. Run:
 
 ```sh
 cargo +1.94.0 test -p servo-net --test main --locked
+cargo +1.94.0 test -p servo-net-traits --test request_client --locked
 ```
 
 Hosted test and native application receipts are required before acceptance.

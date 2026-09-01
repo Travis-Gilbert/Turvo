@@ -22,9 +22,9 @@ tauri-build = { version = "=2.6.3" }
 # Public development integration only. Registry release remains gated by E02;
 # published versions do not yet provide these runtime/origin contracts.
 [patch.crates-io]
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "c9f01133e338ceabc6657a5f7ae9b1c772bbb21d" }
-servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "c9f01133e338ceabc6657a5f7ae9b1c772bbb21d" }
-servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "c9f01133e338ceabc6657a5f7ae9b1c772bbb21d" }
+servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
+servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
+servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
 tauri = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-runtime = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-utils = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }

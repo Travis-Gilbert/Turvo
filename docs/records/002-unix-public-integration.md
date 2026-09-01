@@ -59,8 +59,10 @@ projections; do not hand-edit generated status pages.
   `tokio-util -> futures-util` lockfile edge. The full run had 431 successes and
   one existing file-manager test failure: that test tried to initialize a
   second process-wide runtime. Test-only follow-up
-  `c9f01133e338ceabc6657a5f7ae9b1c772bbb21d` reuses the shared helper and is
-  the current engine pin. Both isolated and full-suite reruns remain required.
+  `c9f01133e338ceabc6657a5f7ae9b1c772bbb21d` reuses the shared helper.
+  Security follow-up `526e95cf47ba81485225660fe1a14dc000ffd4b7`
+  adds engine-authored Window caller metadata and is the current engine pin.
+  Its full engine and native reruns remain required.
 - A separate source reviewer found a completion-channel cancellation race and
   incomplete HTTP framing validation. Both were corrected and re-reviewed.
   This is a source review receipt, not native or exhaustive concurrency proof.
@@ -112,13 +114,18 @@ The fixture now immediately issues the next status request while retaining its
 deadline and required-report oracle; this liveness change still needs a native
 rerun.
 
-Source review also identified a distinct caller-provenance candidate: Servo
-workers inherit their owner origin, webview and pipeline, but are represented as
-non-nested request clients. Turvo currently validates tuple origin and nested
-state without proving that the caller is a Window. The native suite therefore
-adds a same-origin child-frame worker case before changing the production guard.
-Until that fixture first reproduces and then rejects the path on Linux/macOS,
-W02I/V02I remain open.
+Source review also identified a distinct caller-provenance defect: Servo workers
+inherit their owner origin, webview and pipeline but were represented only as
+non-nested request clients. Runs
+[33565016819](https://github.com/Travis-Gilbert/Turvo/actions/runs/33565016819)
+and [33565013959](https://github.com/Travis-Gilbert/Turvo/actions/runs/33565013959)
+reproduced it on Linux and macOS: the same-origin child-frame worker reached
+Rust as `local-frame-worker`. Public Servo revision
+`526e95cf47ba81485225660fe1a14dc000ffd4b7` now marks only actual Window globals
+as window-backed, with missing serialized metadata defaulting to false. Its four
+focused request-client tests passed locally. Turvo requires that marker for IPC
+while leaving synthetic navigation registration unchanged. W02I/V02I remain
+open until the exact-pin native matrix rejects the worker on both platforms.
 
 The encoded-response cap does not bound the embedder queue, decoded body, or
 renderer memory. Cache hits skip per-webview interception; dynamic handlers need

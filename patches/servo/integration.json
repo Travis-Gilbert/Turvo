@@ -2,7 +2,7 @@
   "upstream_repository": "servo/servo",
   "base_revision": "77fccacc1f1fdce10498d50173aafaa09d02879e",
   "repository": "Travis-Gilbert/servo",
-  "revision": "c9f01133e338ceabc6657a5f7ae9b1c772bbb21d",
+  "revision": "526e95cf47ba81485225660fe1a14dc000ffd4b7",
   "branch": "turvo/integration-0.5.0",
   "patches": [
     {
@@ -16,6 +16,10 @@
     {
       "path": "0003-shared-network-test-runtime.patch",
       "sha256": "1ea3f575d48730645b5052f340e3ca1de26f59d0f2d43e45273b3887f4144aa4"
+    },
+    {
+      "path": "0004-fix-security-identify-window-backed-requests.patch",
+      "sha256": "cb1a3e86e8425f42bbb50fbd731a271f6086c2abe048910fb00c742abc48ece1"
     }
   ]
 }
