@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `91235407bdc29086e28edf393c79e56da60be8122b5192cdd9578dc6bb3a2660`
+Canonical SHA-256: `4ee76d4e4377cc9d19875dcb584e422808a51c258fa25c77b61b0448b4ade152`
 
 ## Current facts
 
@@ -38,6 +38,9 @@ Canonical SHA-256: `91235407bdc29086e28edf393c79e56da60be8122b5192cdd9578dc6bb3a
 - `F32`: Independent read-only review of Turvo e9ed69a..040ed11 found no blocking URL authority, handler-origin, HEAD/null-body, upload-dispatch, security-oracle or API integration issue. CodeRabbit reported zero issues for the scoped diff. Lockfile repairs are outside this review; all native and engine execution gates remain open.
 - `F33`: Engine run 33358290552 at Turvo 918ad410cbf182a7b9ef88d99786b75fcc77071a executed all 432 networking tests on Linux and macOS: 431 passed, including all 42 new interception tests. The sole existing filemanager test directly initialized a second process-wide runtime. Public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d replaces that test-owned initialization with the existing shared helper; production guard and assertions are unchanged. Versioned patch 0003 and the coherent root source family now pin that revision; isolated and full networking reruns are required.
 - `F34`: Turvo run 33358290540 at 918ad410cbf182a7b9ef88d99786b75fcc77071a passed 53 runtime tests, two API tests, Clippy, example builds and source-package checks. Both Linux/macOS native runs passed ordinary fetch/HEAD/static and dynamic modules, local IPC/events and all four hostile-frame cases, then timed out because sandbox-top's own relative attacker script was correctly blocked by CSP self against its opaque origin. The fixture correction uses only the generated already-permitted loopback script source, retaining sandbox allow-scripts, app CSP, all mandatory reports and negative call counters. Independent source review confirmed that scope; full native acceptance remains open pending rerun.
+- `F35`: Exact-tip Servo run 33359241838 at Turvo 54e7765f47792c5568e55baf4f47e06cd0337c86 and public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d passed the isolated filemanager case and all 432 networking tests on Linux and macOS, including all 42 interception tests. This discharges the engine-suite rerun but does not prove Turvo native caller isolation.
+- `F36`: Turvo run 33359241859 at 54e7765f47792c5568e55baf4f47e06cd0337c86 passed 53 runtime tests, two API tests, Clippy, examples and the original ten-case native security suite on Linux. macOS passed compile/test/lint/example work but its native probe timed out after five frame/module reports and one status request, with no protected handler reached. The polling fixture no longer sleeps between status responses so network completion, the existing deadline and required-report oracle drive progress; this is a liveness correction awaiting rerun, not a security acceptance receipt.
+- `F37`: Independent exact-source review found that Servo non-Window globals inherit their owner origin, webview and pipeline while RequestClient marks every such caller as not nested. Turvo's tuple-origin authentication currently checks origin and nested state but not whether the requester is a Window, so a same-origin child-frame worker may reuse captured fixture credentials. A native local-frame-worker regression probe now owns reproduction before the guard is changed. This is a source-level candidate, not a demonstrated exploit or completed repair.
 
 ## Explicit exclusions
 

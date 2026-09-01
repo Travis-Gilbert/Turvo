@@ -119,12 +119,12 @@
       }
       document.body.append(frame)
     }
+    const requiredFrameReports = [...cases, 'local-frame-worker']
     const framesDeadline = Date.now() + 15000
     while (true) {
       const reports = await (await fetch(base + '/status')).json()
-      if (cases.every(caseName => reports.includes(caseName))) break
+      if (requiredFrameReports.every(caseName => reports.includes(caseName))) break
       if (Date.now() > framesDeadline) throw new Error('a frame failed to execute and report')
-      await pause(50)
     }
     document.querySelector('#status').textContent = 'Local IPC, channels, events, CSP, and frames passed.'
     await report('local-suite', true)

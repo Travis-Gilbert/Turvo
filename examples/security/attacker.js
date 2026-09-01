@@ -6,8 +6,8 @@
   const params = new URLSearchParams(location.search)
   const caseName = params.get('case') || scriptUrl.searchParams.get('case')
   const base = params.get('base') || scriptUrl.origin
-  const report = (passed, detail = '') => fetch(base + '/report', {
-    method: 'POST', body: JSON.stringify({ case: caseName, passed, detail })
+  const report = (passed, detail = '', reportedCase = caseName) => fetch(base + '/report', {
+    method: 'POST', body: JSON.stringify({ case: reportedCase, passed, detail })
   })
   try {
     if (window !== window.top && (window.__TAURI__ || window.__TURVO_TEST_BASE__)) {
@@ -31,6 +31,29 @@
       }
     }
     if (!await attempt('')) throw new Error('untrusted command reached Rust')
+    if (caseName === 'local-frame') {
+      const result = await new Promise((resolve, reject) => {
+        const worker = new Worker(new URL('worker-probe.js', config.localRoot))
+        const timer = setTimeout(() => {
+          worker.terminate()
+          reject(new Error('local-frame worker did not execute and report'))
+        }, 10000)
+        worker.onmessage = ({ data }) => {
+          clearTimeout(timer)
+          worker.terminate()
+          resolve(data)
+        }
+        worker.onerror = () => {
+          clearTimeout(timer)
+          worker.terminate()
+          reject(new Error('local-frame worker failed to start'))
+        }
+        worker.postMessage({ key: config.key, localAsset: config.localAsset })
+      })
+      if (result.executed !== true) throw new Error(result.detail || 'worker positive control missing')
+      await report(result.denied === true, 'local-frame worker reached Rust', 'local-frame-worker')
+      if (result.denied !== true) return
+    }
     if (caseName === 'remote-frame' || caseName === 'remote-top') {
       let exposed = false
       try {

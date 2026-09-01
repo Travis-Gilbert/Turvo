@@ -7,7 +7,7 @@
     "frontendDist": [
       "index.html", "probe.js", "attacker.html", "attacker.js",
       "sandbox.html", "restore.html", "restore.js", "private.txt", "csp-canary.svg",
-      "static-module.js", "module-leaf.js", "dynamic-module.js"
+      "static-module.js", "module-leaf.js", "dynamic-module.js", "worker-probe.js"
     ]
   },
   "app": {

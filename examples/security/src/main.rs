@@ -23,6 +23,7 @@ const CASES: &[&str] = &[
   "local-suite",
   "remote-frame",
   "local-frame",
+  "local-frame-worker",
   "sandbox-frame",
   "opaque-frame",
   "sandbox-top",

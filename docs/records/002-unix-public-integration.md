@@ -95,6 +95,31 @@ source while retaining the sandbox header, app CSP, mandatory reports and
 negative Rust-call counters. A separate source reviewer checked this correction.
 It is not full native acceptance until the repaired exact-tip rerun passes.
 
+Exact-tip Servo run
+[33359241838](https://github.com/Travis-Gilbert/Turvo/actions/runs/33359241838)
+at Turvo `54e7765f47792c5568e55baf4f47e06cd0337c86` and public Servo
+`c9f01133e338ceabc6657a5f7ae9b1c772bbb21d` passed the isolated file-manager
+case and all 432 networking tests on Linux and macOS, including all forty-two
+interception tests. That is complete engine-suite evidence, not native IPC
+caller-isolation evidence.
+
+Root run
+[33359241859](https://github.com/Travis-Gilbert/Turvo/actions/runs/33359241859)
+passed the original ten-case native suite on Linux. macOS passed compile,
+tests, lint and example builds, then its native probe stopped after five
+frame/module reports and one status poll without reaching a protected handler.
+The fixture now immediately issues the next status request while retaining its
+deadline and required-report oracle; this liveness change still needs a native
+rerun.
+
+Source review also identified a distinct caller-provenance candidate: Servo
+workers inherit their owner origin, webview and pipeline, but are represented as
+non-nested request clients. Turvo currently validates tuple origin and nested
+state without proving that the caller is a Window. The native suite therefore
+adds a same-origin child-frame worker case before changing the production guard.
+Until that fixture first reproduces and then rejects the path on Linux/macOS,
+W02I/V02I remain open.
+
 The encoded-response cap does not bound the embedder queue, decoded body, or
 renderer memory. Cache hits skip per-webview interception; dynamic handlers need
 appropriate cache policy. Synthetic transport does not fabricate TLS handshakes
