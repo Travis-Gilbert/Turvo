@@ -124,8 +124,18 @@ Rust as `local-frame-worker`. Public Servo revision
 `526e95cf47ba81485225660fe1a14dc000ffd4b7` now marks only actual Window globals
 as window-backed, with missing serialized metadata defaulting to false. Its four
 focused request-client tests passed locally. Turvo requires that marker for IPC
-while leaving synthetic navigation registration unchanged. W02I/V02I remain
-open until the exact-pin native matrix rejects the worker on both platforms.
+while leaving synthetic navigation registration unchanged.
+
+Exact-tip run
+[33567283891](https://github.com/Travis-Gilbert/Turvo/actions/runs/33567283891)
+at Turvo `be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd` passed runtime tests,
+Clippy, both examples, package checks, and the native security suite on Linux
+x86_64 and macOS arm64. Both native receipts report
+`native case passed: local-frame-worker`; the final privileged-call list contains
+only `local-json`, `local-raw`, and `restored-local`, so the worker did not reach
+Rust. The root runtime test also rejects workers that share a document identity.
+These exact-pin source and native receipts complete W02I/V02I for Linux/macOS.
+They do not alter the deferred Windows or published-engine release gates.
 
 The encoded-response cap does not bound the embedder queue, decoded body, or
 renderer memory. Cache hits skip per-webview interception; dynamic handlers need

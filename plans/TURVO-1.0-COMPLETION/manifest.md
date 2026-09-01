@@ -1,6 +1,6 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `4ee76d4e4377cc9d19875dcb584e422808a51c258fa25c77b61b0448b4ade152`
+Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
 
 ## Destination
 
@@ -34,7 +34,7 @@ The user requested bootstrap, graph computation, and execution, then explicitly 
 
 ## Opening move
 
-- 1. `W02I`: F26 resolves the development authority gate. First provide normal app origins and policy-preserving asset transport while retaining the existing authenticated IPC and native negative suite on Linux/macOS.
+- 1. `W03`: V02I now proves the IPC boundary on Linux/macOS. Complete the already versioned runtime-neutral opener seam before examples depend on real popup behavior.
 
 ## Task board
 
@@ -48,9 +48,9 @@ The user requested bootstrap, graph computation, and execution, then explicitly 
 | [V01](nodes/V01.md) | completed | verifier | verify.live | W01 | O01, O02, O12 |
 | [W02](nodes/W02.md) | completed | agent | work.implementation | V01 | O03, O04 |
 | [V02](nodes/V02.md) | completed | verifier | verify.local | W02 | O03, O04 |
-| [W02I](nodes/W02I.md) | working | agent | work.implementation | V02 | O03, O04 |
-| [V02I](nodes/V02I.md) | pending | verifier | verify.live | W02I | O03, O04 |
-| [W03](nodes/W03.md) | pending | agent | work.external | V02I | O06 |
+| [W02I](nodes/W02I.md) | completed | agent | work.implementation | V02 | O03, O04 |
+| [V02I](nodes/V02I.md) | completed | verifier | verify.live | W02I | O03, O04 |
+| [W03](nodes/W03.md) | frontier | agent | work.external | V02I | O06 |
 | [V03](nodes/V03.md) | pending | verifier | verify.live | W03 | O06 |
 | [E01](nodes/E01.md) | pending | world | weather | V03 | O06 |
 | [W04](nodes/W04.md) | pending | agent | work.implementation | E01 | O06 |

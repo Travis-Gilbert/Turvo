@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `4ee76d4e4377cc9d19875dcb584e422808a51c258fa25c77b61b0448b4ade152`
+Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
 
 ## Current facts
 
@@ -41,6 +41,9 @@ Canonical SHA-256: `4ee76d4e4377cc9d19875dcb584e422808a51c258fa25c77b61b0448b4ad
 - `F35`: Exact-tip Servo run 33359241838 at Turvo 54e7765f47792c5568e55baf4f47e06cd0337c86 and public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d passed the isolated filemanager case and all 432 networking tests on Linux and macOS, including all 42 interception tests. This discharges the engine-suite rerun but does not prove Turvo native caller isolation.
 - `F36`: Turvo run 33359241859 at 54e7765f47792c5568e55baf4f47e06cd0337c86 passed 53 runtime tests, two API tests, Clippy, examples and the original ten-case native security suite on Linux. macOS passed compile/test/lint/example work but its native probe timed out after five frame/module reports and one status request, with no protected handler reached. The polling fixture no longer sleeps between status responses so network completion, the existing deadline and required-report oracle drive progress; this is a liveness correction awaiting rerun, not a security acceptance receipt.
 - `F37`: Independent exact-source review found that Servo non-Window globals inherit their owner origin, webview and pipeline while RequestClient marks every such caller as not nested. Turvo's tuple-origin authentication currently checks origin and nested state but not whether the requester is a Window, so a same-origin child-frame worker may reuse captured fixture credentials. A native local-frame-worker regression probe now owns reproduction before the guard is changed. This is a source-level candidate, not a demonstrated exploit or completed repair.
+- `F38`: Runs 33565016819 and 33565013959 reproduced the local-frame-worker exploit on Linux and macOS while ordinary assets/modules and the existing hostile-frame cases remained green. The worker reached Rust before the provenance repair, so F37 is demonstrated native behavior rather than a source-only candidate.
+- `F39`: Public Servo revision 526e95cf47ba81485225660fe1a14dc000ffd4b7 adds serde-defaulted RequestClient.is_window provenance set only by Window globals. Four focused engine tests pass, and Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd requires the marker for privileged IPC while retaining synthetic navigation registration.
+- `F40`: Exact-tip run 33567283891 at Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd passed runtime tests, Clippy, examples, packaging and native security on Linux x86_64 and macOS arm64. Both native receipts report local-frame-worker passed and TURVO_NATIVE_SECURITY passed=true; only local-json, local-raw and restored-local reached privileged Rust handlers.
 
 ## Explicit exclusions
 

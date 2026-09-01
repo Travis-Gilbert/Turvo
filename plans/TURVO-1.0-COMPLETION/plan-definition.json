@@ -1,7 +1,7 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 5,
+  "generation": 6,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
@@ -257,6 +257,18 @@
     {
       "id": "F37",
       "text": "Independent exact-source review found that Servo non-Window globals inherit their owner origin, webview and pipeline while RequestClient marks every such caller as not nested. Turvo's tuple-origin authentication currently checks origin and nested state but not whether the requester is a Window, so a same-origin child-frame worker may reuse captured fixture credentials. A native local-frame-worker regression probe now owns reproduction before the guard is changed. This is a source-level candidate, not a demonstrated exploit or completed repair."
+    },
+    {
+      "id": "F38",
+      "text": "Runs 33565016819 and 33565013959 reproduced the local-frame-worker exploit on Linux and macOS while ordinary assets/modules and the existing hostile-frame cases remained green. The worker reached Rust before the provenance repair, so F37 is demonstrated native behavior rather than a source-only candidate."
+    },
+    {
+      "id": "F39",
+      "text": "Public Servo revision 526e95cf47ba81485225660fe1a14dc000ffd4b7 adds serde-defaulted RequestClient.is_window provenance set only by Window globals. Four focused engine tests pass, and Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd requires the marker for privileged IPC while retaining synthetic navigation registration."
+    },
+    {
+      "id": "F40",
+      "text": "Exact-tip run 33567283891 at Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd passed runtime tests, Clippy, examples, packaging and native security on Linux x86_64 and macOS arm64. Both native receipts report local-frame-worker passed and TURVO_NATIVE_SECURITY passed=true; only local-json, local-raw and restored-local reached privileged Rust handlers."
     }
   ],
   "decisions": [
@@ -393,16 +405,16 @@
   "opening_moves": [
     {
       "rank": 1,
-      "node": "W02I",
-      "why": "F26 resolves the development authority gate. First provide normal app origins and policy-preserving asset transport while retaining the existing authenticated IPC and native negative suite on Linux/macOS.",
+      "node": "W03",
+      "why": "V02I now proves the IPC boundary on Linux/macOS. Complete the already versioned runtime-neutral opener seam before examples depend on real popup behavior.",
       "value_vector": {
         "success": {
           "value": "uncertain",
-          "evidence": "Pinned source and independent review identify existing HTTP policy machinery to reuse"
+            "evidence": "The exact public Tauri proposal is compatibility-green and source review identifies the remaining Servo popup metadata seam"
         },
         "cost": {
           "value": "high",
-          "evidence": "Requires coherent public engine/framework revisions and native builds"
+            "evidence": "Requires coherent public Tauri and Servo revisions plus native popup behavior"
         },
         "latency": {
           "value": "hosted-build",
@@ -414,11 +426,11 @@
         },
         "verification_coverage": {
           "value": "critical",
-          "evidence": "Unchanged security negatives plus ordinary local fetch/modules"
+            "evidence": "Compatibility tests plus exact native window.open behavior"
         },
         "information_gain": {
           "value": "high",
-          "evidence": "Tests distinguish policy-correct transport from the old bypass"
+            "evidence": "The integration separates sufficient popup metadata from fabricated Wry-native state"
         },
         "optionality": {
           "value": "high",
@@ -802,7 +814,7 @@
       "id": "W02I",
       "label": "Complete authenticated IPC and ordinary app-origin policy",
       "type": "work.implementation",
-      "status": "working",
+      "status": "completed",
       "controller": "agent",
       "depends_on": [
         "V02"
@@ -843,13 +855,18 @@
         "python3 scripts/check_integration.py",
         "cargo +1.94.0 test -p servo-net --test main --locked filemanager_thread::test_filemanager -- --exact"
       ],
-      "discharge_evidence": [],
+      "discharge_evidence": [
+        "Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd pins public Servo 526e95cf47ba81485225660fe1a14dc000ffd4b7, requires Window-backed engine provenance for privileged IPC, and retains the full hostile-frame, navigation, CSP, asset, module, binary, channel, and event suite.",
+        "CI run 33567283891 passed runtime tests, Clippy, both examples, package checks, and the native security suite on Linux x86_64 and macOS arm64. Both native receipts include local-frame-worker as passed while their privileged-call lists contain only local-json, local-raw, and restored-local.",
+        "The engine-side RequestClient serde and builder tests passed 4/4 locally at the exact public revision; the root runtime test rejects workers even when they share document identity."
+      ],
       "progress_evidence": [
         "F17/F25: all nine native IPC/security cases pass on Linux and macOS, with exact native command/event payloads and clean shutdown.",
         "F19/F25: Windows ANGLE startup and ordinary JSON/raw/binary/channel IPC run, but remote asset disclosure and CSP handler dispatch fail the fixed native security oracle.",
         "The public API alternatives and repair ladder are recorded in docs/research/protocol-origin-boundary.md; no private-fork requirement has been adopted.",
         "F28-F34/ADR10: coherent public dependency pins, Tauri compatibility and all 42 new networking tests pass their respective checks. Full engine suite and expanded native suite exposed test-initialization/sandbox-script setup failures, corrected without weakening production guards or negative assertions.",
-        "F35-F37: the exact-tip engine suite is green on Linux/macOS and Linux native security is green. macOS native liveness and a source-identified non-Window worker provenance gap now have focused fixture changes; V02I remains open until the worker path is reproduced, repaired and independently denied on both required targets."
+        "F35-F37 identified the macOS liveness issue and the non-Window worker provenance gap without weakening the native oracle.",
+        "F38-F40: public Servo 526e95cf47ba81485225660fe1a14dc000ffd4b7 and Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd repair the gap; run 33567283891 passes the exact-pin native matrix on both required targets."
       ],
       "non_conclusions": [
         "Unix fixture success is not normal custom-origin fetch/module compatibility or full production security proof.",
@@ -862,7 +879,7 @@
       "id": "V02I",
       "label": "Verify actual IPC sender isolation",
       "type": "verify.live",
-      "status": "pending",
+      "status": "completed",
       "controller": "verifier",
       "depends_on": [
         "W02I"
@@ -892,14 +909,18 @@
       "proof_commands": [
         "native IPC source-authentication suite"
       ],
-      "discharge_evidence": [],
+      "discharge_evidence": [
+        "Independent source review confirmed only Window globals set RequestClient.is_window=true; dedicated and service workers, worklets, synthetic navigation requests, and deserialized legacy clients remain false.",
+        "Exact-tip GitHub jobs 100053244582 and 100053244665 independently exercised the native worker exploit on Linux and macOS. Each reported native case passed: local-frame-worker and TURVO_NATIVE_SECURITY passed=true without any worker-originated Rust call.",
+        "Run 33567283891 is bound to Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd and completed successfully on both required platforms."
+      ],
       "retraction_path": "Return W02I to frontier with the failing sender-isolation case."
     },
     {
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "pending",
+      "status": "frontier",
       "controller": "agent",
       "depends_on": [
         "V02I"

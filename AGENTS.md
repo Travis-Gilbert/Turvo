@@ -86,13 +86,13 @@ receipts and must not be presented as established project facts.
 
 | Area | Status | Evidence |
 |---|---|---|
-| Runtime bootstrap | Published-engine baseline passes native macOS/Linux; public integration passes 53 runtime tests plus 2 API tests on both targets | CI run 33358290540; Records 001/002 |
+| Runtime bootstrap | Published-engine baseline and public exact-pin integration pass native macOS/Linux | CI runs 33358290540 and 33567283891; Records 001/002 |
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | Linux/macOS required for current integration; Windows explicitly deferred with failing security receipts retained | Record 002; graph O13/WX1 |
-| Completion graph | Resumed on `integration/servo-0.5-unix`; W02I active for public engine/framework integration | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
-| Public integration | Exact public Servo/Tauri pins adopted; ordinary assets/modules and frame denials pass; full native sandbox rerun pending | Record 002; `patches/servo` |
+| Completion graph | W02I/V02I complete on `integration/servo-0.5-unix`; W03 and W05 are the next implementation frontier | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
+| Public integration | Exact public Servo/Tauri pins adopted; ordinary assets/modules and worker/hostile-frame denials pass natively on Linux/macOS | CI run 33567283891; Record 002; `patches/servo` |
 | Tauri opener proposal | Public opener seam adopted and compatibility green; actual Servo popup metadata and integration remain open | CI run 33357076684; `patches/tauri` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
@@ -127,8 +127,9 @@ build graph.
 
 ## Next Step
 
-Continue W02I on `integration/servo-0.5-unix`; read `CONTINUITY.md` and Record 002.
-Public pinned Servo/Tauri patches are authorized. Make reversible integration
-decisions and execute without another confirmation request. Linux/macOS native
-security remains mandatory. Windows is O13/WX1; published-engine release is E02.
-Neither deferred obligation is complete, and existing Theorem branches stay intact.
+Continue W03 on `integration/servo-0.5-unix`; read `CONTINUITY.md` and Record 002.
+Public pinned Servo/Tauri patches are authorized. Complete the real Servo popup
+metadata and runtime integration without fabricating Wry-native state. Linux/macOS
+native behavior remains mandatory. Windows is O13/WX1; published-engine release
+is E02. Neither deferred obligation is complete, and existing Theorem branches
+stay intact.
