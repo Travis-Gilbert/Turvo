@@ -72,6 +72,18 @@ def validate(plan: dict[str, Any]) -> list[str]:
         errors.append("autonomy_box.status must be granted before execution")
     if not str(plan["gate"]).startswith("granted"):
         errors.append("gate must record an explicit grant")
+    profile = plan.get("execution_profile")
+    if profile:
+        required_platforms = set(profile.get("required_platforms", []))
+        deferred_platforms = set(profile.get("deferred_platforms", []))
+        if not required_platforms:
+            errors.append("execution profile needs required platforms")
+        if required_platforms & deferred_platforms:
+            errors.append("a platform cannot be both required and deferred")
+        if deferred_platforms and not profile.get("deferral_reason"):
+            errors.append("deferred platforms need an explicit reason")
+        if not profile.get("release_gate"):
+            errors.append("execution profile needs a release gate")
 
     task_list = plan["tasks"]
     task_ids = [task.get("id") for task in task_list]
@@ -269,6 +281,17 @@ def task_mark(task: dict[str, Any]) -> str:
 
 
 def render_manifest(plan: dict[str, Any], digest: str) -> str:
+    profile_section = ""
+    if profile := plan.get("execution_profile"):
+        profile_section = (
+            "## Active integration profile\n\n"
+            f"Branch: {inline_code(profile['branch'])}\n\n"
+            f"Required: {', '.join(profile['required_platforms'])}. "
+            f"Deferred: {', '.join(profile['deferred_platforms']) or 'None'}.\n\n"
+            f"{profile['deferral_reason']}\n\n"
+            f"{profile['dependency_policy']}\n\n"
+            f"Release: {profile['release_gate']}\n\n"
+        )
     rows = [
         "| Node | Status | Controller | Type | Depends on | Obligations |",
         "|---|---|---|---|---|---|",
@@ -294,6 +317,7 @@ def render_manifest(plan: dict[str, Any], digest: str) -> str:
         f"Canonical SHA-256: {inline_code(digest)}\n\n"
         "## Destination\n\n"
         f"{plan['destination']}\n\n"
+        f"{profile_section}"
         "## Fixpoint\n\n"
         f"{plan['fixpoint']}\n\n"
         "## Hard prerequisite\n\n"

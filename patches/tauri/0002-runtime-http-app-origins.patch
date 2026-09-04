@@ -1,0 +1,548 @@
+diff --git a/.changes/runtime-custom-protocol-http.md b/.changes/runtime-custom-protocol-http.md
+new file mode 100644
+index 0000000..4cc22b7
+--- /dev/null
++++ b/.changes/runtime-custom-protocol-http.md
+@@ -0,0 +1,6 @@
++---
++'tauri-runtime': 'minor:enhance'
++'tauri': 'minor:enhance'
++---
++
++Add the defaulted `Runtime::CUSTOM_PROTOCOLS_USE_HTTP` opt-in for custom runtimes to use HTTP(S) custom-protocol URLs on any platform. App URLs, asset URL conversion, local IPC classification, and isolation/proxy URLs honor the runtime convention. Native runtime defaults are unchanged. Local bundled and HTTP-mapped protocol authorities now reject nondefault ports and credentials. The runtime remains responsible for in-process loading and browser security policy enforcement; this does not change the initial-webview-origin policy of asset CORS response headers.
+diff --git a/crates/tauri-runtime/src/lib.rs b/crates/tauri-runtime/src/lib.rs
+index 235af6b..5f9cfed 100644
+--- a/crates/tauri-runtime/src/lib.rs
++++ b/crates/tauri-runtime/src/lib.rs
+@@ -403,6 +403,19 @@ pub struct RuntimeInitArgs {
+ 
+ /// The webview runtime interface.
+ pub trait Runtime<T: UserEvent>: Debug + Sized + 'static {
++  /// Whether custom protocols use HTTP(S) URLs such as `http://tauri.localhost/`.
++  ///
++  /// The default preserves the native runtime convention on Windows and Android.
++  /// Other runtimes may opt in on any platform. The runtime must serve the mapped
++  /// requests in process, preserve their browser-visible URLs, and enforce the
++  /// engine's origin, CORS, and content-security policies. Before calling a
++  /// registered protocol handler, translate the request URL back to its custom
++  /// protocol form without changing the engine's URL or authenticated origin.
++  /// This does not start a server, make custom protocols cross-origin accessible,
++  /// or select an IPC transport.
++  /// The webview's `use_https_scheme` option chooses HTTP versus HTTPS.
++  const CUSTOM_PROTOCOLS_USE_HTTP: bool = cfg!(any(windows, target_os = "android"));
++
+   /// The window message dispatcher.
+   type WindowDispatcher: WindowDispatch<T, Runtime = Self>;
+   /// The webview message dispatcher.
+diff --git a/crates/tauri/scripts/core.js b/crates/tauri/scripts/core.js
+index 86bafac..6ac0184 100644
+--- a/crates/tauri/scripts/core.js
++++ b/crates/tauri/scripts/core.js
+@@ -7,13 +7,13 @@
+     return window.crypto.getRandomValues(new Uint32Array(1))[0]
+   }
+ 
+-  const osName = __TEMPLATE_os_name__
++  const customProtocolsUseHttp = __TEMPLATE_custom_protocols_use_http__
+   const protocolScheme = __TEMPLATE_protocol_scheme__
+ 
+   Object.defineProperty(window.__TAURI_INTERNALS__, 'convertFileSrc', {
+     value: function (filePath, protocol = 'asset') {
+       const path = encodeURIComponent(filePath)
+-      return osName === 'windows' || osName === 'android'
++      return customProtocolsUseHttp
+         ? `${protocolScheme}://${protocol}.localhost/${path}`
+         : `${protocol}://localhost/${path}`
+     }
+diff --git a/crates/tauri/scripts/core.test.mjs b/crates/tauri/scripts/core.test.mjs
+new file mode 100644
+index 0000000..d2f1990
+--- /dev/null
++++ b/crates/tauri/scripts/core.test.mjs
+@@ -0,0 +1,41 @@
++// Copyright 2019-2024 Tauri Programme within The Commons Conservancy
++// SPDX-License-Identifier: Apache-2.0
++// SPDX-License-Identifier: MIT
++
++import assert from 'node:assert/strict'
++import { readFileSync } from 'node:fs'
++import test from 'node:test'
++import { runInNewContext } from 'node:vm'
++
++const template = readFileSync(new URL('./core.js', import.meta.url), 'utf8')
++
++function core(useHttp, protocolScheme) {
++  const script = template
++    .replaceAll('__TEMPLATE_custom_protocols_use_http__', JSON.stringify(useHttp))
++    .replaceAll('__TEMPLATE_protocol_scheme__', JSON.stringify(protocolScheme))
++  assert.doesNotMatch(script, /__TEMPLATE_/)
++  const window = { __TAURI_INTERNALS__: {} }
++  runInNewContext(script, { window })
++  return window.__TAURI_INTERNALS__
++}
++
++for (const { useHttp, scheme, prefix } of [
++  { useHttp: false, scheme: 'http', prefix: 'asset://localhost/' },
++  { useHttp: false, scheme: 'https', prefix: 'asset://localhost/' },
++  { useHttp: true, scheme: 'http', prefix: 'http://asset.localhost/' },
++  { useHttp: true, scheme: 'https', prefix: 'https://asset.localhost/' }
++]) {
++  test(`convertFileSrc uses runtime mapping ${useHttp} with ${scheme}`, () => {
++    assert.equal(
++      core(useHttp, scheme).convertFileSrc('/tmp/a b#?.png'),
++      `${prefix}%2Ftmp%2Fa%20b%23%3F.png`
++    )
++  })
++}
++
++test('convertFileSrc maps a caller-selected protocol without rewriting the path', () => {
++  assert.equal(
++    core(true, 'https').convertFileSrc('tauri://localhost/nested?a=1', 'myproto'),
++    'https://myproto.localhost/tauri%3A%2F%2Flocalhost%2Fnested%3Fa%3D1'
++  )
++})
+diff --git a/crates/tauri/src/manager/mod.rs b/crates/tauri/src/manager/mod.rs
+index 8215cf1..ff39d4e 100644
+--- a/crates/tauri/src/manager/mod.rs
++++ b/crates/tauri/src/manager/mod.rs
+@@ -335,14 +335,13 @@ impl<R: Runtime> AppManager<R> {
+   }
+ 
+   /// The `tauri` custom protocol URL we use to serve the embedded assets.
+-  /// Returns `tauri://localhost` or its `wry` workaround URL `http://tauri.localhost`/`https://tauri.localhost`
++  /// Returns `tauri://localhost` or the runtime's mapped HTTP(S) URL.
+   pub(crate) fn tauri_protocol_url(&self, https: bool) -> Cow<'_, Url> {
+-    if cfg!(windows) || cfg!(target_os = "android") {
+-      let scheme = if https { "https" } else { "http" };
+-      Cow::Owned(Url::parse(&format!("{scheme}://tauri.localhost")).unwrap())
+-    } else {
+-      Cow::Owned(Url::parse("tauri://localhost").unwrap())
+-    }
++    Cow::Owned(crate::protocol::custom_protocol_url(
++      "tauri",
++      https,
++      R::CUSTOM_PROTOCOLS_USE_HTTP,
++    ))
+   }
+ 
+   /// Get the base app URL for [`WebviewUrl::App`](tauri_utils::config::WebviewUrl::App).
+@@ -443,7 +442,7 @@ impl<R: Runtime> AppManager<R> {
+         #[cfg(feature = "isolation")]
+         if let Pattern::Isolation { schema, .. } = &*self.pattern {
+           let default_src = csp_map.entry("default-src".to_owned()).or_default();
+-          default_src.push(crate::pattern::format_real_schema(
++          default_src.push(crate::pattern::format_real_schema::<R>(
+             schema,
+             _use_https_schema,
+           ));
+diff --git a/crates/tauri/src/manager/webview.rs b/crates/tauri/src/manager/webview.rs
+index 8c99afb..00f10f9 100644
+--- a/crates/tauri/src/manager/webview.rs
++++ b/crates/tauri/src/manager/webview.rs
+@@ -147,7 +147,7 @@ impl<R: Runtime> WebviewManager<R> {
+       isolation_origin: &match &*app_manager.pattern {
+         #[cfg(feature = "isolation")]
+         crate::Pattern::Isolation { schema, .. } => {
+-          crate::pattern::format_real_schema(schema, use_https_scheme)
++          crate::pattern::format_real_schema::<R>(schema, use_https_scheme)
+         }
+         _ => "".to_owned(),
+       },
+@@ -205,7 +205,7 @@ impl<R: Runtime> WebviewManager<R> {
+     if let crate::Pattern::Isolation { schema, .. } = &*app_manager.pattern {
+       all_initialization_scripts.push(main_frame_script(
+         IsolationJavascript {
+-          isolation_src: &crate::pattern::format_real_schema(schema, use_https_scheme),
++          isolation_src: &crate::pattern::format_real_schema::<R>(schema, use_https_scheme),
+           style: tauri_utils::pattern::isolation::IFRAME_STYLE,
+         }
+         .render_default(&Default::default())?
+@@ -242,9 +242,12 @@ impl<R: Runtime> WebviewManager<R> {
+     }
+ 
+     let window_url = Url::parse(&pending.url).unwrap();
++    // Preserve the initial webview-origin response-header policy. This is not
++    // the authenticated origin of a later resource request. In particular,
++    // remote-first webviews retain their existing cross-origin asset allowance.
+     let window_origin = if window_url.scheme() == "data" {
+       "null".into()
+-    } else if (cfg!(windows) || cfg!(target_os = "android"))
++    } else if R::CUSTOM_PROTOCOLS_USE_HTTP
+       && window_url.scheme() != "http"
+       && window_url.scheme() != "https"
+     {
+@@ -395,7 +398,7 @@ impl<R: Runtime> WebviewManager<R> {
+     #[derive(Template)]
+     #[default_template("../../scripts/core.js")]
+     struct CoreJavascript<'a> {
+-      os_name: &'a str,
++      custom_protocols_use_http: bool,
+       protocol_scheme: &'a str,
+       invoke_key: &'a str,
+     }
+@@ -410,7 +413,7 @@ impl<R: Runtime> WebviewManager<R> {
+       pattern_script,
+       ipc_script,
+       core_script: &CoreJavascript {
+-        os_name: std::env::consts::OS,
++        custom_protocols_use_http: R::CUSTOM_PROTOCOLS_USE_HTTP,
+         protocol_scheme: if use_https_scheme { "https" } else { "http" },
+         invoke_key: self.invoke_key(),
+       }
+@@ -444,7 +447,7 @@ impl<R: Runtime> WebviewManager<R> {
+       WebviewUrl::App(path) => {
+         let app_url = app_manager.get_app_url(pending.webview_attributes.use_https_scheme);
+         let url = if PROXY_DEV_SERVER && is_local_network_url(&app_url) {
+-          Cow::Owned(Url::parse("tauri://localhost").unwrap())
++          app_manager.tauri_protocol_url(pending.webview_attributes.use_https_scheme)
+         } else {
+           app_url
+         };
+@@ -464,7 +467,9 @@ impl<R: Runtime> WebviewManager<R> {
+         let is_app_url = config_url.make_relative(url).is_some();
+         let mut url = url.clone();
+         if is_app_url && PROXY_DEV_SERVER && is_local_network_url(&url) {
+-          Url::parse("tauri://localhost").unwrap()
++          app_manager
++            .tauri_protocol_url(pending.webview_attributes.use_https_scheme)
++            .into_owned()
+         } else {
+           url
+         }
+@@ -581,8 +586,10 @@ impl<R: Runtime> WebviewManager<R> {
+       // always allow navigation events for the isolation iframe and do not emit them for consumers
+       #[cfg(feature = "isolation")]
+       if let crate::Pattern::Isolation { schema, .. } = &*pattern {
+-        if url.scheme() == schema
+-          && url.domain() == Some(crate::pattern::ISOLATION_IFRAME_SRC_DOMAIN)
++        if (url.scheme() == schema
++          && url.domain() == Some(crate::pattern::ISOLATION_IFRAME_SRC_DOMAIN))
++          || (R::CUSTOM_PROTOCOLS_USE_HTTP
++            && crate::protocol::is_custom_protocol_url(url, schema, true))
+         {
+           return true;
+         }
+diff --git a/crates/tauri/src/pattern.rs b/crates/tauri/src/pattern.rs
+index c88f11a..c734281 100644
+--- a/crates/tauri/src/pattern.rs
++++ b/crates/tauri/src/pattern.rs
+@@ -82,8 +82,8 @@ pub(crate) struct PatternJavascript {
+ }
+ 
+ #[cfg(feature = "isolation")]
+-pub(crate) fn format_real_schema(schema: &str, https: bool) -> String {
+-  if cfg!(windows) || cfg!(target_os = "android") {
++pub(crate) fn format_real_schema<R: crate::Runtime>(schema: &str, https: bool) -> String {
++  if R::CUSTOM_PROTOCOLS_USE_HTTP {
+     let scheme = if https { "https" } else { "http" };
+     format!("{scheme}://{schema}.{ISOLATION_IFRAME_SRC_DOMAIN}/")
+   } else {
+diff --git a/crates/tauri/src/protocol/isolation.rs b/crates/tauri/src/protocol/isolation.rs
+index f846ad4..1b85fda 100644
+--- a/crates/tauri/src/protocol/isolation.rs
++++ b/crates/tauri/src/protocol/isolation.rs
+@@ -26,7 +26,7 @@ pub fn get<R: Runtime>(
+   window_origin: String,
+   use_https_scheme: bool,
+ ) -> UriSchemeProtocolHandler {
+-  let frame_src = if cfg!(any(windows, target_os = "android")) {
++  let frame_src = if R::CUSTOM_PROTOCOLS_USE_HTTP {
+     let https = if use_https_scheme { "https" } else { "http" };
+     format!("{https}://{schema}.localhost")
+   } else {
+diff --git a/crates/tauri/src/protocol/mod.rs b/crates/tauri/src/protocol/mod.rs
+index 8542e2a..dc1977d 100644
+--- a/crates/tauri/src/protocol/mod.rs
++++ b/crates/tauri/src/protocol/mod.rs
+@@ -4,8 +4,126 @@
+ 
+ //! Custom protocol handlers
+ 
++use url::Url;
++
+ #[cfg(feature = "protocol-asset")]
+ pub mod asset;
+ #[cfg(feature = "isolation")]
+ pub mod isolation;
+ pub mod tauri;
++
++pub(crate) fn custom_protocol_url(protocol: &str, https: bool, use_http: bool) -> Url {
++  let url = if use_http {
++    let scheme = if https { "https" } else { "http" };
++    format!("{scheme}://{protocol}.localhost")
++  } else {
++    format!("{protocol}://localhost")
++  };
++  Url::parse(&url).expect("valid custom protocol URL")
++}
++
++/// Match the complete bundled authority, including the port. Custom schemes
++/// cannot use `Url::origin()` here because rust-url gives them opaque origins.
++pub(crate) fn is_custom_protocol_url(url: &Url, protocol: &str, use_http: bool) -> bool {
++  let expected = custom_protocol_url(protocol, url.scheme() == "https", use_http);
++  url.scheme() == expected.scheme()
++    && url.host() == expected.host()
++    && url.port_or_known_default() == expected.port_or_known_default()
++    && url.username().is_empty()
++    && url.password().is_none()
++}
++
++#[cfg(test)]
++mod tests {
++  use super::{custom_protocol_url, is_custom_protocol_url};
++  use url::Url;
++
++  #[test]
++  fn custom_protocol_url_uses_runtime_mapping() {
++    for (https, use_http, expected) in [
++      (false, false, "tauri://localhost"),
++      (true, false, "tauri://localhost"),
++      (false, true, "http://tauri.localhost/"),
++      (true, true, "https://tauri.localhost/"),
++    ] {
++      assert_eq!(
++        custom_protocol_url("tauri", https, use_http).as_str(),
++        expected
++      );
++    }
++    assert_eq!(
++      custom_protocol_url("myproto", false, true).as_str(),
++      "http://myproto.localhost/"
++    );
++  }
++
++  #[test]
++  fn mapped_protocol_authority_includes_port_and_credentials() {
++    for url in [
++      "http://tauri.localhost/path?query=1#fragment",
++      "http://tauri.localhost:80/",
++      "https://tauri.localhost:443/",
++    ] {
++      assert!(
++        is_custom_protocol_url(&Url::parse(url).unwrap(), "tauri", true),
++        "{url}"
++      );
++    }
++    for url in [
++      "http://tauri.localhost:8080/",
++      "https://tauri.localhost:80/",
++      "http://user@tauri.localhost/",
++      "http://user:password@tauri.localhost/",
++      "http://tauri.localhost.evil.example/",
++      "http://nested.tauri.localhost/",
++      "http://notregistered.localhost/",
++      "tauri://localhost/",
++    ] {
++      assert!(
++        !is_custom_protocol_url(&Url::parse(url).unwrap(), "tauri", true),
++        "{url}"
++      );
++    }
++  }
++
++  #[test]
++  fn native_protocol_authority_does_not_accept_http_or_other_ports() {
++    assert!(is_custom_protocol_url(
++      &Url::parse("tauri://localhost/path").unwrap(),
++      "tauri",
++      false
++    ));
++    for url in [
++      "tauri://localhost:1234/",
++      "tauri://other-host/",
++      "tauri://user@localhost/",
++      "http://tauri.localhost/",
++    ] {
++      assert!(
++        !is_custom_protocol_url(&Url::parse(url).unwrap(), "tauri", false),
++        "{url}"
++      );
++    }
++  }
++
++  #[test]
++  fn mapped_isolation_authority_is_exact() {
++    let schema = "isolation-123";
++    assert!(is_custom_protocol_url(
++      &Url::parse("http://isolation-123.localhost/index.html").unwrap(),
++      schema,
++      true
++    ));
++    for url in [
++      "http://isolation-123.localhost:8080/",
++      "http://user@isolation-123.localhost/",
++      "http://isolation-123.localhost.evil.example/",
++      "http://isolation-456.localhost/",
++    ] {
++      assert!(
++        !is_custom_protocol_url(&Url::parse(url).unwrap(), schema, true),
++        "{url}"
++      );
++    }
++  }
++}
+diff --git a/crates/tauri/src/webview/mod.rs b/crates/tauri/src/webview/mod.rs
+index e9e31db..7c8f388 100644
+--- a/crates/tauri/src/webview/mod.rs
++++ b/crates/tauri/src/webview/mod.rs
+@@ -1698,45 +1698,33 @@ tauri::Builder::default()
+   }
+ 
+   fn is_local_url(&self, current_url: &Url) -> bool {
++    if !current_url.username().is_empty() || current_url.password().is_some() {
++      return false;
++    }
+     let uses_https = current_url.scheme() == "https";
+ 
+-    // if from `tauri://` custom protocol
+-    ({
+-      let protocol_url = self.manager().tauri_protocol_url(uses_https);
+-      current_url.scheme() == protocol_url.scheme()
+-      && current_url.domain() == protocol_url.domain()
+-    }) ||
+-
+-    // or if relative to `devUrl` or `frontendDist`
+-      self
+-          .manager()
+-          .get_app_url(uses_https)
+-          .make_relative(current_url)
+-          .is_some()
+-
+-      // or from a custom protocol registered by the user
+-      || ({
+-        let scheme = current_url.scheme();
+-        let protocols = self.manager().webview.uri_scheme_protocols.lock().unwrap();
+-
+-        #[cfg(all(not(windows), not(target_os = "android")))]
+-        let local = protocols.contains_key(scheme);
+-
+-        // on window and android, custom protocols are `http://<protocol-name>.path/to/route`
+-        // so we check using the first part of the domain
+-        #[cfg(any(windows, target_os = "android"))]
+-        let local = {
+-          let scheme = scheme == self.manager().tauri_protocol_url(uses_https).scheme();
+-          let protocol = current_url
+-            .domain()
+-            .and_then(|d| d.strip_suffix(".localhost"))
+-            .map(|protocol| protocols.contains_key(protocol))
+-            .unwrap_or_default();
+-
+-          scheme && protocol
+-        };
+-
+-        local
++    // The bundled app authority, using the runtime's custom-protocol mapping.
++    if crate::protocol::is_custom_protocol_url(current_url, "tauri", R::CUSTOM_PROTOCOLS_USE_HTTP)
++      || self
++        .manager()
++        .get_app_url(uses_https)
++        .make_relative(current_url)
++        .is_some()
++    {
++      return true;
++    }
++
++    // Or a custom protocol registered by the user, in the same runtime convention.
++    let protocols = self.manager().webview.uri_scheme_protocols.lock().unwrap();
++    if !R::CUSTOM_PROTOCOLS_USE_HTTP {
++      return protocols.contains_key(current_url.scheme());
++    }
++    current_url
++      .domain()
++      .and_then(|d| d.strip_suffix(".localhost"))
++      .is_some_and(|protocol| {
++        protocols.contains_key(protocol)
++          && crate::protocol::is_custom_protocol_url(current_url, protocol, true)
+       })
+   }
+ 
+diff --git a/crates/tauri/tests/runtime_custom_protocol.rs b/crates/tauri/tests/runtime_custom_protocol.rs
+new file mode 100644
+index 0000000..4f9994e
+--- /dev/null
++++ b/crates/tauri/tests/runtime_custom_protocol.rs
+@@ -0,0 +1,84 @@
++// Copyright 2019-2024 Tauri Programme within The Commons Conservancy
++// SPDX-License-Identifier: Apache-2.0
++// SPDX-License-Identifier: MIT
++
++#![cfg(all(feature = "test", not(any(target_os = "android", target_os = "ios"))))]
++
++use tauri::{
++  ipc::{CallbackFn, InvokeBody},
++  test::{get_ipc_response, mock_builder, mock_context, noop_assets, MockRuntime, INVOKE_KEY},
++  webview::InvokeRequest,
++  WebviewUrl, WebviewWindowBuilder,
++};
++
++#[tauri::command]
++fn ping() -> &'static str {
++  "pong"
++}
++
++#[test]
++fn default_mock_runtime_keeps_platform_app_urls() {
++  assert_eq!(
++    <MockRuntime as tauri_runtime::Runtime<()>>::CUSTOM_PROTOCOLS_USE_HTTP,
++    cfg!(any(windows, target_os = "android"))
++  );
++  let app = mock_builder().build(mock_context(noop_assets())).unwrap();
++  for (label, https) in [("http", false), ("https", true)] {
++    let webview = WebviewWindowBuilder::new(&app, label, WebviewUrl::default())
++      .use_https_scheme(https)
++      .build()
++      .unwrap();
++    let expected = if cfg!(windows) {
++      if https {
++        "https://tauri.localhost/"
++      } else {
++        "http://tauri.localhost/"
++      }
++    } else {
++      "tauri://localhost"
++    };
++    assert_eq!(webview.url().unwrap().as_str(), expected);
++  }
++}
++
++#[test]
++fn bundled_authority_other_ports_and_credentials_do_not_receive_local_ipc_permissions() {
++  let app = mock_builder()
++    .invoke_handler(tauri::generate_handler![ping])
++    .build(mock_context(noop_assets()))
++    .unwrap();
++  let webview = WebviewWindowBuilder::new(&app, "main", WebviewUrl::default())
++    .build()
++    .unwrap();
++  let local_url = webview.url().unwrap();
++  let mut other_port = local_url.clone();
++  other_port.set_port(Some(43210)).unwrap();
++  let mut with_credentials = local_url.clone();
++  with_credentials.set_username("user").unwrap();
++  with_credentials.set_password(Some("password")).unwrap();
++  for (url, allowed) in [
++    (local_url, true),
++    (other_port, false),
++    (with_credentials, false),
++  ] {
++    let response = get_ipc_response(
++      &webview,
++      InvokeRequest {
++        cmd: "ping".into(),
++        callback: CallbackFn(0),
++        error: CallbackFn(1),
++        url,
++        body: InvokeBody::default(),
++        headers: Default::default(),
++        invoke_key: INVOKE_KEY.to_string(),
++      },
++    );
++    assert_eq!(response.is_ok(), allowed);
++    if allowed {
++      assert_eq!(response.unwrap().deserialize::<String>().unwrap(), "pong");
++    }
++  }
++}
++
++// Keep the original non-generic MockRuntime type in the public test API.
++const _: fn() -> tauri::Builder<MockRuntime> = mock_builder;

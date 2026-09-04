@@ -106,6 +106,7 @@ type IpcHandler = dyn Fn(Request<String>) + 'static;
 mod devtools;
 mod monitor;
 pub mod servo;
+pub mod storage;
 #[cfg(windows)]
 mod undecorated_resizing;
 mod util;
@@ -116,7 +117,11 @@ pub use webview::Webview;
 use window::WindowExt as _;
 
 pub mod error;
-pub use devtools::{DevtoolsServer, InvalidDevtoolsPort, OptionsAlreadyLocked, TurvoOptions};
+pub use devtools::{
+  DevtoolsServer, InvalidCodeServerUrl, InvalidDevtoolsPort, OptionsAlreadyLocked, TurvoOptions,
+};
+/// Process-wide Servo configuration, including optional storage factories.
+pub type EngineOptions = TurvoOptions;
 pub use error::{Error as ServoError, Result as ServoResult};
 
 pub use cookie;
@@ -257,6 +262,7 @@ struct WebViewAttributes<'a> {
   pub transparent: bool,
   pub background_color: Option<RGBA>,
   pub url: Option<String>,
+  pub use_https_scheme: bool,
   pub headers: Option<http::HeaderMap>,
   pub html: Option<String>,
   pub bounds: Option<Rect>,
@@ -281,6 +287,7 @@ impl Default for WebViewAttributes<'_> {
       transparent: false,
       background_color: None,
       url: None,
+      use_https_scheme: false,
       headers: None,
       html: None,
       bounds: None,
@@ -3178,6 +3185,8 @@ fn install_rustls_crypto_provider() {
 }
 
 impl<T: UserEvent> Runtime<T> for Servo<T> {
+  const CUSTOM_PROTOCOLS_USE_HTTP: bool = true;
+
   type WindowDispatcher = ServoWindowDispatcher<T>;
   type WebviewDispatcher = ServoWebviewDispatcher<T>;
   type Handle = ServoHandle<T>;
@@ -4900,6 +4909,7 @@ fn create_webview<T: UserEvent>(
   let mut webview_builder = WebViewBuilder::new()
     .with_id(&label)
     .with_transparent(webview_attributes.transparent);
+  webview_builder.attrs.use_https_scheme = webview_attributes.use_https_scheme;
 
   if url != "about:blank" {
     webview_builder = webview_builder.with_url(&url);

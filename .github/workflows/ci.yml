@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, next]
+    branches: [main, next, 'integration/**']
   pull_request:
 
 permissions:
@@ -38,7 +38,9 @@ jobs:
         run: python3 plans/TURVO-1.0-COMPLETION/render_board.py --check
       - name: Test completion graph receipt gates
         run: python3 -B -m unittest discover -s plans/TURVO-1.0-COMPLETION -p 'test_*.py'
-      - name: Check published crate contents
+      - name: Check exact public integration source families
+        run: python3 scripts/check_integration.py
+      - name: Check source package contents (not registry release proof)
         run: cargo package -p turvo --locked --no-verify
 
   build:
@@ -46,8 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
+          # Windows is explicitly deferred in Record 002 and graph O13/WX1.
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
           - os: macos-latest

@@ -1,0 +1,12 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 9a7f7ec..02190af 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -10497,6 +10497,7 @@ dependencies = [
+  "bytes",
+  "futures-core",
+  "futures-sink",
++ "futures-util",
+  "libc",
+  "pin-project-lite",
+  "tokio",

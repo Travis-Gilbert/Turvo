@@ -1,0 +1,56 @@
+From 85a5adadd5262d27200ee6ff43b3b3b05a6e74b3 Mon Sep 17 00:00:00 2001
+From: Travis Gilbert <1travisgilbert@gmail.com>
+Date: Thu, 3 Sep 2026 20:39:51 -0400
+Subject: [PATCH] fix(storage): align external engine allocator graph
+
+---
+ Cargo.lock | 8 ++++----
+ Cargo.toml | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 75980422c2..cae0d07b2b 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -10278,9 +10278,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "tikv-jemalloc-sys"
+-version = "0.6.1+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7"
++version = "0.5.4+5.3.0-patched"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "cd8aa5b2ab86a2cefa406d889139c162cbb230092f7d1d7cbc1716405d852a3b"
++checksum = "9402443cb8fd499b6f327e40565234ff34dbda27460c5b47db0db77443dd85d1"
+ dependencies = [
+  "cc",
+  "libc",
+@@ -10288,9 +10288,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "tikv-jemallocator"
+-version = "0.6.1"
++version = "0.5.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0359b4327f954e0567e69fb191cf1436617748813819c94b8cd4a431422d053a"
++checksum = "965fe0c26be5c56c94e38ba547249074803efd52adfb66de62107d95aab3eaca"
+ dependencies = [
+  "libc",
+  "tikv-jemalloc-sys",
+diff --git a/Cargo.toml b/Cargo.toml
+index 19d4caa074..afcbdd9eb4 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -249,8 +249,8 @@ sys-locale = "0.3"
+ taffy = { version = "0.12.1", default-features = false, features = ["calc", "detailed_layout_info", "grid", "std"] }
+ tempfile = "3"
+ tendril = { version = "0.5", features = ["encoding_rs"] }
+-tikv-jemalloc-sys = "0.6.1"
+-tikv-jemallocator = "0.6.1"
++tikv-jemalloc-sys = "0.5.4"
++tikv-jemallocator = "0.5.4"
+ time = { package = "time", version = "0.3", features = ["large-dates", "local-offset", "serde"] }
+ tokio = "1"
+ tokio-rustls = { version = "0.26", default-features = false, features = ["logging"] }
+-- 
+2.53.0
+

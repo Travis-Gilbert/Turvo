@@ -29,7 +29,7 @@ async function invoke(payload, response, command = 'echo') {
     cmd: command, callback: 7, error: 8, payload,
     options: { headers: { 'X-Test': 'preserved' } }
   })
-  return { result: await callback, requests }
+  return { result: await callback, requests, window: context.window }
 }
 
 function response(body, contentType, kind = 'ok', status = 200) {
@@ -91,4 +91,11 @@ test('network and HTTP failures do not fall back to an unauthenticated transport
     assert.equal(result.id, 8)
     assert.match(result.value, /network denied|request was rejected: 403/)
   }
+})
+
+test('initialization exposes an immutable Turvo runtime marker', async () => {
+  const { window } = await invoke({}, response('{}', 'application/json'))
+  assert.deepEqual({ ...window.__TURVO__ }, { runtime: 'servo' })
+  assert.equal(Object.isFrozen(window.__TURVO__), true)
+  assert.equal(Object.getOwnPropertyDescriptor(window, '__TURVO__').enumerable, false)
 })

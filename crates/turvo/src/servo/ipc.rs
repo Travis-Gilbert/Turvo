@@ -118,7 +118,9 @@ impl SourceTracker {
               .any(|directive| directive.name == "sandbox")
         })
       });
-    if client.is_nested_browsing_context || sandboxed {
+    // Workers inherit their owner's origin and pipeline but are not browser
+    // documents. Only engine-authored Window clients may cross the IPC bridge.
+    if !client.is_window || client.is_nested_browsing_context || sandboxed {
       return Err(denied);
     }
     let Origin::Origin(origin) = &request.origin else {
@@ -236,6 +238,7 @@ mod tests {
       is_nested_browsing_context: nested,
       insecure_requests_policy: InsecureRequestsPolicy::DoNotUpgrade,
       has_trustworthy_ancestor_origin: false,
+      is_window: true,
     };
     RequestBuilder::new(
       None,
@@ -302,6 +305,26 @@ mod tests {
     assert!(tracker
       .authenticate(&request("https://remote.example/", true))
       .is_err());
+  }
+
+  #[test]
+  fn rejects_workers_even_when_they_share_the_document_identity() {
+    let tracker = SourceTracker::default();
+    tracker.observe_url(&Url::parse("https://remote.example/page").unwrap());
+    let mut tuple_request = request("https://remote.example/page", false);
+    tuple_request.client.as_mut().unwrap().is_window = false;
+    assert!(tracker.authenticate(&tuple_request).is_err());
+
+    let mut opaque_request = request("tauri://localhost/", false);
+    let pipeline = pipeline();
+    opaque_request.pipeline_id = Some(pipeline);
+    tracker.accept_document(Some((
+      tracker.epoch().unwrap(),
+      u64::from(pipeline),
+      Url::parse("tauri://localhost/").unwrap(),
+    )));
+    opaque_request.client.as_mut().unwrap().is_window = false;
+    assert!(tracker.authenticate(&opaque_request).is_err());
   }
 
   #[test]

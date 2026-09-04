@@ -20,6 +20,26 @@
       await pause(20)
     }
     await fetch(base + '/stage/globals-ready')
+    assert(location.origin === 'http://tauri.localhost', 'bundled document lacks its HTTP tuple origin')
+    const asset = await fetch('private.txt', { mode: 'same-origin' })
+    assert(asset.ok && (await asset.text()).includes('turvo-cross-origin-asset-canary'), 'same-origin bundled fetch failed')
+    const head = await fetch('private.txt', { method: 'HEAD' })
+    assert(head.ok && (await head.text()) === '', 'HEAD did not preserve an empty successful response')
+    let uploadRejected = false
+    try {
+      const upload = await fetch('private.txt', { method: 'POST', body: 'must-not-reach-asset-handler' })
+      uploadRejected = !upload.ok
+    } catch (_) { uploadRejected = true }
+    assert(uploadRejected, 'asset interceptor accepted an upload without a body transport')
+    while (!window.__TURVO_STATIC_MODULE__) {
+      if (Date.now() > deadline) throw new Error('static module or its dependency failed under CSP self')
+      await pause(20)
+    }
+    assert(window.__TURVO_STATIC_MODULE__ === 'static-module-dependency-loaded', 'static module result changed')
+    const dynamicModule = await import('./dynamic-module.js')
+    assert(dynamicModule.value === 'dynamic-module-loaded', 'dynamic module failed under CSP self')
+    assert(window.__TAURI__.core.convertFileSrc('/probe.txt').startsWith('http://asset.localhost/'), 'convertFileSrc ignored the runtime URL contract')
+    await report('local-assets-modules', true)
     const { invoke, Channel } = window.__TAURI__.core
     const { listen, emit } = window.__TAURI__.event
     const originalFetch = window.fetch.bind(window)
@@ -99,12 +119,12 @@
       }
       document.body.append(frame)
     }
+    const requiredFrameReports = [...cases, 'local-frame-worker']
     const framesDeadline = Date.now() + 15000
     while (true) {
       const reports = await (await fetch(base + '/status')).json()
-      if (cases.every(caseName => reports.includes(caseName))) break
+      if (requiredFrameReports.every(caseName => reports.includes(caseName))) break
       if (Date.now() > framesDeadline) throw new Error('a frame failed to execute and report')
-      await pause(50)
     }
     document.querySelector('#status').textContent = 'Local IPC, channels, events, CSP, and frames passed.'
     await report('local-suite', true)

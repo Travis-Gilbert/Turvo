@@ -2,7 +2,7 @@ name: Tauri opener patch
 
 on:
   push:
-    branches: [main, next]
+    branches: [main, next, 'integration/**']
     paths:
       - patches/tauri/**
       - .github/workflows/tauri-opener-patch.yml
@@ -28,7 +28,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Windows is explicitly deferred in Record 002 and graph O13/WX1.
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     defaults:
@@ -53,7 +54,11 @@ jobs:
         run: |
           git apply --check ../patches/tauri/0001-runtime-owned-new-window-opener.patch
           git apply ../patches/tauri/0001-runtime-owned-new-window-opener.patch
+          git apply --check ../patches/tauri/0002-runtime-http-app-origins.patch
+          git apply ../patches/tauri/0002-runtime-http-app-origins.patch
           git diff --check
+      - name: Test runtime-driven JavaScript URL mapping
+        run: node --test crates/tauri/scripts/core.test.mjs
       - name: Install Linux prerequisites
         if: runner.os == 'Linux'
         run: |
@@ -76,3 +81,5 @@ jobs:
         run: cargo check -p tauri --no-default-features --lib --locked
       - name: Test default Wry compatibility and mock-runtime rejection
         run: cargo test -p tauri --lib --tests --features test --locked
+      - name: Test runtime URL contracts with isolation enabled
+        run: cargo test -p tauri --no-default-features --features test,isolation --lib --test runtime_custom_protocol --locked

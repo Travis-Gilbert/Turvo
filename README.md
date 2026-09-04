@@ -10,6 +10,11 @@ deliberately deferred until Turvo has a reproducible benchmark suite.
 
 ## Current status
 
+Active integration work is Linux/macOS-first on `integration/servo-0.5-unix`.
+That branch pins public Servo/Tauri patches; Windows is explicitly deferred,
+not verified. The published-engine release contract remains gated. See
+[Record 002](docs/records/002-unix-public-integration.md) for the current scope.
+
 Turvo is pre-release software. The repository currently contains:
 
 - an in-process Servo 0.5.0 runtime over Tao and `tauri-runtime` 2.11.3;
@@ -21,12 +26,15 @@ Turvo is pre-release software. The repository currently contains:
 - opt-in Firefox remote devtools via `builder_with_options`;
 - a minimal bundled-HTML example;
 - an API probe for invoke, events, and runtime-managed windows; and
-- compile/test CI definitions for Linux, Windows, and macOS.
+- required compile/test CI for Linux and macOS, with Windows deferred.
 
 Cross-platform compilation is not the same as cross-platform runtime proof.
-The native IPC/security fixture passes on Linux and macOS. Windows boots with
-ANGLE and reaches IPC, but its mapped-asset path fails cross-origin and CSP
-checks. Ordinary app `fetch()` and module compatibility also remain unresolved.
+The published-engine baseline's native IPC/security fixture passes on Linux and
+macOS. Windows boots with ANGLE and reaches IPC, but its mapped-asset path fails
+cross-origin and CSP checks. The public integration's ordinary
+`fetch()`/HEAD/static-module/dynamic-module tests pass on Linux/macOS; full native
+acceptance still awaits the sandbox-probe correction and exact-tip rerun.
+Source and automated review are not runtime proof.
 Do not use this bootstrap in production or load untrusted remote pages/frames.
 The [protocol audit](https://github.com/Travis-Gilbert/Turvo/blob/main/docs/research/protocol-origin-boundary.md)
 records the engine API limitations and required negative tests.
@@ -39,6 +47,9 @@ tracks which behaviors are wired, compiled, and actually observed.
 
 Turvo 0.1.0 is not published yet. The two edits below describe the release
 interface; until publication, use the checked-out examples in this repository.
+The integration's root-level Cargo overrides are not inherited by external
+consumers. Copying the two-edit example into another workspace cannot use these
+unreleased APIs yet; that clean-consumer check remains a release gate.
 
 Disable Tauri's default Wry runtime and add Turvo:
 
@@ -99,7 +110,7 @@ cargo run -p turvo-api
 The first Servo build is large. Keep `MOZJS_FROM_SOURCE` unset so `mozjs_sys`
 can use a prebuilt SpiderMonkey artifact where one is available. Do not start a
 local build without ample free disk space; hosted CI is the authoritative
-three-platform compile lane for this repository.
+compile lane for the active Linux/macOS integration targets.
 
 ## Engine policy
 

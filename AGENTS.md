@@ -86,13 +86,14 @@ receipts and must not be presented as established project facts.
 
 | Area | Status | Evidence |
 |---|---|---|
-| Runtime bootstrap | Three-platform compilation; full native security suite passes on macOS/Linux at `a0b50fb` | CI run 33334311977; Record 001 |
+| Runtime bootstrap | Published-engine baseline and public exact-pin integration pass native macOS/Linux | CI runs 33358290540 and 33567283891; Records 001/002 |
 | Hello-world example | Implemented, not locally launched | `examples/helloworld` |
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
-| Cross-platform CI | macOS/Linux native green; Windows ANGLE boots but native asset CORS/CSP tests fail | CI run 33334815996 |
-| Completion graph | W01/V01 and W02/V02 verified; W02I/W03 parked on engine/API integration gates | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
-| Tauri opener proposal | All three compatibility jobs green; not adopted, full Servo popup sufficiency remains unverified | CI run 33336218434; `patches/tauri` |
+| Cross-platform CI | Linux/macOS required for current integration; Windows explicitly deferred with failing security receipts retained | Record 002; graph O13/WX1 |
+| Completion graph | W02I/V02I complete on `integration/servo-0.5-unix`; W03 and W05 are the next implementation frontier | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
+| Public integration | Exact public Servo/Tauri pins adopted; ordinary assets/modules and worker/hostile-frame denials pass natively on Linux/macOS | CI run 33567283891; Record 002; `patches/servo` |
+| Tauri opener proposal | Public opener seam adopted and compatibility green; actual Servo popup metadata and integration remain open | CI run 33357076684; `patches/tauri` |
 | Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |
@@ -106,6 +107,7 @@ receipts and must not be presented as established project facts.
 | 2026-08-30 | Keep `window.open` blocked pending a Tauri trait change or reviewed patch | `NewWindowOpener` currently exposes native Wry platform objects that Servo cannot safely construct. |
 | 2026-08-30 | Separate compile CI from native behavior proof | Successful compilation does not demonstrate rendering, IPC, origin security, or window behavior. |
 | 2026-08-30 | Relay monthly agent changes as a scoped patch through fresh jobs | The migration agent should not receive a GitHub token, and credentialed PR creation must not execute agent-modified code. |
+| 2026-08-30 | Proceed with public exact-revision Servo/Tauri integration without repeated confirmation; defer Windows | Explicit user correction; preserve Linux/macOS security checks, published-release gates, and Theorem-owned branches. See Record 002. |
 
 ## Development Commands
 
@@ -125,8 +127,9 @@ build graph.
 
 ## Next Step
 
-The board is parked, not complete. Read its `CONTINUITY.md` and Record 001.
-W02I needs engine origin/policy support; W03 retains the popup API/design gap.
-Resume on a suitable public revision or explicit authorization for an isolated
-public patched-engine development lane. Do not silently replace the published
-engine requirement or weaken native, packaging, release, and consumer gates.
+Continue W03 on `integration/servo-0.5-unix`; read `CONTINUITY.md` and Record 002.
+Public pinned Servo/Tauri patches are authorized. Complete the real Servo popup
+metadata and runtime integration without fabricating Wry-native state. Linux/macOS
+native behavior remains mandatory. Windows is O13/WX1; published-engine release
+is E02. Neither deferred obligation is complete, and existing Theorem branches
+stay intact.

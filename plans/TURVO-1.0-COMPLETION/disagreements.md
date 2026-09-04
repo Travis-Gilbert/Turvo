@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `3acdebbd81396e7804d432127141c9890fbf3d665bc1d41e84f267e93a3b9f9a`
+Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -67,3 +67,19 @@ Choice: Use the versioned-public-patch path already allowed by W03, pinned to ex
 Reversibility: `reversible_with_cost`
 
 Retraction: Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves.
+
+## ADR09: How does the user's new authority change the parked graph?
+
+Choice: Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Revert integration commits or return to the unchanged public main baseline; retain Windows failure receipts and do not rewrite pushed or Theorem-owned history.
+
+## ADR10: How should normal app origin policy work on the authorized Unix integration?
+
+Choice: Use Tauri's runtime-neutral HTTP URL opt-in and move Servo interception inside HTTP transport, retaining browser policy, current redirect URLs and response filtering. Keep body-aware IPC separate; reject unsupported asset uploads before dispatch. Require exact public source-family pins, framing/cancellation tests and native self/fetch/module/negative-oracle receipts.
+
+Reversibility: `reversible_with_cost`
+
+Retraction: Revert public integration pins and transport changes without weakening the old security oracle. No upstream Servo submission is assumed: its AI contribution policy keeps this work on the authorized public fork and E02 remains external.

@@ -1,13 +1,26 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 3,
+  "generation": 6,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
   },
   "destination": "Ship Turvo 0.1.0 as a public, deterministic, desktop-only Tauri runtime backed by an in-process pinned Servo engine, with native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, Firefox DevTools, runtime-managed window.open, automated Servo migration, a published two-edit consumer path, and an exact-revision Theorem consumer receipt.",
-  "fixpoint": "O01-O12 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable.",
+  "fixpoint": "O01-O13 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.",
+  "execution_profile": {
+    "branch": "integration/servo-0.5-unix",
+    "required_platforms": [
+      "Linux",
+      "macOS"
+    ],
+    "deferred_platforms": [
+      "Windows"
+    ],
+    "deferral_reason": "The user explicitly said to skip Windows for now on 2026-08-30. Its failing native receipts remain evidence of unresolved work under O13/WX1/VX1.",
+    "dependency_policy": "The user authorized version-pinned public Servo/Tauri integration branches. Preserve main/next and Theorem-owned branches; test actual source revisions on Linux/macOS.",
+    "release_gate": "E02 retains the published-engine/two-edit consumer requirement; VX1 retains deferred Windows proof. Neither can be discharged by integration-branch CI."
+  },
   "hard_prerequisite": "Never substitute source inspection, inherited upstream CI, metadata, or package listing for current-tip compilation or native behavior. Preserve unrelated repositories and credentials. The crates.io publish node is irreversible and remains held until every prerequisite obligation has a replayable receipt.",
   "scope_exclusions": [
     "No arbitrary third-party web compatibility commitment.",
@@ -20,20 +33,20 @@
     {
       "id": "O01",
       "source": "Desired end state; acceptance 6",
-      "text": "The standalone public repository has tracked main and next branches, an exact source tip, and green current-tip format, test, Clippy, package, and three-platform compile jobs.",
-      "oracle": "Git commit SHA plus GitHub Actions run IDs for Linux, Windows, and macOS; local metadata is not a substitute."
+      "text": "The standalone public repository has tracked main and next branches plus an exact public integration tip with green current-tip format, test, Clippy, package-source, and Linux/macOS compile jobs. Deferred Windows proof is O13.",
+      "oracle": "Git commit SHA plus Linux/macOS GitHub Actions run IDs; local metadata is not a substitute. O13 must pass before claiming three-platform release acceptance."
     },
     {
       "id": "O02",
       "source": "Named choices: engine linkage, Tauri integration, rendering v1",
       "text": "Turvo compiles as an in-process Servo runtime implementing Runtime, RuntimeHandle, window and webview dispatchers on Tao without an active Wry desktop dependency or external engine process.",
-      "oracle": "Current-tip Cargo test/Clippy receipts on all three desktop targets plus dependency-tree and process/source audit."
+      "oracle": "Current-tip Cargo test/Clippy receipts on the active Linux/macOS targets plus dependency-tree and process/source audit; Windows remains O13."
     },
     {
       "id": "O03",
       "source": "Acceptance 1 and 3",
-      "text": "Bundled hello-world assets render through Servo on Linux, Windows, and macOS, including the Windows HTTP localhost mapping, while local capability scope succeeds and a remote origin is denied.",
-      "oracle": "Automated native launch receipts on each OS, positive local and negative remote capability assertions, and captured app output or screenshots."
+      "text": "Bundled hello-world assets render through Servo on Linux/macOS with ordinary same-origin fetch and modules, while local capability scope succeeds and remote, sandboxed, and navigation-raced callers are denied. Windows HTTP mapping and native acceptance remain O13.",
+      "oracle": "Automated Linux/macOS native launch receipts, unchanged positive/negative security assertions, ordinary app fetch/module success, and captured app output or screenshots."
     },
     {
       "id": "O04",
@@ -68,7 +81,7 @@
     {
       "id": "O09",
       "source": "Churn model; acceptance 6",
-      "text": "Main CI runs the real example smoke suite on all three desktop platforms, and servo-next demonstrably creates a reviewed agent-authored migration PR without granting the agent GitHub credentials.",
+      "text": "The active integration CI runs the real example smoke suite on Linux/macOS, and servo-next demonstrably creates a reviewed agent-authored migration PR without granting the agent GitHub credentials. Main release promotion and Windows remain separate gates.",
       "oracle": "Successful workflow run IDs, smoke artifacts, and a real draft migration PR URL against next."
     },
     {
@@ -88,6 +101,12 @@
       "source": "README, positioning, follow-on work",
       "text": "Documentation is internally consistent, the literal quickstart commands work, mobile remains on Wry, provenance and dual licensing remain intact, and separate offscreen, prebuilt-engine, and benchmark follow-on plans exist without premature performance claims.",
       "oracle": "Documentation conformance script, license/package audit, working quickstart, and versioned follow-on records."
+    },
+    {
+      "id": "O13",
+      "source": "Original three-platform acceptance, explicitly deferred by the user on 2026-08-30",
+      "text": "Windows compilation, native asset CORS/CSP isolation, IPC, windows/popups, DevTools, and ANGLE bundle behavior remain required before three-platform release acceptance. Skipping Windows now is not a passing result.",
+      "oracle": "A restored Windows job at the exact integration/release revision, unchanged native positive/negative tests, and a clean-machine packaged launch."
     }
   ],
   "facts": [
@@ -190,6 +209,66 @@
     {
       "id": "F25",
       "text": "Latest runtime run 33336218455 at bc4946982bfa385a39f25a62bbaa7b5340a1d497 again passed format/package, Linux native job 99323466341, and macOS native job 99323466358. Windows job 99323466401 passed 49 unit tests, two API tests, Clippy and all example builds, staged current ANGLE DLLs, then repeated the remote bundled-asset read and blocked_app_asset_requested=true native failure. Repetition confirms the named policy blocker remains open; no release or full-plan completion is claimed."
+    },
+    {
+      "id": "F26",
+      "text": "The user authorized the proposed public version-pinned patched Servo/Tauri integration branch with 'of course, no need to ask' and explicitly deferred Windows on 2026-08-30. This resumes implementation without treating the prior Windows failure as success or removing the published-engine release requirement."
+    },
+    {
+      "id": "F27",
+      "text": "Catchup found clean Turvo main at dbfc503281b784b4313fe0af86f95ae8632d4148. Servo 0.5.0 records public source commit 77fccacc1f1fdce10498d50173aafaa09d02879e in .cargo_vcs_info.json; GitHub confirms it exists. Travis-Gilbert/servo is public and its theorem/v0.4.0 branch is protected unrelated state. A new public Travis-Gilbert/tauri fork is available for isolated integration revisions."
+    },
+    {
+      "id": "F28",
+      "text": "Public integration revisions are Servo 8d45326e4a414afb3fe8b7afba98492e320d42f6 and Tauri e84733018d84c8004645e04cbc8fea8511ae36b1, on isolated Turvo-specific fork branches. Versioned patches and digests are in patches/servo and patches/tauri. Turvo opts into HTTP app URLs on Linux/macOS and preserves custom handler URLs; IPC keeps its authenticated body stream. Development pins are adopted explicitly; committed-lockfile, engine-test and new native-module receipts remain pending."
+    },
+    {
+      "id": "F29",
+      "text": "A separate source reviewer identified a post-interception cancellation completion-channel race and incomplete HTTP framing validation. Both were fixed and re-reviewed without remaining source blockers. The engine suite has 42 focused tests including framing and bounded completion/cancellation stress; source review and test construction do not establish execution. Turvo suppresses HEAD/null-status payloads and uses engine has_body metadata to reject uploads before asset handler dispatch."
+    },
+    {
+      "id": "F30",
+      "text": "Tauri compatibility run 33357076684 at Turvo e9ed69a78b029326e194cfb4c79addfd002d1661 passed Linux/macOS after applying both versioned patches: runtime/core tests, no-Wry compilation, default Wry compatibility, five JavaScript mapping tests and isolation-mode tests. This verifies the public Tauri patch tree, not Servo popup behavior, native HTTP origin security, registry publication or Windows."
+    },
+    {
+      "id": "F31",
+      "text": "Initial engine run 33357839669 stopped at --locked before compilation because tokio-util's rt feature adds futures-util. Public follow-up Servo 1dfbf13a15b2b37d93b6740024a6892b7ed5e96f records only that dependency edge and is the current pin. Lockfile candidate run 33357839687 succeeded; review confirmed 996 unchanged package versions and 63 intended public Git packages. Turvo 918ad410cbf182a7b9ef88d99786b75fcc77071a commits the coherent lockfile; engine/native --locked reruns 33358290552 and33358290540 are pending."
+    },
+    {
+      "id": "F32",
+      "text": "Independent read-only review of Turvo e9ed69a..040ed11 found no blocking URL authority, handler-origin, HEAD/null-body, upload-dispatch, security-oracle or API integration issue. CodeRabbit reported zero issues for the scoped diff. Lockfile repairs are outside this review; all native and engine execution gates remain open."
+    },
+    {
+      "id": "F33",
+      "text": "Engine run 33358290552 at Turvo 918ad410cbf182a7b9ef88d99786b75fcc77071a executed all 432 networking tests on Linux and macOS: 431 passed, including all 42 new interception tests. The sole existing filemanager test directly initialized a second process-wide runtime. Public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d replaces that test-owned initialization with the existing shared helper; production guard and assertions are unchanged. Versioned patch 0003 and the coherent root source family now pin that revision; isolated and full networking reruns are required."
+    },
+    {
+      "id": "F34",
+      "text": "Turvo run 33358290540 at 918ad410cbf182a7b9ef88d99786b75fcc77071a passed 53 runtime tests, two API tests, Clippy, example builds and source-package checks. Both Linux/macOS native runs passed ordinary fetch/HEAD/static and dynamic modules, local IPC/events and all four hostile-frame cases, then timed out because sandbox-top's own relative attacker script was correctly blocked by CSP self against its opaque origin. The fixture correction uses only the generated already-permitted loopback script source, retaining sandbox allow-scripts, app CSP, all mandatory reports and negative call counters. Independent source review confirmed that scope; full native acceptance remains open pending rerun."
+    },
+    {
+      "id": "F35",
+      "text": "Exact-tip Servo run 33359241838 at Turvo 54e7765f47792c5568e55baf4f47e06cd0337c86 and public Servo c9f01133e338ceabc6657a5f7ae9b1c772bbb21d passed the isolated filemanager case and all 432 networking tests on Linux and macOS, including all 42 interception tests. This discharges the engine-suite rerun but does not prove Turvo native caller isolation."
+    },
+    {
+      "id": "F36",
+      "text": "Turvo run 33359241859 at 54e7765f47792c5568e55baf4f47e06cd0337c86 passed 53 runtime tests, two API tests, Clippy, examples and the original ten-case native security suite on Linux. macOS passed compile/test/lint/example work but its native probe timed out after five frame/module reports and one status request, with no protected handler reached. The polling fixture no longer sleeps between status responses so network completion, the existing deadline and required-report oracle drive progress; this is a liveness correction awaiting rerun, not a security acceptance receipt."
+    },
+    {
+      "id": "F37",
+      "text": "Independent exact-source review found that Servo non-Window globals inherit their owner origin, webview and pipeline while RequestClient marks every such caller as not nested. Turvo's tuple-origin authentication currently checks origin and nested state but not whether the requester is a Window, so a same-origin child-frame worker may reuse captured fixture credentials. A native local-frame-worker regression probe now owns reproduction before the guard is changed. This is a source-level candidate, not a demonstrated exploit or completed repair."
+    },
+    {
+      "id": "F38",
+      "text": "Runs 33565016819 and 33565013959 reproduced the local-frame-worker exploit on Linux and macOS while ordinary assets/modules and the existing hostile-frame cases remained green. The worker reached Rust before the provenance repair, so F37 is demonstrated native behavior rather than a source-only candidate."
+    },
+    {
+      "id": "F39",
+      "text": "Public Servo revision 526e95cf47ba81485225660fe1a14dc000ffd4b7 adds serde-defaulted RequestClient.is_window provenance set only by Window globals. Four focused engine tests pass, and Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd requires the marker for privileged IPC while retaining synthetic navigation registration."
+    },
+    {
+      "id": "F40",
+      "text": "Exact-tip run 33567283891 at Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd passed runtime tests, Clippy, examples, packaging and native security on Linux x86_64 and macOS arm64. Both native receipts report local-frame-worker passed and TURVO_NATIVE_SECURITY passed=true; only local-json, local-raw and restored-local reached privileged Rust handlers."
     }
   ],
   "decisions": [
@@ -246,9 +325,35 @@
       "id": "ADR08",
       "question": "How can W03 produce a reviewable upstream proposal without representing AI work as human-reviewed?",
       "choice": "Use the versioned-public-patch path already allowed by W03, pinned to exact Tauri source and tested on all three desktop hosts in Turvo CI. Preserve the existing native opener signature, document the new runtime-only accessor tradeoff, and default-reject unsupported tokens. Do not submit an upstream PR until a human has reviewed and tested it under Tauri's contribution policy. E01 remains an accepted-release or explicitly approved-public-revision gate.",
-      "options_considered": ["Submit an upstream PR immediately: no human review receipt exists, contrary to the pinned contribution policy.", "Publish a versioned patch and hosted compatibility tests: preserves reviewability and the original W03 artifact option without implying upstream acceptance."],
+      "options_considered": [
+        "Submit an upstream PR immediately: no human review receipt exists, contrary to the pinned contribution policy.",
+        "Publish a versioned patch and hosted compatibility tests: preserves reviewability and the original W03 artifact option without implying upstream acceptance."
+      ],
       "reversibility_class": "reversible_with_cost",
       "retraction_path": "Revise or remove the proposal before adoption; Turvo's released dependency graph remains unchanged until E01 resolves."
+    },
+    {
+      "id": "ADR09",
+      "question": "How does the user's new authority change the parked graph?",
+      "choice": "Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.",
+      "options_considered": [
+        "Continue waiting for upstream releases: no longer needed for the authorized development branch.",
+        "Silently delete Windows/release obligations: would confuse deferred work with proof.",
+        "Isolate development and retain explicit release/deferred gates: matches the user's authorization and preserves evidence."
+      ],
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Revert integration commits or return to the unchanged public main baseline; retain Windows failure receipts and do not rewrite pushed or Theorem-owned history."
+    },
+    {
+      "id": "ADR10",
+      "question": "How should normal app origin policy work on the authorized Unix integration?",
+      "choice": "Use Tauri's runtime-neutral HTTP URL opt-in and move Servo interception inside HTTP transport, retaining browser policy, current redirect URLs and response filtering. Keep body-aware IPC separate; reject unsupported asset uploads before dispatch. Require exact public source-family pins, framing/cancellation tests and native self/fetch/module/negative-oracle receipts.",
+      "options_considered": [
+        "Custom opaque-origin registration would also require changing independent URL/CSP origin implementations and cross-process propagation.",
+        "An in-process HTTP tuple origin reuses existing engine policy; it does not need a server or permissive fetchable flag."
+      ],
+      "reversibility_class": "reversible_with_cost",
+      "retraction_path": "Revert public integration pins and transport changes without weakening the old security oracle. No upstream Servo submission is assumed: its AI contribution policy keeps this work on the authorized public fork and E02 remains external."
     }
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
@@ -289,15 +394,51 @@
     }
   },
   "gate": "granted_by_user_request_2026-08-30",
-  "gate_note": "The user explicitly requested the bootstrap push, graph computation, and execution to completion in one instruction. This grants the bounded authority below; no additional scheduled human stop is charted.",
+  "gate_note": "The user requested bootstrap, graph computation, and execution, then explicitly authorized public patched Servo/Tauri integration and deferred Windows on 2026-08-30. No further confirmation is required for reversible implementation choices inside that scope; published-engine and deferred-platform release gates remain explicit.",
   "autonomy_box": {
     "status": "granted",
     "trust_tier": "Repository and public open-source delivery with proof-gated irreversible release effects.",
-    "allowed_external_effects": "Edit, test, commit, and push Turvo; create main/next branches, GitHub Actions runs, issues, and draft pull requests; create isolated upstream Tauri and Theorem worktrees and public PRs; publish turvo 0.1.0 only after O01-O10 prerequisite gates pass.",
+    "allowed_external_effects": "Edit, test, commit, and push Turvo and its public integration branch; create isolated public Servo/Tauri fork branches with exact revision pins and hosted Linux/macOS tests; create GitHub Actions runs, issues, and draft pull requests subject to upstream contribution policies; create isolated Theorem worktrees. Publish turvo 0.1.0 only after the published-engine E02, Windows VX1, and O01-O10 prerequisite gates pass.",
     "live_provider_authority": "GitHub through the authenticated Travis-Gilbert gh session. crates.io only if existing local authentication succeeds at W09; never print or inspect secret values.",
     "protected_state": "Credentials, unrelated dirty worktrees, existing user commits, production systems, private Servo patches, and any history already pushed. No force push or destructive cleanup."
   },
-  "opening_moves": [],
+  "opening_moves": [
+    {
+      "rank": 1,
+      "node": "W03",
+      "why": "V02I now proves the IPC boundary on Linux/macOS. Complete the already versioned runtime-neutral opener seam before examples depend on real popup behavior.",
+      "value_vector": {
+        "success": {
+          "value": "uncertain",
+            "evidence": "The exact public Tauri proposal is compatibility-green and source review identifies the remaining Servo popup metadata seam"
+        },
+        "cost": {
+          "value": "high",
+            "evidence": "Requires coherent public Tauri and Servo revisions plus native popup behavior"
+        },
+        "latency": {
+          "value": "hosted-build",
+          "evidence": "Local disk is insufficient for a cold Servo build"
+        },
+        "reversibility": {
+          "value": "high",
+          "evidence": "Isolated versioned branches preserve published main"
+        },
+        "verification_coverage": {
+          "value": "critical",
+            "evidence": "Compatibility tests plus exact native window.open behavior"
+        },
+        "information_gain": {
+          "value": "high",
+            "evidence": "The integration separates sufficient popup metadata from fabricated Wry-native state"
+        },
+        "optionality": {
+          "value": "high",
+          "evidence": "Public patches can be revised or upstreamed independently of release"
+        }
+      }
+    }
+  ],
   "terminal_node": "V11",
   "render_command": "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check",
   "tasks": [
@@ -308,20 +449,53 @@
       "status": "completed",
       "controller": "agent",
       "depends_on": [],
-      "scope": ["read-only Turvo source, spec, dependency, Git, disk, and public-endpoint census"],
-      "obligations": ["O01", "O02", "O03", "O04", "O05", "O06", "O07", "O08", "O09", "O10", "O11", "O12"],
+      "scope": [
+        "read-only Turvo source, spec, dependency, Git, disk, and public-endpoint census"
+      ],
+      "obligations": [
+        "O01",
+        "O02",
+        "O03",
+        "O04",
+        "O05",
+        "O06",
+        "O07",
+        "O08",
+        "O09",
+        "O10",
+        "O11",
+        "O12"
+      ],
       "gist": "Bind every handoff obligation to current source and public repository truth.",
-      "consumes": ["HANDOFF-TURVO-1_0.md", "current Turvo working tree"],
-      "produces": ["spec-review mapping", "public bootstrap tip", "initial CI run"],
-      "blueprint": ["Audit source versus all named choices and observable criteria.", "Reconcile and push the initial bootstrap without rewriting user history."],
+      "consumes": [
+        "HANDOFF-TURVO-1_0.md",
+        "current Turvo working tree"
+      ],
+      "produces": [
+        "spec-review mapping",
+        "public bootstrap tip",
+        "initial CI run"
+      ],
+      "blueprint": [
+        "Audit source versus all named choices and observable criteria.",
+        "Reconcile and push the initial bootstrap without rewriting user history."
+      ],
       "oracle_class": "source census plus public tip artifact",
       "implementation_mode": "probe",
       "evidence_class": "local source evidence and published Git commit",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["git rev-parse HEAD", "gh repo view Travis-Gilbert/Turvo", "gh run view 33326854324"],
-      "discharge_evidence": ["Bootstrap a54063aed480922cc0b636371d041a674d158fc4 pushed to https://github.com/Travis-Gilbert/Turvo; CI run 33326854324 started."],
-      "non_conclusions": ["The public push does not prove compilation, native behavior, publication, or Theorem integration."],
+      "proof_commands": [
+        "git rev-parse HEAD",
+        "gh repo view Travis-Gilbert/Turvo",
+        "gh run view 33326854324"
+      ],
+      "discharge_evidence": [
+        "Bootstrap a54063aed480922cc0b636371d041a674d158fc4 pushed to https://github.com/Travis-Gilbert/Turvo; CI run 33326854324 started."
+      ],
+      "non_conclusions": [
+        "The public push does not prove compilation, native behavior, publication, or Theorem integration."
+      ],
       "retraction_path": "Reopen the census if the spec or public tip changes."
     },
     {
@@ -330,20 +504,43 @@
       "type": "decision.architecture",
       "status": "completed",
       "controller": "agent",
-      "depends_on": ["P00"],
-      "scope": ["plan decision state and read-only project instructions"],
-      "obligations": ["O01", "O10", "O11", "O12"],
+      "depends_on": [
+        "P00"
+      ],
+      "scope": [
+        "plan decision state and read-only project instructions"
+      ],
+      "obligations": [
+        "O01",
+        "O10",
+        "O11",
+        "O12"
+      ],
       "gist": "Treat the handoff as requirements, current source as evidence, and the user's execute instruction as the bounded authority grant.",
-      "consumes": ["P00 census", "AGENTS.md", "named graph skills"],
-      "produces": ["authority grant", "source precedence decision"],
-      "blueprint": ["Protect secrets, unrelated work, and pushed history.", "Permit proof-gated GitHub and crates.io effects required by the destination."],
+      "consumes": [
+        "P00 census",
+        "AGENTS.md",
+        "named graph skills"
+      ],
+      "produces": [
+        "authority grant",
+        "source precedence decision"
+      ],
+      "blueprint": [
+        "Protect secrets, unrelated work, and pushed history.",
+        "Permit proof-gated GitHub and crates.io effects required by the destination."
+      ],
       "oracle_class": "recorded architecture decision",
       "implementation_mode": "decision_record",
       "evidence_class": "user instruction plus project policy",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"],
-      "discharge_evidence": ["Authority and protected state recorded in canonical board."],
+      "proof_commands": [
+        "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"
+      ],
+      "discharge_evidence": [
+        "Authority and protected state recorded in canonical board."
+      ],
       "retraction_path": "Narrow the grant if the user revokes an external effect."
     },
     {
@@ -352,21 +549,49 @@
       "type": "probe.research",
       "status": "completed",
       "controller": "agent",
-      "depends_on": ["D00"],
-      "scope": ["read-only pinned Servo and Tauri source plus Turvo runtime audit"],
-      "obligations": ["O03", "O05", "O06", "O08"],
+      "depends_on": [
+        "D00"
+      ],
+      "scope": [
+        "read-only pinned Servo and Tauri source plus Turvo runtime audit"
+      ],
+      "obligations": [
+        "O03",
+        "O05",
+        "O06",
+        "O08"
+      ],
       "gist": "Locate the exact pinned APIs and blockers before changing the runtime.",
-      "consumes": ["P00 findings", "Servo 0.5.0 source", "Tauri 2.11.5 and tauri-runtime 2.11.3 source"],
-      "produces": ["protocol finding", "NewWindowOpener finding", "resource-staging trigger"],
-      "blueprint": ["Trace app URL production, custom protocol registration, resource interception, rendering contexts, and new-window types.", "Record explicit non-conclusions for source-only evidence."],
+      "consumes": [
+        "P00 findings",
+        "Servo 0.5.0 source",
+        "Tauri 2.11.5 and tauri-runtime 2.11.3 source"
+      ],
+      "produces": [
+        "protocol finding",
+        "NewWindowOpener finding",
+        "resource-staging trigger"
+      ],
+      "blueprint": [
+        "Trace app URL production, custom protocol registration, resource interception, rendering contexts, and new-window types.",
+        "Record explicit non-conclusions for source-only evidence."
+      ],
       "oracle_class": "primary pinned-source research",
       "implementation_mode": "probe",
       "evidence_class": "exact local crate source",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["rg -n 'tauri_protocol_url|NewWindowOpener|load_web_resource|new_window_handler' crates/turvo/src /Users/travisgilbert/.cargo/registry/src"],
-      "discharge_evidence": ["F03-F04 established from exact pinned source; Record 001 and upstream audit preserve the findings."],
-      "non_conclusions": ["Source inspection does not prove the observed Windows failure mode.", "A compilable upstream API design has not yet been accepted by Tauri.", "Upstream cross-platform builds do not prove clean-machine resource bundling."],
+      "proof_commands": [
+        "rg -n 'tauri_protocol_url|NewWindowOpener|load_web_resource|new_window_handler' crates/turvo/src /Users/travisgilbert/.cargo/registry/src"
+      ],
+      "discharge_evidence": [
+        "F03-F04 established from exact pinned source; Record 001 and upstream audit preserve the findings."
+      ],
+      "non_conclusions": [
+        "Source inspection does not prove the observed Windows failure mode.",
+        "A compilable upstream API design has not yet been accepted by Tauri.",
+        "Upstream cross-platform builds do not prove clean-machine resource bundling."
+      ],
       "retraction_path": "Re-run the probe after any Servo or Tauri pin change."
     },
     {
@@ -375,20 +600,41 @@
       "type": "decision.architecture",
       "status": "completed",
       "controller": "agent",
-      "depends_on": ["P01"],
-      "scope": ["plan decision state and read-only API evidence"],
-      "obligations": ["O03", "O06", "O08"],
+      "depends_on": [
+        "P01"
+      ],
+      "scope": [
+        "plan decision state and read-only API evidence"
+      ],
+      "obligations": [
+        "O03",
+        "O06",
+        "O08"
+      ],
       "gist": "Adopt ADR01-ADR03: narrow HTTP interception, safe upstream opener seam, behavior-first module extraction.",
-      "consumes": ["P01 findings"],
-      "produces": ["ADR01", "ADR02", "ADR03"],
-      "blueprint": ["Reject hardcoded Origin and unsafe Wry-object fabrication.", "Keep resource staging evidence-driven while still delivering the named build helper."],
+      "consumes": [
+        "P01 findings"
+      ],
+      "produces": [
+        "ADR01",
+        "ADR02",
+        "ADR03"
+      ],
+      "blueprint": [
+        "Reject hardcoded Origin and unsafe Wry-object fabrication.",
+        "Keep resource staging evidence-driven while still delivering the named build helper."
+      ],
       "oracle_class": "recorded reversible architecture decision",
       "implementation_mode": "decision_record",
       "evidence_class": "sealed ADR with retraction paths",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"],
-      "discharge_evidence": ["ADR01-ADR03 sealed in canonical board."],
+      "proof_commands": [
+        "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"
+      ],
+      "discharge_evidence": [
+        "ADR01-ADR03 sealed in canonical board."
+      ],
       "retraction_path": "Reopen the affected ADR when its exact source assumption changes."
     },
     {
@@ -397,20 +643,43 @@
       "type": "work.implementation",
       "status": "completed",
       "controller": "agent",
-      "depends_on": ["D01"],
-      "scope": ["Turvo Cargo manifests, baseline runtime repairs, README command corrections, and .github/workflows/ci.yml"],
-      "obligations": ["O01", "O02", "O12"],
+      "depends_on": [
+        "D01"
+      ],
+      "scope": [
+        "Turvo Cargo manifests, baseline runtime repairs, README command corrections, and .github/workflows/ci.yml"
+      ],
+      "obligations": [
+        "O01",
+        "O02",
+        "O12"
+      ],
       "gist": "Drive the exact public bootstrap tip to green tests, Clippy, packages, and example builds on all three operating systems.",
-      "consumes": ["D01 decisions", "CI run 33326854324"],
-      "produces": ["green compile baseline commit", "three-platform CI receipts"],
-      "blueprint": ["Inspect every failed matrix job and repair the narrow cause without weakening warnings or exact pins.", "Correct literal quickstart and DevTools documentation contradictions discovered by review."],
+      "consumes": [
+        "D01 decisions",
+        "CI run 33326854324"
+      ],
+      "produces": [
+        "green compile baseline commit",
+        "three-platform CI receipts"
+      ],
+      "blueprint": [
+        "Inspect every failed matrix job and repair the narrow cause without weakening warnings or exact pins.",
+        "Correct literal quickstart and DevTools documentation contradictions discovered by review."
+      ],
       "oracle_class": "hosted three-platform compile and lint",
       "implementation_mode": "real",
       "evidence_class": "GitHub Actions jobs bound to exact commit",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo fmt --all --check", "cargo metadata --locked --format-version 1", "gh run watch --exit-status"],
-      "discharge_evidence": ["750d6422f7781f408bcc2f7759b942d0f57b2d1c passed all four jobs in https://github.com/Travis-Gilbert/Turvo/actions/runs/33329627108. Windows runtime tests, Clippy, and both examples passed after manifest and native icon repairs."],
+      "proof_commands": [
+        "cargo fmt --all --check",
+        "cargo metadata --locked --format-version 1",
+        "gh run watch --exit-status"
+      ],
+      "discharge_evidence": [
+        "750d6422f7781f408bcc2f7759b942d0f57b2d1c passed all four jobs in https://github.com/Travis-Gilbert/Turvo/actions/runs/33329627108. Windows runtime tests, Clippy, and both examples passed after manifest and native icon repairs."
+      ],
       "retraction_path": "Revert focused repair commits while retaining the public bootstrap history.",
       "verify_sibling": "V01"
     },
@@ -420,20 +689,41 @@
       "type": "verify.live",
       "status": "completed",
       "controller": "verifier",
-      "depends_on": ["W01"],
-      "scope": ["read-only W01 diff, dependency graph, package contents, and GitHub Actions receipts"],
-      "obligations": ["O01", "O02", "O12"],
+      "depends_on": [
+        "W01"
+      ],
+      "scope": [
+        "read-only W01 diff, dependency graph, package contents, and GitHub Actions receipts"
+      ],
+      "obligations": [
+        "O01",
+        "O02",
+        "O12"
+      ],
       "gist": "Independently confirm the exact pushed commit passes every baseline job without active Wry or documentation drift.",
-      "consumes": ["W01 commit and receipts"],
-      "produces": ["baseline verification receipt"],
-      "blueprint": ["Audit the diff, rerun cheap local checks, and inspect every GitHub matrix job and package artifact."],
+      "consumes": [
+        "W01 commit and receipts"
+      ],
+      "produces": [
+        "baseline verification receipt"
+      ],
+      "blueprint": [
+        "Audit the diff, rerun cheap local checks, and inspect every GitHub matrix job and package artifact."
+      ],
       "oracle_class": "independent published-tip verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "reproducible local checks plus hosted job IDs",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo tree -p turvo --locked", "cargo package -p turvo --locked --allow-dirty --list", "gh run view --log-failed"],
-      "discharge_evidence": ["Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.", "Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof."],
+      "proof_commands": [
+        "cargo tree -p turvo --locked",
+        "cargo package -p turvo --locked --allow-dirty --list",
+        "gh run view --log-failed"
+      ],
+      "discharge_evidence": [
+        "Separate read-only audit confirmed success for jobs 99305763884, 99305763947, 99305763979, and 99305763986 at exact public SHA 750d6422f7781f408bcc2f7759b942d0f57b2d1c; tracked next was created from the same SHA.",
+        "Local fmt, locked metadata, and three target-specific normal dependency trees passed; no active tauri-runtime-wry, wry, or versoview appeared. Locked offline cargo package --no-verify produced 27 files including both licenses, public source, tests, and the Windows manifest. These are compile/package receipts, not native behavior or published-crate proof."
+      ],
       "retraction_path": "Return W01 to frontier with the failed job and exact commit."
     },
     {
@@ -442,20 +732,41 @@
       "type": "work.implementation",
       "status": "completed",
       "controller": "agent",
-      "depends_on": ["V01"],
-      "scope": ["crates/turvo/src/servo protocol interception, protocol-origin tests, and docs/research/protocol-origin-boundary.md"],
-      "obligations": ["O03", "O04"],
+      "depends_on": [
+        "V01"
+      ],
+      "scope": [
+        "crates/turvo/src/servo protocol interception, protocol-origin tests, and docs/research/protocol-origin-boundary.md"
+      ],
+      "obligations": [
+        "O03",
+        "O04"
+      ],
       "gist": "Route only Tauri-owned Windows localhost traffic to the registered asset protocol while preserving local and remote origins.",
-      "consumes": ["V01 baseline", "ADR01"],
-      "produces": ["HTTP interception adapter", "mapped-URL and response-preservation tests"],
-      "blueprint": ["Use Servo WebResourceLoad rather than rewriting Origin headers.", "Test exact registered localhost routing, unrelated HTTP pass-through, and unchanged URL, headers, status, and response body. Source-authenticated capability success and remote denial remain mandatory in W02I/V02I and the native suite."],
+      "consumes": [
+        "V01 baseline",
+        "ADR01"
+      ],
+      "produces": [
+        "HTTP interception adapter",
+        "mapped-URL and response-preservation tests"
+      ],
+      "blueprint": [
+        "Use Servo WebResourceLoad rather than rewriting Origin headers.",
+        "Test exact registered localhost routing, unrelated HTTP pass-through, and unchanged URL, headers, status, and response body. Source-authenticated capability success and remote denial remain mandatory in W02I/V02I and the native suite."
+      ],
       "oracle_class": "focused asset-routing tests; native delivery remains a downstream O03 gate",
       "implementation_mode": "real",
       "evidence_class": "unit tests and three-platform compile receipts; not native capability proof",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["cargo test -p turvo --lib --tests --locked", "cargo clippy -p turvo --lib --tests --locked -- -D warnings"],
-      "discharge_evidence": ["7813baa3529e6db53113e30adfc4242de65ee276 passed all jobs in run 33330884047, including seven protocol routing/header/response tests on Linux, macOS, and Windows. The adapter is Windows-only, shares registered handlers, rejects ambiguous authorities, and fails closed on a dropped response. Native asset rendering and IPC authentication are not discharged here."],
+      "proof_commands": [
+        "cargo test -p turvo --lib --tests --locked",
+        "cargo clippy -p turvo --lib --tests --locked -- -D warnings"
+      ],
+      "discharge_evidence": [
+        "7813baa3529e6db53113e30adfc4242de65ee276 passed all jobs in run 33330884047, including seven protocol routing/header/response tests on Linux, macOS, and Windows. The adapter is Windows-only, shares registered handlers, rejects ambiguous authorities, and fails closed on a dropped response. Native asset rendering and IPC authentication are not discharged here."
+      ],
       "retraction_path": "Remove the narrow HTTP adapter and restore protocol-registry-only routing.",
       "verify_sibling": "V02"
     },
@@ -465,46 +776,102 @@
       "type": "verify.local",
       "status": "completed",
       "controller": "verifier",
-      "depends_on": ["W02"],
-      "scope": ["read-only W02 diff and local-versus-remote protocol receipts"],
-      "obligations": ["O03", "O04"],
+      "depends_on": [
+        "W02"
+      ],
+      "scope": [
+        "read-only W02 diff and local-versus-remote protocol receipts"
+      ],
+      "obligations": [
+        "O03",
+        "O04"
+      ],
       "gist": "Prove app assets are intercepted narrowly without rewriting request origins; do not mistake this for source-authenticated IPC proof.",
-      "consumes": ["W02 implementation"],
-      "produces": ["asset-routing verification receipt and explicit IPC non-conclusions"],
-      "blueprint": ["Run positive, negative, and pass-through cases and audit for hardcoded Origin headers."],
+      "consumes": [
+        "W02 implementation"
+      ],
+      "produces": [
+        "asset-routing verification receipt and explicit IPC non-conclusions"
+      ],
+      "blueprint": [
+        "Run positive, negative, and pass-through cases and audit for hardcoded Origin headers."
+      ],
       "oracle_class": "independent security verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "reproducible tests and source audit",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["rg -n 'Origin|tauri\\.localhost|load_web_resource' crates/turvo/src crates/turvo/tests", "cargo test -p turvo --lib --tests --locked"],
-      "discharge_evidence": ["Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations."],
+      "proof_commands": [
+        "rg -n 'Origin|tauri\\.localhost|load_web_resource' crates/turvo/src crates/turvo/tests",
+        "cargo test -p turvo --lib --tests --locked"
+      ],
+      "discharge_evidence": [
+        "Read-only review and exact-commit logs confirmed 31 unit tests and two public API tests per target in run 33330884047 (jobs 99309104910, 99309104920, 99309104928), plus Clippy, examples, and package job 99309104737. Source audit confirmed original headers are forwarded without synthesized Origin and both Servo delegate paths share the router. W02I/V02I retain all native IPC, CSP, and caller-isolation obligations."
+      ],
       "retraction_path": "Return W02 to frontier with the failing security case."
     },
     {
       "id": "W02I",
-      "label": "Replace console-derived privileged IPC identity",
+      "label": "Complete authenticated IPC and ordinary app-origin policy",
       "type": "work.implementation",
-      "status": "parked",
-      "park_reason": "Native Windows run 33334815996 reproduces mapped-asset cross-origin disclosure and CSP bypass. Published Servo 0.5.0 cannot provide both the required origin semantics and normal app fetch/modules through its documented embedding paths. No safe embedder-only repair has been established.",
-      "resume_condition": "A public Servo release or accepted public API revision supplies standards-preserving asset transport/origins, or the user explicitly changes the published-engine constraint to authorize an isolated patched-engine integration lane; rerun the unchanged native positive/negative suite before discharge.",
+      "status": "completed",
       "controller": "agent",
-      "depends_on": ["V02"],
-      "scope": ["Turvo IPC transport and dependency manifests, initialization-script frame scope, source-identity tests, example CSP configuration, examples/security, native security CI and its observed graphics/shutdown blockers, public Servo API research or isolated patch, and scoped README/AGENTS security status"],
-      "obligations": ["O03", "O04"],
+      "depends_on": [
+        "V02"
+      ],
+      "scope": [
+        "Turvo IPC and app-asset transport, dependency manifests, examples/security and CSP fixtures, Linux/macOS native CI, isolated public Servo transport/policy patch, isolated Tauri app-URL contract, and integration policy records"
+      ],
+      "obligations": [
+        "O03",
+        "O04"
+      ],
       "gist": "Bind each privileged call to its engine-authenticated initiating document, including remote frames and navigation changes.",
-      "consumes": ["V02 asset routing", "F08", "ADR04", "ADR05"],
-      "produces": ["source-authenticated IPC adapter", "main-frame initialization handling", "native origin regression probes"],
-      "blueprint": ["Research and reuse the pinned engine request surface before introducing a transport; never trust a page-supplied origin, top-level URL substitution, or a hardcoded Origin header.", "Preserve payloads, callbacks, binary responses, and channel fetches; honor Tauri main-frame initialization flags.", "Require real local success, remote top-level denial, remote iframe denial, opaque-origin denial, and navigation-race denial. If the published engine lacks a sufficient API, produce a public compatibility proposal and retain an explicit release blocker."],
+      "consumes": [
+        "V02 asset routing",
+        "F08",
+        "ADR04",
+        "ADR05"
+      ],
+      "produces": [
+        "source-authenticated IPC adapter",
+        "main-frame initialization handling",
+        "native origin regression probes"
+      ],
+      "blueprint": [
+        "Reuse engine request provenance and existing HTTP origin/fetch/CORS/CSP policy; never trust page-supplied identity or a hardcoded Origin header.",
+        "Preserve payloads, callbacks, binary responses, channels and main-frame script scope. Public source patches are now authorized by ADR09.",
+        "Require Linux/macOS local fetch/modules and real local IPC success plus remote, iframe, opaque/sandboxed, navigation-race and CSP denials. Do not weaken the existing assertions. Windows is separately carried by O13."
+      ],
       "oracle_class": "source-authenticated IPC and native adversarial origin behavior",
       "implementation_mode": "real",
       "evidence_class": "focused tests and native positive/negative capability receipts",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo test -p turvo --lib --tests --locked", "native IPC source-authentication suite"],
-      "discharge_evidence": [],
-      "progress_evidence": ["F17/F25: all nine native IPC/security cases pass on Linux and macOS, with exact native command/event payloads and clean shutdown.", "F19/F25: Windows ANGLE startup and ordinary JSON/raw/binary/channel IPC run, but remote asset disclosure and CSP handler dispatch fail the fixed native security oracle.", "The public API alternatives and repair ladder are recorded in docs/research/protocol-origin-boundary.md; no private-fork requirement has been adopted."],
-      "non_conclusions": ["Unix fixture success is not normal custom-origin fetch/module compatibility or full production security proof.", "Windows compilation and startup are not native security acceptance."],
+      "proof_commands": [
+        "cargo test -p turvo --lib --tests --locked",
+        "native IPC source-authentication suite",
+        "cargo +1.94.0 test -p servo-net --test main --locked in the exact public engine checkout",
+        "python3 scripts/check_integration.py",
+        "cargo +1.94.0 test -p servo-net --test main --locked filemanager_thread::test_filemanager -- --exact"
+      ],
+      "discharge_evidence": [
+        "Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd pins public Servo 526e95cf47ba81485225660fe1a14dc000ffd4b7, requires Window-backed engine provenance for privileged IPC, and retains the full hostile-frame, navigation, CSP, asset, module, binary, channel, and event suite.",
+        "CI run 33567283891 passed runtime tests, Clippy, both examples, package checks, and the native security suite on Linux x86_64 and macOS arm64. Both native receipts include local-frame-worker as passed while their privileged-call lists contain only local-json, local-raw, and restored-local.",
+        "The engine-side RequestClient serde and builder tests passed 4/4 locally at the exact public revision; the root runtime test rejects workers even when they share document identity."
+      ],
+      "progress_evidence": [
+        "F17/F25: all nine native IPC/security cases pass on Linux and macOS, with exact native command/event payloads and clean shutdown.",
+        "F19/F25: Windows ANGLE startup and ordinary JSON/raw/binary/channel IPC run, but remote asset disclosure and CSP handler dispatch fail the fixed native security oracle.",
+        "The public API alternatives and repair ladder are recorded in docs/research/protocol-origin-boundary.md; no private-fork requirement has been adopted.",
+        "F28-F34/ADR10: coherent public dependency pins, Tauri compatibility and all 42 new networking tests pass their respective checks. Full engine suite and expanded native suite exposed test-initialization/sandbox-script setup failures, corrected without weakening production guards or negative assertions.",
+        "F35-F37 identified the macOS liveness issue and the non-Window worker provenance gap without weakening the native oracle.",
+        "F38-F40: public Servo 526e95cf47ba81485225660fe1a14dc000ffd4b7 and Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd repair the gap; run 33567283891 passes the exact-pin native matrix on both required targets."
+      ],
+      "non_conclusions": [
+        "Unix fixture success is not normal custom-origin fetch/module compatibility or full production security proof.",
+        "Windows compilation and startup are not native security acceptance."
+      ],
       "retraction_path": "Revert the transport adapter and keep privileged IPC release-blocked; do not reinstate an untrusted identity fallback.",
       "verify_sibling": "V02I"
     },
@@ -512,48 +879,92 @@
       "id": "V02I",
       "label": "Verify actual IPC sender isolation",
       "type": "verify.live",
-      "status": "pending",
+      "status": "completed",
       "controller": "verifier",
-      "depends_on": ["W02I"],
-      "scope": ["read-only IPC source-identity diff, engine provenance, and native adversarial receipts"],
-      "obligations": ["O03", "O04"],
+      "depends_on": [
+        "W02I"
+      ],
+      "scope": [
+        "read-only IPC source-identity diff, engine provenance, and native adversarial receipts"
+      ],
+      "obligations": [
+        "O03",
+        "O04"
+      ],
       "gist": "Verify the caller identity cannot be widened by a child frame, opaque origin, forged message, or document navigation.",
-      "consumes": ["W02I transport and native probes"],
-      "produces": ["IPC source-authentication verification receipt"],
-      "blueprint": ["Audit trusted metadata provenance and independently replay local success plus remote, iframe, opaque-origin, and navigation-race denials."],
+      "consumes": [
+        "W02I transport and native probes"
+      ],
+      "produces": [
+        "IPC source-authentication verification receipt"
+      ],
+      "blueprint": [
+        "Audit trusted metadata provenance and independently replay local success plus remote, iframe, opaque-origin, and navigation-race denials."
+      ],
       "oracle_class": "independent native IPC security verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "exact-commit native positive and negative security receipts",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["native IPC source-authentication suite"],
-      "discharge_evidence": [],
+      "proof_commands": [
+        "native IPC source-authentication suite"
+      ],
+      "discharge_evidence": [
+        "Independent source review confirmed only Window globals set RequestClient.is_window=true; dedicated and service workers, worklets, synthetic navigation requests, and deserialized legacy clients remain false.",
+        "Exact-tip GitHub jobs 100053244582 and 100053244665 independently exercised the native worker exploit on Linux and macOS. Each reported native case passed: local-frame-worker and TURVO_NATIVE_SECURITY passed=true without any worker-originated Rust call.",
+        "Run 33567283891 is bound to Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd and completed successfully on both required platforms."
+      ],
       "retraction_path": "Return W02I to frontier with the failing sender-isolation case."
     },
     {
       "id": "W03",
       "label": "Create a runtime-neutral upstream new-window seam",
       "type": "work.external",
-      "status": "parked",
-      "park_reason": "The versioned Tauri proposal passed all three compatibility jobs (F24), but the complete V03 Servo-sufficiency gate is not established: the pinned engine request lacks target URL/geometry provenance (F23), and no accepted public integration revision or native Servo popup receipt exists. Partial API proof is retained without discharging O06.",
-      "resume_condition": "An accepted public engine API or validated design supplies the real popup metadata and responder lifecycle, or the user explicitly authorizes a patched-engine development lane. Re-enter V03 verification before adopting a public Tauri revision; do not invent popup metadata.",
+      "status": "frontier",
       "controller": "agent",
-      "depends_on": ["V02"],
-      "scope": ["external Tauri clean worktree, patches/tauri, docs/research/tauri-new-window.md, and a scoped upstream-patch validation workflow"],
-      "obligations": ["O06"],
+      "depends_on": [
+        "V02I"
+      ],
+      "scope": [
+        "isolated public Tauri opener and Servo popup metadata revisions, patches/tauri, docs/research/tauri-new-window.md, and scoped compatibility tests"
+      ],
+      "obligations": [
+        "O06"
+      ],
       "gist": "Implement and propose an additive Tauri API that lets non-Wry runtimes process window.open safely.",
-      "consumes": ["ADR02", "V02 baseline"],
-      "produces": ["upstream tests", "public Tauri PR or versioned patch", "Turvo integration note"],
-      "blueprint": ["Preserve Wry behavior and public compatibility.", "Give runtime-neutral embedders enough request information to create or deny a new window without native Wry objects."],
+      "consumes": [
+        "ADR02",
+        "V02 baseline"
+      ],
+      "produces": [
+        "upstream tests",
+        "public Tauri PR or versioned patch",
+        "Turvo integration note"
+      ],
+      "blueprint": [
+        "Preserve Wry behavior and public compatibility; ADR09 authorizes consumable public integration revisions.",
+        "Expose the actual Servo request URL/geometry and one-shot responder lifecycle, without fabricating metadata or native Wry objects. Test compatibility on Linux/macOS."
+      ],
       "oracle_class": "upstream compile, tests, and public review artifact",
       "implementation_mode": "real_external_patch",
       "evidence_class": "upstream-source test receipt and public PR URL or versioned proposal commit",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo test -p tauri-runtime --lib --locked", "cargo check -p tauri --no-default-features --lib --locked", "cargo test -p tauri --lib --tests --features test --locked"],
+      "proof_commands": [
+        "cargo test -p tauri-runtime --lib --locked",
+        "cargo check -p tauri --no-default-features --lib --locked",
+        "cargo test -p tauri --lib --tests --features test --locked"
+      ],
       "discharge_evidence": [],
-      "progress_evidence": ["Public proposal commit d4c8b2bba0c6213e2e7e3c7638dc9da2c9321994 contains the exact pinned Tauri patch and integration note; bc4946982bfa385a39f25a62bbaa7b5340a1d497 fixes only the hosted checkout line-ending issue.", "Run 33336218434 passed all three declared proof commands on Linux, macOS, and Windows; F24 names the jobs and test counts.", "A separate read-only source pass checked native constructor/accessor compatibility, default rejection, private builder storage, and the actual Servo creation request. It found F23, so full Servo-adapter sufficiency is not claimed; no independent-agent or maintainer approval is represented."],
-      "non_conclusions": ["No Servo window.open integration, upstream approval, MSRV/mobile matrix, or native Wry popup parity is established by these compile/mock tests.", "Turvo still resolves the published Tauri and Servo crates; the proposal is not silently adopted."],
+      "progress_evidence": [
+        "Public proposal commit d4c8b2bba0c6213e2e7e3c7638dc9da2c9321994 contains the exact pinned Tauri patch and integration note; bc4946982bfa385a39f25a62bbaa7b5340a1d497 fixes only the hosted checkout line-ending issue.",
+        "Run 33336218434 passed all three declared proof commands on Linux, macOS, and Windows; F24 names the jobs and test counts.",
+        "A separate read-only source pass checked native constructor/accessor compatibility, default rejection, private builder storage, and the actual Servo creation request. It found F23, so full Servo-adapter sufficiency is not claimed; no independent-agent or maintainer approval is represented."
+      ],
+      "non_conclusions": [
+        "No Servo window.open integration, upstream approval, MSRV/mobile matrix, or native Wry popup parity is established by these compile/mock tests.",
+        "F28 explicitly adopts the public Tauri and Servo source pins for the authorized integration only. The real Servo popup API and runtime are not yet integrated or verified."
+      ],
       "retraction_path": "Close the PR or revise the versioned proposal and retain Turvo's documented blocked behavior if the design is rejected.",
       "verify_sibling": "V03"
     },
@@ -563,19 +974,34 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W03"],
-      "scope": ["read-only upstream Tauri patch, compatibility tests, and public PR or versioned proposal commit"],
-      "obligations": ["O06"],
+      "depends_on": [
+        "W03"
+      ],
+      "scope": [
+        "read-only upstream Tauri patch, compatibility tests, and public PR or versioned proposal commit"
+      ],
+      "obligations": [
+        "O06"
+      ],
       "gist": "Confirm the proposed seam is additive, runtime-neutral, safe, and sufficient for a Servo adapter.",
-      "consumes": ["W03 versioned patch or PR and exact-revision hosted test receipts"],
-      "produces": ["upstream verification receipt"],
-      "blueprint": ["Audit Wry compatibility and independently exercise a mock non-Wry runtime path."],
+      "consumes": [
+        "W03 versioned patch or PR and exact-revision hosted test receipts"
+      ],
+      "produces": [
+        "upstream verification receipt"
+      ],
+      "blueprint": [
+        "Audit Wry compatibility and independently exercise a mock non-Wry runtime path."
+      ],
       "oracle_class": "independent upstream verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "upstream tests and public review state",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh run view <exact-proposal-run> --log", "read-only native API compatibility and MockRuntime test audit"],
+      "proof_commands": [
+        "gh run view <exact-proposal-run> --log",
+        "read-only native API compatibility and MockRuntime test audit"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W03 to frontier with compatibility failures or review objections."
     },
@@ -585,19 +1011,34 @@
       "type": "weather",
       "status": "pending",
       "controller": "world",
-      "depends_on": ["V03"],
-      "scope": ["read-only upstream Tauri release and PR state"],
-      "obligations": ["O06"],
+      "depends_on": [
+        "V03"
+      ],
+      "scope": [
+        "read-only upstream Tauri release and PR state"
+      ],
+      "obligations": [
+        "O06"
+      ],
       "gist": "Resolve when a released or explicitly versioned public Tauri revision exposes the accepted runtime-neutral opener seam.",
-      "consumes": ["V03 verified upstream proposal"],
-      "produces": ["consumable Tauri revision"],
-      "blueprint": ["Track the public merge and release event; do not hold an executor while unchanged."],
+      "consumes": [
+        "V03 verified upstream proposal"
+      ],
+      "produces": [
+        "consumable Tauri revision"
+      ],
+      "blueprint": [
+        "ADR09 permits the exact tested public fork revision for development; verify its public reachability and pin. Upstream acceptance and published release remain E02."
+      ],
       "oracle_class": "external release event",
       "implementation_mode": "weather",
       "evidence_class": "upstream merge commit and published version or approved public revision",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh pr view --json state,mergeCommit,url"],
+      "proof_commands": [
+        "git ls-remote https://github.com/Travis-Gilbert/tauri.git refs/heads/turvo/integration-2.11.5",
+        "gh run view <exact-proposal-run> --log"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return to W03 if upstream requires a redesigned seam."
     },
@@ -607,19 +1048,33 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["E01"],
-      "scope": ["Turvo NewWindowOpener adapter and window.open integration tests"],
-      "obligations": ["O06"],
+      "depends_on": [
+        "E01"
+      ],
+      "scope": [
+        "Turvo NewWindowOpener adapter and window.open integration tests"
+      ],
+      "obligations": [
+        "O06"
+      ],
       "gist": "Replace the discarded handler with a safe Servo-managed new-window implementation.",
-      "consumes": ["E01 consumable revision"],
-      "produces": ["runtime-managed window.open path"],
-      "blueprint": ["Map URL and window features to Tauri's handler and create or deny the requested Servo window according to its response."],
+      "consumes": [
+        "E01 consumable revision"
+      ],
+      "produces": [
+        "runtime-managed window.open path"
+      ],
+      "blueprint": [
+        "Map URL and window features to Tauri's handler and create or deny the requested Servo window according to its response."
+      ],
       "oracle_class": "focused integration plus native multi-window smoke",
       "implementation_mode": "real",
       "evidence_class": "tests and native receipt",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["cargo test -p turvo --lib --tests --locked"],
+      "proof_commands": [
+        "cargo test -p turvo --lib --tests --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Revert the adapter and preserve command-created windows while upstream is revisited.",
       "verify_sibling": "V04"
@@ -630,19 +1085,33 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W04"],
-      "scope": ["read-only W04 diff and native window.open receipts"],
-      "obligations": ["O06"],
+      "depends_on": [
+        "W04"
+      ],
+      "scope": [
+        "read-only W04 diff and native window.open receipts"
+      ],
+      "obligations": [
+        "O06"
+      ],
       "gist": "Prove allow, deny, and create responses produce the expected runtime-managed Servo windows.",
-      "consumes": ["W04 implementation"],
-      "produces": ["window.open verification receipt"],
-      "blueprint": ["Exercise exact opener behavior and confirm no unsafe or Wry-native fabrication exists."],
+      "consumes": [
+        "W04 implementation"
+      ],
+      "produces": [
+        "window.open verification receipt"
+      ],
+      "blueprint": [
+        "Exercise exact opener behavior and confirm no unsafe or Wry-native fabrication exists."
+      ],
       "oracle_class": "independent native behavior verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "native smoke artifact bound to commit",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["scripts/smoke/window-open.sh"],
+      "proof_commands": [
+        "scripts/smoke/window-open.sh"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W04 to frontier with the failing response case."
     },
@@ -652,19 +1121,40 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V02I"],
-      "scope": ["examples/api, examples/helloworld, and crates/turvo/tests public behavior probes"],
-      "obligations": ["O03", "O04", "O06", "O07", "O12"],
+      "depends_on": [
+        "V02I"
+      ],
+      "scope": [
+        "examples/api, examples/helloworld, and crates/turvo/tests public behavior probes"
+      ],
+      "obligations": [
+        "O03",
+        "O04",
+        "O06",
+        "O07",
+        "O12"
+      ],
       "gist": "Make examples exercise invoke, both event directions, plugin, tray, multi-window, window.open, and literal quickstart behavior with automatable receipts.",
-      "consumes": ["V02I source-authenticated protocol implementation"],
-      "produces": ["complete examples", "self-reporting smoke mode"],
-      "blueprint": ["Use existing Tauri plugin and tray primitives rather than bespoke substitutes.", "Emit deterministic smoke markers and exit codes suitable for hosted native runners."],
+      "consumes": [
+        "V02I source-authenticated protocol implementation"
+      ],
+      "produces": [
+        "complete examples",
+        "self-reporting smoke mode"
+      ],
+      "blueprint": [
+        "Use existing Tauri plugin and tray primitives rather than bespoke substitutes.",
+        "Emit deterministic smoke markers and exit codes suitable for hosted native runners."
+      ],
       "oracle_class": "example integration tests and native behavior",
       "implementation_mode": "real",
       "evidence_class": "focused tests and smoke markers",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["cargo build -p helloworld --locked", "cargo build -p turvo-api --locked"],
+      "proof_commands": [
+        "cargo build -p helloworld --locked",
+        "cargo build -p turvo-api --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Remove smoke-only hooks behind their explicit mode while preserving user-facing examples.",
       "verify_sibling": "V05"
@@ -675,19 +1165,37 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W05"],
-      "scope": ["read-only example diff and native behavior receipts"],
-      "obligations": ["O03", "O04", "O06", "O07", "O12"],
+      "depends_on": [
+        "W05"
+      ],
+      "scope": [
+        "read-only example diff and native behavior receipts"
+      ],
+      "obligations": [
+        "O03",
+        "O04",
+        "O06",
+        "O07",
+        "O12"
+      ],
       "gist": "Independently verify exact payloads and observable window, plugin, and tray outcomes.",
-      "consumes": ["W05 examples"],
-      "produces": ["example verification receipt"],
-      "blueprint": ["Run every smoke assertion and audit that markers cannot be emitted before the real behavior occurs."],
+      "consumes": [
+        "W05 examples"
+      ],
+      "produces": [
+        "example verification receipt"
+      ],
+      "blueprint": [
+        "Run every smoke assertion and audit that markers cannot be emitted before the real behavior occurs."
+      ],
       "oracle_class": "independent native example verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "native logs and screenshots",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["scripts/smoke/examples.sh"],
+      "proof_commands": [
+        "scripts/smoke/examples.sh"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W05 to frontier with the exact failed behavior."
     },
@@ -697,19 +1205,41 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V04", "V05"],
-      "scope": ["crates/turvo source-module layout, crates/turvo-build, workspace manifests, and packaging records"],
-      "obligations": ["O08", "O12"],
+      "depends_on": [
+        "V04",
+        "V05"
+      ],
+      "scope": [
+        "crates/turvo source-module layout, crates/turvo-build, workspace manifests, and packaging records"
+      ],
+      "obligations": [
+        "O08",
+        "O12"
+      ],
       "gist": "Split responsibilities behind behavior tests and provide evidence-driven Servo resource staging helpers.",
-      "consumes": ["V04 and V05 behavior baselines", "ADR03"],
-      "produces": ["named module layout", "turvo-build crate", "clean-machine package manifest"],
-      "blueprint": ["Extract without changing public behavior.", "Stage only resources and native libraries the clean-machine probe demonstrates are required."],
+      "consumes": [
+        "V04 and V05 behavior baselines",
+        "ADR03"
+      ],
+      "produces": [
+        "named module layout",
+        "turvo-build crate",
+        "clean-machine package manifest"
+      ],
+      "blueprint": [
+        "Extract without changing public behavior.",
+        "Stage only resources and native libraries the clean-machine probe demonstrates are required."
+      ],
       "oracle_class": "module conformance, compile, package, and clean-machine bundle",
       "implementation_mode": "real",
       "evidence_class": "tests plus platform package inspection",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["cargo test --workspace --locked", "cargo package -p turvo --locked", "cargo package -p turvo-build --locked"],
+      "proof_commands": [
+        "cargo test --workspace --locked",
+        "cargo package -p turvo --locked",
+        "cargo package -p turvo-build --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Recombine extracted modules or remove an unneeded staging rule while retaining behavior tests.",
       "verify_sibling": "V06"
@@ -720,64 +1250,128 @@
       "type": "verify.local",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W06"],
-      "scope": ["read-only W06 diff, crate packages, dynamic-library scans, and behavior regression receipts"],
-      "obligations": ["O08", "O12"],
+      "depends_on": [
+        "W06"
+      ],
+      "scope": [
+        "read-only W06 diff, crate packages, dynamic-library scans, and behavior regression receipts"
+      ],
+      "obligations": [
+        "O08",
+        "O12"
+      ],
       "gist": "Confirm the split matches the handoff, packages are self-contained, and no behavior or license provenance regressed.",
-      "consumes": ["W06 modules and packages"],
-      "produces": ["packaging verification receipt"],
-      "blueprint": ["Audit crate contents, platform resources, public exports, SPDX headers, and regression tests."],
+      "consumes": [
+        "W06 modules and packages"
+      ],
+      "produces": [
+        "packaging verification receipt"
+      ],
+      "blueprint": [
+        "Audit crate contents, platform resources, public exports, SPDX headers, and regression tests."
+      ],
       "oracle_class": "independent package and architecture verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "package archives and reproducible audits",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["python3 scripts/check-layout.py", "cargo package --workspace --locked"],
+      "proof_commands": [
+        "python3 scripts/check-layout.py",
+        "cargo package --workspace --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W06 to frontier with the package or boundary violation."
     },
     {
       "id": "W07",
-      "label": "Build the three-platform native smoke and DevTools lane",
+      "label": "Build the Linux/macOS native smoke and DevTools lane",
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V06"],
-      "scope": [".github/workflows/ci.yml, scripts/smoke, and native smoke artifacts"],
-      "obligations": ["O01", "O03", "O04", "O05", "O06", "O07", "O08", "O09"],
+      "depends_on": [
+        "V06"
+      ],
+      "scope": [
+        ".github/workflows/ci.yml, scripts/smoke, and native smoke artifacts"
+      ],
+      "obligations": [
+        "O01",
+        "O03",
+        "O04",
+        "O05",
+        "O06",
+        "O07",
+        "O08",
+        "O09"
+      ],
       "gist": "Turn cross-platform compilation into observable native behavior and Firefox DevTools proof.",
-      "consumes": ["V06 packaged implementation", "W05 smoke probes"],
-      "produces": ["native smoke workflow", "three-platform artifacts", "DevTools receipt"],
-      "blueprint": ["Launch packaged apps on each native runner with bounded timeouts and deterministic receipts.", "Use a virtual display only where the runner requires it; retain screenshots and logs."],
-      "oracle_class": "hosted native three-platform behavior",
+      "consumes": [
+        "V06 packaged implementation",
+        "W05 smoke probes"
+      ],
+      "produces": [
+        "native smoke workflow",
+        "Linux/macOS artifacts",
+        "DevTools receipt"
+      ],
+      "blueprint": [
+        "Launch packaged apps on each native runner with bounded timeouts and deterministic receipts.",
+        "Use a virtual display only where the runner requires it; retain screenshots and logs."
+      ],
+      "oracle_class": "hosted native Linux/macOS behavior; Windows deferred to O13",
       "implementation_mode": "real",
       "evidence_class": "GitHub Actions native smoke artifacts",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh workflow run CI", "gh run watch --exit-status"],
+      "proof_commands": [
+        "gh workflow run CI",
+        "gh run watch --exit-status"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Revert the smoke workflow changes without weakening compile CI.",
       "verify_sibling": "V07"
     },
     {
       "id": "V07",
-      "label": "Verify native behavior on Linux, Windows, and macOS",
+      "label": "Verify native behavior on Linux and macOS",
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W07"],
-      "scope": ["read-only CI run, native logs, screenshots, DevTools transcript, and exact source tip"],
-      "obligations": ["O01", "O03", "O04", "O05", "O06", "O07", "O08", "O09"],
+      "depends_on": [
+        "W07"
+      ],
+      "scope": [
+        "read-only CI run, native logs, screenshots, DevTools transcript, and exact source tip"
+      ],
+      "obligations": [
+        "O01",
+        "O03",
+        "O04",
+        "O05",
+        "O06",
+        "O07",
+        "O08",
+        "O09"
+      ],
       "gist": "Confirm every native receipt is bound to the exact commit and represents real behavior rather than process startup.",
-      "consumes": ["W07 workflow run and artifacts"],
-      "produces": ["three-platform acceptance receipt"],
-      "blueprint": ["Inspect each OS artifact, exact payload, screenshot, exit reason, and DevTools page identity."],
+      "consumes": [
+        "W07 workflow run and artifacts"
+      ],
+      "produces": [
+        "Linux/macOS acceptance receipt; no Windows discharge"
+      ],
+      "blueprint": [
+        "Inspect each OS artifact, exact payload, screenshot, exit reason, and DevTools page identity."
+      ],
       "oracle_class": "independent hosted native verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "published CI artifacts and job IDs",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh run download", "python3 scripts/verify-smoke-artifacts.py"],
+      "proof_commands": [
+        "gh run download",
+        "python3 scripts/verify-smoke-artifacts.py"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W07 to frontier with the affected OS and artifact mismatch."
     },
@@ -787,22 +1381,41 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V07"],
-      "scope": [".github/workflows/servo-next.yml, .github/prompts/servo-next.md, next branch, and migration records"],
-      "obligations": ["O09"],
+      "depends_on": [
+        "V07"
+      ],
+      "scope": [
+        ".github/workflows/servo-next.yml, .github/prompts/servo-next.md, next branch, and migration records"
+      ],
+      "obligations": [
+        "O09"
+      ],
       "gist": "Exercise servo-next end to end and open a real scoped agent-authored draft PR against next.",
-      "consumes": ["V07 green main lane"],
-      "produces": ["next branch", "migration workflow run", "draft migration PR"],
-      "blueprint": ["Add a controlled target override if necessary to demonstrate the lane without lying about latest stable.", "Keep the agent credentialless and validate its patch in fresh jobs before PR creation."],
+      "consumes": [
+        "V07 green Linux/macOS integration lane"
+      ],
+      "produces": [
+        "next branch",
+        "migration workflow run",
+        "draft migration PR"
+      ],
+      "blueprint": [
+        "Add a controlled target override if necessary to demonstrate the lane without lying about latest stable.",
+        "Keep the agent credentialless and validate its patch in fresh jobs before PR creation."
+      ],
       "oracle_class": "live GitHub automation and PR",
       "implementation_mode": "real",
       "evidence_class": "workflow run and draft PR URL",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh workflow run servo-next.yml", "gh run watch --exit-status", "gh pr view"],
+      "proof_commands": [
+        "gh workflow run servo-next.yml",
+        "gh run watch --exit-status",
+        "gh pr view"
+      ],
       "discharge_evidence": [],
-      "retraction_path": "Close the demonstration PR and revert only the controlled trigger support."
-      ,"verify_sibling": "V08"
+      "retraction_path": "Close the demonstration PR and revert only the controlled trigger support.",
+      "verify_sibling": "V08"
     },
     {
       "id": "V08",
@@ -810,21 +1423,152 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W08"],
-      "scope": ["read-only servo-next run, agent patch, permissions, and migration PR"],
-      "obligations": ["O09"],
+      "depends_on": [
+        "W08"
+      ],
+      "scope": [
+        "read-only servo-next run, agent patch, permissions, and migration PR"
+      ],
+      "obligations": [
+        "O09"
+      ],
       "gist": "Prove the agent never held GitHub credentials, the patch stayed in scope, and the PR triggered the standard platform gate.",
-      "consumes": ["W08 run and PR"],
-      "produces": ["migration verification receipt"],
-      "blueprint": ["Audit workflow permissions, patch paths, validation jobs, PR base/head, and downstream CI."],
+      "consumes": [
+        "W08 run and PR"
+      ],
+      "produces": [
+        "migration verification receipt"
+      ],
+      "blueprint": [
+        "Audit workflow permissions, patch paths, validation jobs, PR base/head, and downstream CI."
+      ],
       "oracle_class": "independent live automation verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "GitHub run logs and PR checks",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["gh run view --log", "gh pr checks --watch"],
+      "proof_commands": [
+        "gh run view --log",
+        "gh pr checks --watch"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W08 to frontier with the permission, scope, or PR defect."
+    },
+    {
+      "id": "WX1",
+      "label": "Restore Windows native and packaging acceptance",
+      "type": "work.implementation",
+      "status": "parked",
+      "park_reason": "Windows is explicitly deferred by the user in F26. Previous cross-origin asset and CSP failures remain unresolved, not passed.",
+      "resume_condition": "Windows returns to active project scope; restore its CI target and fix the unchanged native and clean-machine packaging oracles.",
+      "controller": "agent",
+      "depends_on": [
+        "V07"
+      ],
+      "scope": [
+        "Windows-only native integration, ANGLE packaging, and restored Windows CI target"
+      ],
+      "obligations": [
+        "O13"
+      ],
+      "gist": "Retain the deferred Windows acceptance work outside the active Unix development path.",
+      "consumes": [
+        "V07 Linux/macOS implementation",
+        "F19/F25 failed Windows receipts"
+      ],
+      "produces": [
+        "Windows implementation and restored native CI"
+      ],
+      "blueprint": [
+        "Restore the Windows target and reuse the same security assertions, including remote-asset and CSP handler canaries.",
+        "Verify ANGLE libraries and clean-machine bundles before claiming Windows support."
+      ],
+      "oracle_class": "Windows native security and packaged behavior",
+      "implementation_mode": "real",
+      "evidence_class": "exact-commit Windows native and bundle receipts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": [
+        "Windows native security and packaged smoke suite"
+      ],
+      "discharge_evidence": [],
+      "retraction_path": "Return Windows to deferred status with the exact failed receipt; do not claim three-platform acceptance.",
+      "verify_sibling": "VX1"
+    },
+    {
+      "id": "VX1",
+      "label": "Verify restored Windows acceptance",
+      "type": "verify.live",
+      "status": "pending",
+      "controller": "verifier",
+      "depends_on": [
+        "WX1"
+      ],
+      "scope": [
+        "read-only restored Windows CI, security and package receipts"
+      ],
+      "obligations": [
+        "O13"
+      ],
+      "gist": "Only real Windows receipts discharge the deferred platform obligation.",
+      "consumes": [
+        "WX1 exact-revision artifacts"
+      ],
+      "produces": [
+        "Windows verification receipt"
+      ],
+      "blueprint": [
+        "Independently check the original negative security assertions, native window behavior, and ANGLE bundle launch."
+      ],
+      "oracle_class": "independent Windows native verification",
+      "implementation_mode": "independent_verification",
+      "evidence_class": "Windows hosted and clean-machine artifacts",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": [
+        "Windows native security and packaged smoke suite"
+      ],
+      "discharge_evidence": [],
+      "retraction_path": "Reopen WX1 on any failed or missing Windows receipt."
+    },
+    {
+      "id": "E02",
+      "label": "Require a published-engine release graph",
+      "type": "weather",
+      "status": "parked",
+      "park_reason": "The integration branch may use public Git revisions, but no published Servo/Tauri versions provide these new integration APIs yet.",
+      "resume_condition": "Published dependency versions contain the required APIs and the unpatched two-edit consumer passes the native acceptance suite.",
+      "controller": "world",
+      "depends_on": [
+        "V07"
+      ],
+      "scope": [
+        "read-only published Servo/Tauri versions and clean release dependency graph"
+      ],
+      "obligations": [
+        "O10"
+      ],
+      "gist": "Keep development authority separate from the original published-engine release requirement.",
+      "consumes": [
+        "V07 tested public integration revisions"
+      ],
+      "produces": [
+        "consumable published release dependency graph"
+      ],
+      "blueprint": [
+        "Verify actual registry versions and package contents; public Git branches alone do not satisfy this gate."
+      ],
+      "oracle_class": "published dependency availability",
+      "implementation_mode": "weather",
+      "evidence_class": "registry package versions and clean consumer build/native proof",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": [
+        "cargo publish -p turvo --dry-run --locked",
+        "clean two-edit consumer native suite without workspace patches"
+      ],
+      "discharge_evidence": [],
+      "retraction_path": "Keep W09 closed if the registry graph loses the required APIs or native proof."
     },
     {
       "id": "W09",
@@ -832,19 +1576,42 @@
       "type": "work.release",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V08"],
-      "scope": ["Turvo release metadata, crates.io turvo 0.1.0, Git tag and release, and isolated consumer fixture"],
-      "obligations": ["O10", "O12"],
+      "depends_on": [
+        "V08",
+        "VX1",
+        "E02"
+      ],
+      "scope": [
+        "Turvo release metadata, crates.io turvo 0.1.0, Git tag and release, and isolated consumer fixture"
+      ],
+      "obligations": [
+        "O10",
+        "O12"
+      ],
       "gist": "Publish the independently verified crate and exercise the documented two-edit migration in a clean Tauri app.",
-      "consumes": ["V08 complete public-repo acceptance", "all O01-O09 receipts"],
-      "produces": ["crates.io release", "Git tag", "clean consumer receipt"],
-      "blueprint": ["Run full cargo publish dry-run and inspect the archive checksum before publication.", "Publish only if existing authentication succeeds without exposing credentials, then build and launch a clean consumer from crates.io."],
+      "consumes": [
+        "V08 complete public-repo acceptance",
+        "all O01-O09 receipts"
+      ],
+      "produces": [
+        "crates.io release",
+        "Git tag",
+        "clean consumer receipt"
+      ],
+      "blueprint": [
+        "Run full cargo publish dry-run and inspect the archive checksum before publication.",
+        "Publish only if existing authentication succeeds without exposing credentials, then build and launch a clean consumer from crates.io."
+      ],
       "oracle_class": "published artifact and clean native consumer",
       "implementation_mode": "irreversible_release_after_gate",
       "evidence_class": "crates.io record, checksum, consumer build and native launch",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo publish -p turvo --dry-run --locked", "cargo publish -p turvo --locked", "cargo build --locked"],
+      "proof_commands": [
+        "cargo publish -p turvo --dry-run --locked",
+        "cargo publish -p turvo --locked",
+        "cargo build --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "A published version cannot be deleted; yank 0.1.0 and publish a corrected version if a post-release defect is discovered.",
       "verify_sibling": "V09"
@@ -855,19 +1622,35 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W09"],
-      "scope": ["read-only crates.io package, Git release, checksum, and clean consumer receipts"],
-      "obligations": ["O10", "O12"],
+      "depends_on": [
+        "W09"
+      ],
+      "scope": [
+        "read-only crates.io package, Git release, checksum, and clean consumer receipts"
+      ],
+      "obligations": [
+        "O10",
+        "O12"
+      ],
       "gist": "Confirm consumers resolve the public crate without workspace patches and the documented two edits boot Servo.",
-      "consumes": ["W09 published artifact and consumer"],
-      "produces": ["publication verification receipt"],
-      "blueprint": ["Download the registry archive independently, compare checksums and contents, and reproduce the consumer build and launch."],
+      "consumes": [
+        "W09 published artifact and consumer"
+      ],
+      "produces": [
+        "publication verification receipt"
+      ],
+      "blueprint": [
+        "Download the registry archive independently, compare checksums and contents, and reproduce the consumer build and launch."
+      ],
       "oracle_class": "independent published-artifact verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "registry artifact and clean install path",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo search turvo --limit 1", "cargo build --locked"],
+      "proof_commands": [
+        "cargo search turvo --limit 1",
+        "cargo build --locked"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W09 to a corrective-release state; never overwrite the published version."
     },
@@ -877,19 +1660,39 @@
       "type": "work.external",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V09"],
-      "scope": ["isolated Theorem worktree Turvo dependency, consumer Servo patch, apps/browser pin, and integration records"],
-      "obligations": ["O11"],
+      "depends_on": [
+        "V09"
+      ],
+      "scope": [
+        "isolated Theorem worktree Turvo dependency, consumer Servo patch, apps/browser pin, and integration records"
+      ],
+      "obligations": [
+        "O11"
+      ],
       "gist": "Make TheoremWeb desktop and apps/browser resolve one theorem Servo revision while Turvo remains public-fork independent.",
-      "consumes": ["V09 published Turvo", "Theorem current ownership and build instructions"],
-      "produces": ["Theorem integration commit or PR", "resolved graph receipt", "native boot receipts"],
-      "blueprint": ["Use a clean Theorem worktree and consumer-owned patch entries.", "Do not add the private Servo fork to Turvo or disturb unrelated Theorem work."],
+      "consumes": [
+        "V09 published Turvo",
+        "Theorem current ownership and build instructions"
+      ],
+      "produces": [
+        "Theorem integration commit or PR",
+        "resolved graph receipt",
+        "native boot receipts"
+      ],
+      "blueprint": [
+        "Use a clean Theorem worktree and consumer-owned patch entries.",
+        "Do not add the private Servo fork to Turvo or disturb unrelated Theorem work."
+      ],
       "oracle_class": "exact-revision cross-repository native integration",
       "implementation_mode": "real_external_integration",
       "evidence_class": "Theorem commit, dependency graph, and native boots",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo tree -i servo", "cargo build --locked", "native TheoremWeb boot oracle"],
+      "proof_commands": [
+        "cargo tree -i servo",
+        "cargo build --locked",
+        "native TheoremWeb boot oracle"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Revert the isolated Theorem integration commit while leaving Turvo published and unchanged.",
       "verify_sibling": "V10"
@@ -900,19 +1703,34 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W10"],
-      "scope": ["read-only Theorem integration diff, dependency graphs, and native boot receipts"],
-      "obligations": ["O11"],
+      "depends_on": [
+        "W10"
+      ],
+      "scope": [
+        "read-only Theorem integration diff, dependency graphs, and native boot receipts"
+      ],
+      "obligations": [
+        "O11"
+      ],
       "gist": "Prove desktop and browser hosts share the exact fork revision and Turvo has no private-fork dependency.",
-      "consumes": ["W10 integration"],
-      "produces": ["Theorem integration verification receipt"],
-      "blueprint": ["Audit both dependency graphs and independently reproduce the native boots at the exact commit."],
+      "consumes": [
+        "W10 integration"
+      ],
+      "produces": [
+        "Theorem integration verification receipt"
+      ],
+      "blueprint": [
+        "Audit both dependency graphs and independently reproduce the native boots at the exact commit."
+      ],
       "oracle_class": "independent cross-repository native verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "exact commit and native application receipts",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["cargo tree -i servo", "native TheoremWeb and browser-host boot oracles"],
+      "proof_commands": [
+        "cargo tree -i servo",
+        "native TheoremWeb and browser-host boot oracles"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Return W10 to frontier with the mismatched revision or failed host."
     },
@@ -922,19 +1740,38 @@
       "type": "work.implementation",
       "status": "pending",
       "controller": "agent",
-      "depends_on": ["V10"],
-      "scope": ["README, AGENTS.md, docs records and research, benchmark and offscreen follow-on plans, and canonical completion board"],
-      "obligations": ["O12"],
+      "depends_on": [
+        "V10"
+      ],
+      "scope": [
+        "README, AGENTS.md, docs records and research, benchmark and offscreen follow-on plans, and canonical completion board"
+      ],
+      "obligations": [
+        "O12"
+      ],
       "gist": "Reconcile every handoff line against final receipts and leave no unsupported claim or undocumented follow-on boundary.",
-      "consumes": ["V10 final product receipts", "all obligation evidence"],
-      "produces": ["final conformance record", "follow-on planning records", "closed board"],
-      "blueprint": ["Update status only from actual receipts.", "Create separate offscreen, prebuilt-engine, and benchmark records and keep performance claims gated."],
+      "consumes": [
+        "V10 final product receipts",
+        "all obligation evidence"
+      ],
+      "produces": [
+        "final conformance record",
+        "follow-on planning records",
+        "closed board"
+      ],
+      "blueprint": [
+        "Update status only from actual receipts.",
+        "Create separate offscreen, prebuilt-engine, and benchmark records and keep performance claims gated."
+      ],
       "oracle_class": "full spec conformance audit",
       "implementation_mode": "real",
       "evidence_class": "line-by-line obligation mapping and immutable receipts",
       "substitution_allowed": false,
       "live_oracle_required": false,
-      "proof_commands": ["python3 scripts/check-spec-conformance.py", "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"],
+      "proof_commands": [
+        "python3 scripts/check-spec-conformance.py",
+        "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Restore the prior truthful status if any referenced receipt is invalidated.",
       "verify_sibling": "V11"
@@ -945,19 +1782,35 @@
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
-      "depends_on": ["W11"],
-      "scope": ["read-only complete Turvo and Theorem receipts, public artifacts, spec, and board"],
-      "obligations": ["O12"],
+      "depends_on": [
+        "W11"
+      ],
+      "scope": [
+        "read-only complete Turvo and Theorem receipts, public artifacts, spec, and board"
+      ],
+      "obligations": [
+        "O12"
+      ],
       "gist": "Independently prove all obligations are discharged at their required evidence class and no rewrite remains.",
-      "consumes": ["W11 conformance record", "O01-O12 receipts"],
-      "produces": ["fixpoint receipt"],
-      "blueprint": ["Re-run the full conformance checker, inspect public artifacts, and refuse closure for any substituted or stale receipt."],
+      "consumes": [
+        "W11 conformance record",
+        "O01-O13 receipts"
+      ],
+      "produces": [
+        "fixpoint receipt"
+      ],
+      "blueprint": [
+        "Re-run the full conformance checker, inspect public artifacts, and refuse closure for any substituted or stale receipt."
+      ],
       "oracle_class": "independent full-destination verification",
       "implementation_mode": "independent_verification",
       "evidence_class": "complete published and native receipt set",
       "substitution_allowed": false,
       "live_oracle_required": true,
-      "proof_commands": ["python3 scripts/check-spec-conformance.py --require-live", "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"],
+      "proof_commands": [
+        "python3 scripts/check-spec-conformance.py --require-live",
+        "python3 plans/TURVO-1.0-COMPLETION/render_board.py --check"
+      ],
       "discharge_evidence": [],
       "retraction_path": "Reopen the earliest node whose receipt no longer satisfies its obligation."
     }
