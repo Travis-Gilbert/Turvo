@@ -3,14 +3,24 @@
 The exact source and patch digests are in `integration.json`. The patches apply
 to published Servo 0.5.0's recorded commit
 `77fccacc1f1fdce10498d50173aafaa09d02879e` and are published on the isolated
-`Travis-Gilbert/servo:turvo/integration-0.5.0` branch. Theorem branches are untouched.
+`Travis-Gilbert/servo:turvo/storage-engines-1.0` branch. Theorem branches are untouched.
 The second patch locks the added Tokio cancellation feature's existing
 `futures-util` dependency. The third patch makes the file-manager test reuse
 the networking suite's shared runtime instead of initializing and dropping its
 own process-wide runtime. The fourth patch marks engine request clients by
 global kind so workers cannot inherit a document's protected IPC privilege.
+The fifth patch adds value-selected storage engine factories for IndexedDB,
+the client storage registry, Web Storage, and Cache Storage while preserving
+the existing built-ins when no factory is supplied. It also moves the Turvo
+compatibility preferences to fork defaults.
+The sixth patch aligns Servo's jemalloc dependency with the 0.5.4 native-link
+owner already required by Theorem, allowing the public storage traits package
+to resolve in that workspace without two crates claiming `links = "jemalloc"`.
+The seventh patch makes the public web-resource response handle `Send`, so a
+bounded Turvo interceptor can finish Servo-owned responses from its worker
+thread without an unsafe wrapper or a duplicate response path.
 The current public revision is
-`526e95cf47ba81485225660fe1a14dc000ffd4b7`.
+`c535d2b639bde66570dbcf0f07c3fce009c01b9a`.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,

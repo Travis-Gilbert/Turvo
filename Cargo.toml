@@ -2,6 +2,7 @@
 members = [
   "crates/turvo",
   "examples/api",
+  "examples/code-server",
   "examples/helloworld",
   "examples/security",
 ]
@@ -18,13 +19,17 @@ repository = "https://github.com/Travis-Gilbert/Turvo"
 [workspace.dependencies]
 tauri = { version = "=2.11.5", default-features = false, features = ["common-controls-v6"] }
 tauri-build = { version = "=2.6.3" }
+tauri-plugin-shell = "2"
+ureq = { version = "3.4", default-features = false }
 
 # Public development integration only. Registry release remains gated by E02;
 # published versions do not yet provide these runtime/origin contracts.
 [patch.crates-io]
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
-servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
-servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "526e95cf47ba81485225660fe1a14dc000ffd4b7" }
+servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
+servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
+servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
+servo-storage-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
+servo-url = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
 tauri = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-runtime = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-utils = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }

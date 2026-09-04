@@ -1,0 +1,35 @@
+{
+  "schema": "theorem.portable-plan.v1",
+  "plan_id": "TURVO-CODE-SERVER-LEDGER",
+  "generation": 1,
+  "charted_from": {
+    "binding": "portable",
+    "reason": "No callable Theorem plan surface is available. The Turvo native compatibility ledger is projected into a file-native board."
+  },
+  "destination": "Resolve every failure class observed by the native Turvo code-server console capture, with each class routed to exactly one owning fork and discharged by a recapture in which its stable fingerprint is absent.",
+  "fixpoint": "The native Turvo capture is complete, no remaining VSC-NNN failure class is present in docs/ledgers/vscode/0002-turvo.md, and the generated board has no class work node or verifier node.",
+  "hard_prerequisite": "The native ledger is the sole authority for observed failure classes. A missing or capture-pending ledger creates no class node, and source inspection or a ServoShell capture cannot substitute for the Turvo native capture.",
+  "scope_law": "A class has one routing owner at a time. Fingerprint-locked ownership overrides are explicit, and dependency overrides may reference only classes present in the same ledger.",
+  "gate": "granted_by_SPEC-TURVO-RUSTYRED-STORAGE-AND-CODE-SERVER-1.0_V5",
+  "gate_note": "The user authorized repository implementation and verification. Upstream PRs and design threads remain prohibited; fixes land only in the named hard forks.",
+  "autonomy_box": {
+    "status": "granted",
+    "trust_tier": "Local repository and named hard-fork implementation with replayable proof.",
+    "allowed_external_effects": "Edit and test Turvo and the named Servo and code-server forks. Capture native compatibility evidence. Do not open upstream issues, pull requests, or design threads.",
+    "protected_state": "Credentials, unrelated dirty work, user commits, and all repositories outside the named Turvo, Servo, and code-server scopes."
+  },
+  "palette": {
+    "weather": {
+      "controller": "world",
+      "attempt_policy": "Wait for the native capture artifact and resume only when its observable status changes."
+    },
+    "work.implementation": {
+      "controller": "agent",
+      "attempt_policy": "Reproduce the exact fingerprint, repair it in the assigned fork, and recapture without weakening the console oracle."
+    },
+    "verify.live": {
+      "controller": "verifier",
+      "attempt_policy": "Independently recapture the native Turvo workbench and prove that the exact class fingerprint is absent."
+    }
+  }
+}

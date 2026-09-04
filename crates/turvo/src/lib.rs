@@ -106,6 +106,7 @@ type IpcHandler = dyn Fn(Request<String>) + 'static;
 mod devtools;
 mod monitor;
 pub mod servo;
+pub mod storage;
 #[cfg(windows)]
 mod undecorated_resizing;
 mod util;
@@ -116,7 +117,11 @@ pub use webview::Webview;
 use window::WindowExt as _;
 
 pub mod error;
-pub use devtools::{DevtoolsServer, InvalidDevtoolsPort, OptionsAlreadyLocked, TurvoOptions};
+pub use devtools::{
+  DevtoolsServer, InvalidCodeServerUrl, InvalidDevtoolsPort, OptionsAlreadyLocked, TurvoOptions,
+};
+/// Process-wide Servo configuration, including optional storage factories.
+pub type EngineOptions = TurvoOptions;
 pub use error::{Error as ServoError, Result as ServoResult};
 
 pub use cookie;

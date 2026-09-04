@@ -64,6 +64,16 @@ fn close_secondary_window(app: tauri::AppHandle<turvo::Turvo>) -> Result<(), Str
   window.close().map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn clear_browsing_data(app: tauri::AppHandle<turvo::Turvo>) -> Result<(), String> {
+  let window = app
+    .get_webview_window("main")
+    .ok_or_else(|| "the main window is not open".to_owned())?;
+  window
+    .clear_all_browsing_data()
+    .map_err(|error| error.to_string())
+}
+
 fn main() {
   turvo::builder()
     .setup(|app| {
@@ -83,6 +93,7 @@ fn main() {
       retitle_secondary_window,
       resize_secondary_window,
       close_secondary_window,
+      clear_browsing_data,
     ])
     .run(tauri::generate_context!())
     .expect("failed to run the Turvo API example");

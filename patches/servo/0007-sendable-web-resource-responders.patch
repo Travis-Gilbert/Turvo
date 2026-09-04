@@ -1,0 +1,73 @@
+From c535d2b639bde66570dbcf0f07c3fce009c01b9a Mon Sep 17 00:00:00 2001
+From: Travis Gilbert <1travisgilbert@gmail.com>
+Date: Thu, 3 Sep 2026 21:06:41 -0400
+Subject: [PATCH] fix(embedder): make web resource responders sendable
+
+---
+ components/servo/responders.rs       | 10 +++++-----
+ components/servo/webview_delegate.rs |  3 +++
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/components/servo/responders.rs b/components/servo/responders.rs
+index 4788323aaac..b61a486adb9 100644
+--- a/components/servo/responders.rs
++++ b/components/servo/responders.rs
+@@ -61,12 +61,12 @@ impl ServoErrorChannel {
+     }
+ }
+ 
+-pub(crate) trait AbstractSender {
++pub(crate) trait AbstractSender: Send {
+     type Message;
+     fn send(&self, value: Self::Message) -> SendResult;
+ }
+ 
+-impl<T: Serialize> AbstractSender for GenericSender<T> {
++impl<T: Serialize + Send> AbstractSender for GenericSender<T> {
+     type Message = T;
+     fn send(&self, value: T) -> SendResult {
+         GenericSender::send(self, value)
+@@ -82,7 +82,7 @@ impl<T: for<'de> Deserialize<'de> + Serialize + Send + 'static> AbstractSender
+     }
+ }
+ 
+-impl<T> AbstractSender for TokioSender<T> {
++impl<T: Send> AbstractSender for TokioSender<T> {
+     type Message = T;
+     fn send(&self, value: T) -> SendResult {
+         TokioSender::send(self, value).map_err(|_| SendError::Disconnected)
+@@ -97,7 +97,7 @@ impl<T> From<TokioOneshotSender<T>> for OneshotSender<T> {
+     }
+ }
+ 
+-impl<T> AbstractSender for OneshotSender<T> {
++impl<T: Send> AbstractSender for OneshotSender<T> {
+     type Message = T;
+     fn send(&self, value: T) -> SendResult {
+         let sender = self.0.borrow_mut().take();
+@@ -117,7 +117,7 @@ pub(crate) struct IpcResponder<T> {
+     default_response: Option<T>,
+ }
+ 
+-impl<T: Serialize + 'static> IpcResponder<T> {
++impl<T: Serialize + Send + 'static> IpcResponder<T> {
+     pub(crate) fn new(response_sender: GenericSender<T>, default_response: T) -> Self {
+         Self {
+             response_sender: Box::new(response_sender),
+diff --git a/components/servo/webview_delegate.rs b/components/servo/webview_delegate.rs
+index 12c2d4ba4b8..2e9b24fa781 100644
+--- a/components/servo/webview_delegate.rs
++++ b/components/servo/webview_delegate.rs
+@@ -1216,6 +1216,9 @@ mod test {
+ 
+         use crate::responders::ServoErrorChannel;
+ 
++        fn assert_send<T: Send>() {}
++        assert_send::<WebResourceLoad>();
++
+         let web_resource_request = || WebResourceRequest {
+             has_body: false,
+             method: Method::GET,
+-- 
+2.53.0
+

@@ -9,6 +9,13 @@
 // not fall back to the metadata-only HTTP resource interception interface.
 
 ;(function () {
+  Object.defineProperty(window, '__TURVO__', {
+    value: Object.freeze({ runtime: 'servo' }),
+    configurable: false,
+    enumerable: false,
+    writable: false
+  })
+
   /**
    * A runtime generated key to ensure an IPC call comes from an initialized frame.
    *

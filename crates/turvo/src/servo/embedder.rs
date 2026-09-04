@@ -587,6 +587,9 @@ impl Embedder {
         custom_protocols,
         bridge,
         use_https_scheme,
+        crate::devtools::configured_options()
+          .code_server_url()
+          .cloned(),
       )),
     });
     let target = RenderingTarget::Window { window, context };
@@ -651,6 +654,9 @@ impl Embedder {
         custom_protocols,
         bridge,
         use_https_scheme,
+        crate::devtools::configured_options()
+          .code_server_url()
+          .cloned(),
       )),
     });
     let target = RenderingTarget::Child {
@@ -693,45 +699,6 @@ impl Embedder {
     if let Some(background_color) = background_color {
       preferences.shell_background_color_rgba = background_color;
     }
-    // The legacy editing API (`document.queryCommandSupported` and friends)
-    // is implemented but pref-gated off by default; widely-deployed libraries
-    // probe it at load time (e.g. monaco-editor's clipboard contrib) and an
-    // entire bundle dies on the missing function when the pref is off.
-    preferences.dom_exec_command_enabled = true;
-    // CSS Grid is implemented but ships disabled (layout_grid_enabled defaults
-    // to false in servo's components/config/prefs.rs). With it off the
-    // display:grid declaration does not parse and is dropped, so every grid
-    // container silently falls back to its default display -- a <span> stays
-    // inline. Nothing errors; the layout is just quietly wrong, which is how
-    // this survived unnoticed: the app's disclosure caret painted as a
-    // trapezoid only because its container was never a grid, leaving the
-    // ::before in a line box.
-    preferences.layout_grid_enabled = true;
-    // Native SVG layout (servo-patches 0009-0024). The pref itself only
-    // exists on a patched servo tree (0009 introduces it), so the assignment
-    // is feature-gated: without `patched-servo` the crate compiles against
-    // the stock pinned rev and the patch series stays fully optional.
-    #[cfg(feature = "patched-servo")]
-    {
-      preferences.layout_svg_native_enabled = true;
-    }
-    // The async Clipboard API (`navigator.clipboard`) is likewise implemented
-    // behind a pref, and servo's default `clipboard` feature ships a system
-    // clipboard delegate on desktop platforms — enabling it lights up copy
-    // buttons with no embedder-side plumbing.
-    preferences.dom_async_clipboard_enabled = true;
-    // Two more implemented-but-gated APIs commonly probed by app frameworks
-    // and editor libraries; both are standard and inert unless used.
-    preferences.dom_intersection_observer_enabled = true;
-    preferences.dom_composition_event_enabled = true;
-    // Variable fonts: off by default, but the full pipeline exists (CSS
-    // font-weight/-width/-optical-sizing composed into fvar coordinates,
-    // applied to shaping, metrics, and rasterization). Without it a variable
-    // TTF renders at its *default* fvar instance — for fonts whose default is
-    // the Thin master (wght min), every weight renders hairline-thin with the
-    // Thin master's spacing.
-    preferences.layout_variable_fonts_enabled = true;
-
     let protocol_registry = delegate.protocols.registry()?;
 
     // Claim the process-wide configuration only after every recoverable setup
@@ -747,6 +714,7 @@ impl Embedder {
       .preferences(preferences)
       .event_loop_waker(Box::new(waker))
       .protocol_registry(protocol_registry)
+      .storage_engines(runtime_options.storage_engines().clone())
       .build();
     servo.set_delegate(Rc::new(EngineDelegate {
       options: runtime_options,
@@ -1293,6 +1261,7 @@ mod tests {
         Default::default(),
         None,
         false,
+        None,
       )),
     };
 
