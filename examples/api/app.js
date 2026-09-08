@@ -48,3 +48,79 @@ document.querySelectorAll('[data-command]').forEach((button) => {
     }
   })
 })
+
+const databaseName = 'turvo-api-storage-hook'
+const storeName = 'probe'
+const probeKey = 'round-trip'
+
+function requestResult(request) {
+  return new Promise((resolve, reject) => {
+    request.addEventListener('success', () => resolve(request.result), { once: true })
+    request.addEventListener('error', () => reject(request.error), { once: true })
+  })
+}
+
+function transactionComplete(transaction) {
+  return new Promise((resolve, reject) => {
+    transaction.addEventListener('complete', resolve, { once: true })
+    transaction.addEventListener('abort', () => reject(transaction.error), { once: true })
+    transaction.addEventListener('error', () => reject(transaction.error), { once: true })
+  })
+}
+
+async function openProbeDatabase() {
+  const request = indexedDB.open(databaseName, 1)
+  request.addEventListener('upgradeneeded', () => {
+    if (!request.result.objectStoreNames.contains(storeName)) {
+      request.result.createObjectStore(storeName)
+    }
+  })
+  return requestResult(request)
+}
+
+async function readProbeValue() {
+  const database = await openProbeDatabase()
+  try {
+    const transaction = database.transaction(storeName, 'readonly')
+    const completed = transactionComplete(transaction)
+    const result = await requestResult(transaction.objectStore(storeName).get(probeKey))
+    await completed
+    return result
+  } finally {
+    database.close()
+  }
+}
+
+document.querySelector('#idb-round-trip').addEventListener('click', async () => {
+  try {
+    const database = await openProbeDatabase()
+    const value = { source: 'turvo-api', committed: true }
+    const transaction = database.transaction(storeName, 'readwrite')
+    const completed = transactionComplete(transaction)
+    transaction.objectStore(storeName).put(value, probeKey)
+    await completed
+    database.close()
+
+    const reopened = await readProbeValue()
+    if (JSON.stringify(reopened) !== JSON.stringify(value)) {
+      throw new Error(`IndexedDB reopened with an unexpected value: ${JSON.stringify(reopened)}`)
+    }
+    report('IndexedDB write committed and survived reopen.')
+  } catch (error) {
+    report(error)
+  }
+})
+
+document.querySelector('#idb-clear').addEventListener('click', async () => {
+  try {
+    await invoke('clear_browsing_data')
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    const reopened = await readProbeValue()
+    if (reopened !== undefined) {
+      throw new Error('IndexedDB value remained after clear_all_browsing_data.')
+    }
+    report('IndexedDB was cleared and reopened empty.')
+  } catch (error) {
+    report(error)
+  }
+})

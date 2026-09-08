@@ -1,0 +1,224 @@
+From 526e95cf47ba81485225660fe1a14dc000ffd4b7 Mon Sep 17 00:00:00 2001
+From: Travis Gilbert <1travisgilbert@gmail.com>
+Date: Tue, 1 Sep 2026 18:36:15 -0400
+Subject: [PATCH] fix(security): identify window-backed requests
+
+---
+ Cargo.lock                                    |  1 +
+ .../script/dom/globalscope/globalscope.rs     |  1 +
+ components/script/dom/window/window.rs        |  1 +
+ .../dom/workers/dedicatedworkerglobalscope.rs |  1 +
+ .../dom/workers/sharedworkerglobalscope.rs    |  1 +
+ components/script/navigation.rs               |  1 +
+ components/shared/net/Cargo.toml              |  1 +
+ components/shared/net/request.rs              |  5 +
+ components/shared/net/tests/request_client.rs | 99 +++++++++++++++++++
+ 9 files changed, 111 insertions(+)
+ create mode 100644 components/shared/net/tests/request_client.rs
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 02190af..7598042 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -8771,6 +8771,7 @@ dependencies = [
+  "rustc-hash 2.1.3",
+  "rustls-pki-types",
+  "serde",
++ "serde_json",
+  "servo-base",
+  "servo-config",
+  "servo-default-resources",
+diff --git a/components/script/dom/globalscope/globalscope.rs b/components/script/dom/globalscope/globalscope.rs
+index 2e43975..5caf0c4 100644
+--- a/components/script/dom/globalscope/globalscope.rs
++++ b/components/script/dom/globalscope/globalscope.rs
+@@ -2652,6 +2652,7 @@ impl GlobalScope {
+             is_nested_browsing_context: false,
+             insecure_requests_policy: self.insecure_requests_policy(),
+             has_trustworthy_ancestor_origin: false,
++            is_window: false,
+         }
+     }
+ 
+diff --git a/components/script/dom/window/window.rs b/components/script/dom/window/window.rs
+index c62d466..fdd149d 100644
+--- a/components/script/dom/window/window.rs
++++ b/components/script/dom/window/window.rs
+@@ -994,6 +994,7 @@ impl Window {
+             is_nested_browsing_context: !self.is_top_level(),
+             insecure_requests_policy,
+             has_trustworthy_ancestor_origin,
++            is_window: true,
+         }
+     }
+ 
+diff --git a/components/script/dom/workers/dedicatedworkerglobalscope.rs b/components/script/dom/workers/dedicatedworkerglobalscope.rs
+index 321f017..8c9f1a7 100644
+--- a/components/script/dom/workers/dedicatedworkerglobalscope.rs
++++ b/components/script/dom/workers/dedicatedworkerglobalscope.rs
+@@ -421,6 +421,7 @@ impl DedicatedWorkerGlobalScope {
+                     is_nested_browsing_context,
+                     insecure_requests_policy,
+                     has_trustworthy_ancestor_origin: current_global_ancestor_trustworthy,
++                    is_window: false,
+                 };
+ 
+                 let event_loop_sender = ScriptEventLoopSender::DedicatedWorker {
+diff --git a/components/script/dom/workers/sharedworkerglobalscope.rs b/components/script/dom/workers/sharedworkerglobalscope.rs
+index 58d2d5e..452981b 100644
+--- a/components/script/dom/workers/sharedworkerglobalscope.rs
++++ b/components/script/dom/workers/sharedworkerglobalscope.rs
+@@ -420,6 +420,7 @@ impl SharedWorkerGlobalScope {
+                     is_nested_browsing_context,
+                     insecure_requests_policy,
+                     has_trustworthy_ancestor_origin: current_global_ancestor_trustworthy,
++                    is_window: false,
+                 };
+ 
+                 let event_loop_sender = ScriptEventLoopSender::SharedWorker(own_sender.clone());
+diff --git a/components/script/navigation.rs b/components/script/navigation.rs
+index b04a9a6..233e20a 100644
+--- a/components/script/navigation.rs
++++ b/components/script/navigation.rs
+@@ -230,6 +230,7 @@ impl InProgressLoad {
+             is_nested_browsing_context: self.parent_info.is_some(),
+             insecure_requests_policy,
+             has_trustworthy_ancestor_origin: self.load_data.has_trustworthy_ancestor_origin,
++            is_window: false,
+         };
+ 
+         let mut request_builder = RequestBuilder::new(
+diff --git a/components/shared/net/Cargo.toml b/components/shared/net/Cargo.toml
+index 5da2095..2799eaa 100644
+--- a/components/shared/net/Cargo.toml
++++ b/components/shared/net/Cargo.toml
+@@ -55,4 +55,5 @@ uuid = { workspace = true }
+ webrender_api = { workspace = true }
+ 
+ [dev-dependencies]
++serde_json = { workspace = true }
+ servo-default-resources = { workspace = true }
+diff --git a/components/shared/net/request.rs b/components/shared/net/request.rs
+index ad5e155..deedca6 100644
+--- a/components/shared/net/request.rs
++++ b/components/shared/net/request.rs
+@@ -225,6 +225,11 @@ pub struct RequestClient {
+     pub insecure_requests_policy: InsecureRequestsPolicy,
+     /// <https://w3c.github.io/webappsec-secure-contexts/#potentially-trustworthy-origin>
+     pub has_trustworthy_ancestor_origin: bool,
++    /// True only for a client backed by an actual `Window` global.
++    /// Workers and synthetic clients remain false even when they share a window's origin or IDs.
++    /// This must not be inferred from `is_nested_browsing_context`; missing metadata fails closed.
++    #[serde(default)]
++    pub is_window: bool,
+ }
+ 
+ /// <https://html.spec.whatwg.org/multipage/#system-visibility-state>
+diff --git a/components/shared/net/tests/request_client.rs b/components/shared/net/tests/request_client.rs
+new file mode 100644
+index 0000000..35d1dd8
+--- /dev/null
++++ b/components/shared/net/tests/request_client.rs
+@@ -0,0 +1,99 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
++
++use net_traits::blob_url_store::UrlWithBlobClaim;
++use net_traits::request::{
++    InsecureRequestsPolicy, Origin, Referrer, RequestBuilder, RequestClient,
++};
++use serde_json::json;
++use servo_url::ServoUrl;
++
++const TEST_URL: &str = "https://app.invalid/";
++
++fn request_client(is_window: bool, is_nested_browsing_context: bool) -> RequestClient {
++    RequestClient {
++        preloaded_resources: Default::default(),
++        policy_container: Default::default(),
++        origin: Origin::Origin(ServoUrl::parse(TEST_URL).unwrap().origin()),
++        is_nested_browsing_context,
++        insecure_requests_policy: InsecureRequestsPolicy::DoNotUpgrade,
++        has_trustworthy_ancestor_origin: true,
++        is_window,
++    }
++}
++
++#[test]
++fn missing_request_client_kind_deserializes_as_non_window() {
++    for nested in [false, true] {
++        let expected = request_client(true, nested);
++        let mut encoded = serde_json::to_value(&expected).unwrap();
++        assert_eq!(
++            encoded.as_object_mut().unwrap().remove("is_window"),
++            Some(json!(true))
++        );
++
++        let decoded: RequestClient = serde_json::from_value(encoded).unwrap();
++        assert!(!decoded.is_window);
++        assert_eq!(decoded.is_nested_browsing_context, nested);
++        assert_eq!(decoded.origin, expected.origin);
++        assert!(decoded.has_trustworthy_ancestor_origin);
++    }
++}
++
++#[test]
++fn request_client_kind_roundtrip_is_independent_of_nesting() {
++    for is_window in [false, true] {
++        for nested in [false, true] {
++            let expected = request_client(is_window, nested);
++            let encoded = serde_json::to_value(&expected).unwrap();
++            assert_eq!(encoded["is_window"], json!(is_window));
++
++            let decoded: RequestClient = serde_json::from_value(encoded).unwrap();
++            assert_eq!(decoded.is_window, is_window);
++            assert_eq!(decoded.is_nested_browsing_context, nested);
++            assert_eq!(decoded.origin, expected.origin);
++        }
++    }
++}
++
++#[test]
++fn non_boolean_request_client_kind_is_rejected() {
++    for invalid_kind in [
++        json!(null),
++        json!(0),
++        json!(1),
++        json!("false"),
++        json!("true"),
++        json!([]),
++        json!({}),
++    ] {
++        let mut encoded = serde_json::to_value(request_client(true, false)).unwrap();
++        encoded["is_window"] = invalid_kind.clone();
++        assert!(
++            serde_json::from_value::<RequestClient>(encoded).is_err(),
++            "accepted non-boolean caller kind: {invalid_kind}"
++        );
++    }
++}
++
++#[test]
++fn request_builder_preserves_request_client_kind() {
++    for is_window in [false, true] {
++        for nested in [false, true] {
++            let expected = request_client(is_window, nested);
++            let request = RequestBuilder::new(
++                None,
++                UrlWithBlobClaim::new(ServoUrl::parse(TEST_URL).unwrap(), None),
++                Referrer::NoReferrer,
++            )
++            .client(expected.clone())
++            .build();
++
++            let client = request.clone().client.unwrap();
++            assert_eq!(client.is_window, is_window);
++            assert_eq!(client.is_nested_browsing_context, nested);
++            assert_eq!(client.origin, expected.origin);
++        }
++    }
++}
+-- 
+2.53.0
+

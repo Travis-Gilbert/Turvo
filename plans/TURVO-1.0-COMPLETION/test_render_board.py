@@ -3,7 +3,14 @@
 from copy import deepcopy
 import unittest
 
-from render_board import load_plan, render_node, render_replay, validate
+from render_board import (
+    ancestors,
+    load_plan,
+    render_manifest,
+    render_node,
+    render_replay,
+    validate,
+)
 
 
 class ParkReceiptTests(unittest.TestCase):
@@ -59,6 +66,23 @@ class ParkReceiptTests(unittest.TestCase):
     def test_replay_preserves_park_reason(self):
         plan, task = self.parked_plan()
         self.assertIn(task["park_reason"], render_replay(plan, self.digest))
+
+    def test_required_platform_cannot_also_be_deferred(self):
+        plan = deepcopy(self.plan)
+        plan["execution_profile"]["required_platforms"].append("Windows")
+        self.assertIn("a platform cannot be both required and deferred", validate(plan))
+
+    def test_profile_discloses_deferral_and_release_gate(self):
+        profile = self.plan["execution_profile"]
+        rendered = render_manifest(self.plan, self.digest)
+        self.assertIn(profile["deferral_reason"], rendered)
+        self.assertIn(profile["release_gate"], rendered)
+        self.assertIn("Required: Linux, macOS. Deferred: Windows.", rendered)
+
+    def test_release_retains_deferred_and_published_engine_gates(self):
+        tasks = {task["id"]: task for task in self.plan["tasks"]}
+        self.assertTrue({"VX1", "E02"} <= ancestors("W09", tasks))
+        self.assertEqual(tasks["WX1"]["status"], "parked")
 
 
 if __name__ == "__main__":

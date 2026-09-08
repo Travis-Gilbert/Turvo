@@ -19,9 +19,11 @@ use tiny_http::{Header, Response, Server};
 use url::Url;
 
 const CASES: &[&str] = &[
+  "local-assets-modules",
   "local-suite",
   "remote-frame",
   "local-frame",
+  "local-frame-worker",
   "sandbox-frame",
   "opaque-frame",
   "sandbox-top",
@@ -39,6 +41,7 @@ struct Observations {
   js_event: bool,
   blocked_asset_requested: bool,
   blocked_app_asset_requested: bool,
+  upload_asset_requested: bool,
 }
 
 type Shared = Arc<Mutex<Observations>>;
@@ -99,6 +102,7 @@ fn finish(app: &tauri::AppHandle<turvo::Turvo>, state: &Shared, failure: Option<
     && state.js_event
     && !state.blocked_asset_requested
     && !state.blocked_app_asset_requested
+    && !state.upload_asset_requested
     && CASES.iter().all(|case| state.reports.contains(*case));
   println!(
     "TURVO_NATIVE_SECURITY {}",
@@ -111,7 +115,8 @@ fn finish(app: &tauri::AppHandle<turvo::Turvo>, state: &Shared, failure: Option<
       "channel": state.channel,
       "js_event": state.js_event,
       "blocked_asset_requested": state.blocked_asset_requested,
-      "blocked_app_asset_requested": state.blocked_app_asset_requested
+      "blocked_app_asset_requested": state.blocked_app_asset_requested,
+      "upload_asset_requested": state.upload_asset_requested
     })
   );
   app.exit(if passed { 0 } else { 1 });
@@ -277,6 +282,7 @@ fn main() {
         let _ = handle.emit("security:ack", "ack-value");
       });
       let assets_state = setup_state.clone();
+      let sandbox_script_url = format!("{base}/attacker.js");
       WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Turvo native security probe")
         .inner_size(800.0, 600.0)
@@ -285,6 +291,9 @@ fn main() {
           serde_json::to_string(&base)?
         ))
         .on_web_resource_request(move |request, response| {
+          if request.method() == tauri::http::Method::POST {
+            assets_state.lock().unwrap().upload_asset_requested = true;
+          }
           if request.uri().path() == "/csp-canary.svg" {
             assets_state.lock().unwrap().blocked_app_asset_requested = true;
           }
@@ -293,6 +302,16 @@ fn main() {
               tauri::http::header::CONTENT_SECURITY_POLICY,
               tauri::http::HeaderValue::from_static("sandbox allow-scripts"),
             );
+            // Sandbox makes the document origin opaque, so 'self' cannot load
+            // its probe script. Use the already-allowed loopback fixture source.
+            let body = String::from_utf8_lossy(response.body())
+              .replace("__TURVO_TEST_SCRIPT_URL__", &sandbox_script_url)
+              .into_bytes();
+            response.headers_mut().insert(
+              tauri::http::header::CONTENT_LENGTH,
+              tauri::http::HeaderValue::from(body.len()),
+            );
+            *response.body_mut() = body.into();
           }
         })
         .build()?;

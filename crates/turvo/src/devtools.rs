@@ -8,6 +8,10 @@ use std::{
   sync::{Arc, OnceLock, RwLock},
 };
 
+use url::{Host, Url};
+
+use crate::storage::StorageEngines;
+
 type DevtoolsConnectionHandler = Arc<dyn Fn() -> bool + Send + Sync>;
 type DevtoolsServerHandler = Arc<dyn Fn(DevtoolsServer) + Send + Sync>;
 
@@ -65,6 +69,8 @@ pub struct TurvoOptions {
   devtools_port: Option<u16>,
   devtools_connection_handler: Option<DevtoolsConnectionHandler>,
   devtools_server_handler: Option<DevtoolsServerHandler>,
+  code_server_url: Option<Url>,
+  storage_engines: StorageEngines,
 }
 
 impl TurvoOptions {
@@ -109,6 +115,40 @@ impl TurvoOptions {
     self
   }
 
+  /// Enables Turvo's allowlisted VS Code webview-resource interception.
+  ///
+  /// The endpoint must be a loopback HTTP origin. Turvo only rewrites VS Code's
+  /// known virtual resource authorities; this URL is never exposed to page
+  /// script as a general-purpose proxy.
+  pub fn try_with_code_server_url(mut self, url: Url) -> Result<Self, InvalidCodeServerUrl> {
+    let is_loopback = match url.host() {
+      Some(Host::Ipv4(address)) => address.is_loopback(),
+      Some(Host::Ipv6(address)) => address.is_loopback(),
+      Some(Host::Domain(domain)) => domain.eq_ignore_ascii_case("localhost"),
+      None => false,
+    };
+    if url.scheme() != "http"
+      || !url.username().is_empty()
+      || url.password().is_some()
+      || url.query().is_some()
+      || url.fragment().is_some()
+      || !is_loopback
+    {
+      return Err(InvalidCodeServerUrl);
+    }
+    self.code_server_url = Some(url);
+    Ok(self)
+  }
+
+  /// Selects the storage factories used by all Servo webviews in this process.
+  ///
+  /// Passing [`StorageEngines::default`] preserves Servo's built-in backends.
+  #[must_use]
+  pub fn with_storage_engines(mut self, storage_engines: StorageEngines) -> Self {
+    self.storage_engines = storage_engines;
+    self
+  }
+
   pub(crate) fn devtools_listen_address(&self) -> Option<SocketAddr> {
     self
       .devtools_port
@@ -136,6 +176,14 @@ impl TurvoOptions {
       });
     }
   }
+
+  pub(crate) fn code_server_url(&self) -> Option<&Url> {
+    self.code_server_url.as_ref()
+  }
+
+  pub(crate) fn storage_engines(&self) -> &StorageEngines {
+    &self.storage_engines
+  }
 }
 
 impl fmt::Debug for TurvoOptions {
@@ -151,6 +199,19 @@ impl fmt::Debug for TurvoOptions {
         "has_devtools_server_handler",
         &self.devtools_server_handler.is_some(),
       )
+      .field("code_server_url", &self.code_server_url)
+      .field(
+        "custom_storage_engine_count",
+        &[
+          self.storage_engines.indexeddb.is_some(),
+          self.storage_engines.registry.is_some(),
+          self.storage_engines.web_storage.is_some(),
+          self.storage_engines.cache.is_some(),
+        ]
+        .into_iter()
+        .filter(|selected| *selected)
+        .count(),
+      )
       .finish()
   }
 }
@@ -159,6 +220,11 @@ impl fmt::Debug for TurvoOptions {
 #[derive(Debug, thiserror::Error)]
 #[error("the pinned Servo release cannot report an OS-selected DevTools port; choose 1..=65535")]
 pub struct InvalidDevtoolsPort;
+
+/// Error returned when the VS Code resource proxy is pointed outside loopback.
+#[derive(Debug, thiserror::Error)]
+#[error("the code-server resource endpoint must be a loopback HTTP URL without credentials, query, or fragment")]
+pub struct InvalidCodeServerUrl;
 
 /// Error returned when runtime options are changed after Servo has started.
 #[derive(Debug, thiserror::Error)]
@@ -216,13 +282,28 @@ pub(crate) fn options_for_engine() -> TurvoOptions {
     .start_engine()
 }
 
+pub(crate) fn configured_options() -> TurvoOptions {
+  options()
+    .read()
+    .expect("Turvo options lock poisoned")
+    .options
+    .clone()
+}
+
 #[cfg(test)]
 mod tests {
   use super::{DevtoolsServer, OptionsState, TurvoOptions};
+  use crate::storage::{CacheStorageEngine, CacheStorageEngineFactory, StorageEngines};
   use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::{Arc, Mutex},
+    path::PathBuf,
+    sync::{
+      atomic::{AtomicBool, Ordering},
+      Arc, Mutex,
+    },
   };
+  use storage_traits::{cache_storage::CacheStorageError, client_storage::StorageProxyMap};
+  use url::Url;
 
   #[test]
   fn devtools_are_disabled_by_default() {
@@ -277,6 +358,76 @@ mod tests {
   #[test]
   fn zero_is_not_accepted_as_a_devtools_port() {
     assert!(TurvoOptions::default().try_with_devtools_port(0).is_err());
+  }
+
+  #[test]
+  fn code_server_interception_requires_an_uncredentialed_loopback_http_url() {
+    for accepted in [
+      "http://127.0.0.1:8080/",
+      "http://[::1]:8080/base/",
+      "http://localhost:8080/",
+    ] {
+      assert!(TurvoOptions::default()
+        .try_with_code_server_url(Url::parse(accepted).unwrap())
+        .is_ok());
+    }
+
+    for rejected in [
+      "https://localhost:8080/",
+      "http://example.com:8080/",
+      "http://user@localhost:8080/",
+      "http://localhost:8080/?token=secret",
+      "http://localhost:8080/#fragment",
+    ] {
+      assert!(TurvoOptions::default()
+        .try_with_code_server_url(Url::parse(rejected).unwrap())
+        .is_err());
+    }
+  }
+
+  struct MemoryCacheEngine;
+
+  impl CacheStorageEngine for MemoryCacheEngine {
+    fn has_cache(
+      &mut self,
+      _origin: &servo_url::ImmutableOrigin,
+      _proxy: &StorageProxyMap,
+      cache_name: &str,
+    ) -> Result<bool, CacheStorageError<String>> {
+      Ok(cache_name == "selected-by-turvo")
+    }
+  }
+
+  struct MemoryCacheFactory {
+    opened: Arc<AtomicBool>,
+  }
+
+  impl CacheStorageEngineFactory for MemoryCacheFactory {
+    fn open(&self, _storage_dir: PathBuf) -> Result<Box<dyn CacheStorageEngine>, String> {
+      self.opened.store(true, Ordering::SeqCst);
+      Ok(Box::new(MemoryCacheEngine))
+    }
+  }
+
+  #[test]
+  fn storage_hook_preserves_an_injected_factory() {
+    let opened = Arc::new(AtomicBool::new(false));
+    let engines = StorageEngines {
+      cache: Some(Arc::new(MemoryCacheFactory {
+        opened: opened.clone(),
+      })),
+      ..StorageEngines::default()
+    };
+    let options = TurvoOptions::default().with_storage_engines(engines);
+    let _engine = options
+      .storage_engines()
+      .cache
+      .as_ref()
+      .unwrap()
+      .open(PathBuf::from("unused-by-memory-engine"))
+      .unwrap();
+
+    assert!(opened.load(Ordering::SeqCst));
   }
 
   #[test]

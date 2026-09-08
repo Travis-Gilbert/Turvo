@@ -1,0 +1,143 @@
+{
+  "schema": "theorem.portable-plan.v1",
+  "plan_id": "TURVO-CODE-SERVER-LEDGER",
+  "generation": 1,
+  "charted_from": {
+    "binding": "portable",
+    "reason": "No callable Theorem plan surface is available. The Turvo native compatibility ledger is projected into a file-native board."
+  },
+  "destination": "Resolve every failure class observed by the native Turvo code-server console capture, with each class routed to exactly one owning fork and discharged by a recapture in which its stable fingerprint is absent.",
+  "fixpoint": "The native Turvo capture is complete, no remaining VSC-NNN failure class is present in docs/ledgers/vscode/0002-turvo.md, and the generated board has no class work node or verifier node.",
+  "hard_prerequisite": "The native ledger is the sole authority for observed failure classes. A missing or capture-pending ledger creates no class node, and source inspection or a ServoShell capture cannot substitute for the Turvo native capture.",
+  "scope_law": "A class has one routing owner at a time. Fingerprint-locked ownership overrides are explicit, and dependency overrides may reference only classes present in the same ledger.",
+  "gate": "granted_by_SPEC-TURVO-RUSTYRED-STORAGE-AND-CODE-SERVER-1.0_V5",
+  "gate_note": "The user authorized repository implementation and verification. Upstream PRs and design threads remain prohibited; fixes land only in the named hard forks.",
+  "autonomy_box": {
+    "status": "granted",
+    "trust_tier": "Local repository and named hard-fork implementation with replayable proof.",
+    "allowed_external_effects": "Edit and test Turvo and the named Servo and code-server forks. Capture native compatibility evidence. Do not open upstream issues, pull requests, or design threads.",
+    "protected_state": "Credentials, unrelated dirty work, user commits, and all repositories outside the named Turvo, Servo, and code-server scopes."
+  },
+  "palette": {
+    "weather": {
+      "controller": "world",
+      "attempt_policy": "Wait for the native capture artifact and resume only when its observable status changes."
+    },
+    "work.implementation": {
+      "controller": "agent",
+      "attempt_policy": "Reproduce the exact fingerprint, repair it in the assigned fork, and recapture without weakening the console oracle."
+    },
+    "verify.live": {
+      "controller": "verifier",
+      "attempt_policy": "Independently recapture the native Turvo workbench and prove that the exact class fingerprint is absent."
+    }
+  },
+  "opening_moves": [],
+  "source_ledger": {
+    "path": "docs/ledgers/vscode/0002-turvo.md",
+    "status": "capture_pending",
+    "sha256": "bbdfec042fb2485d821c356db10baf61dd589a68e826a228db8e13ec84465d75",
+    "class_count": 0,
+    "reason": "the ledger explicitly records capture pending"
+  },
+  "acceptance_obligations": [
+    {
+      "id": "CAPTURE",
+      "text": "A completed native Turvo console capture is the class authority.",
+      "oracle": "0002-turvo.md declares its classifier count and carries stable fingerprint comments."
+    },
+    {
+      "id": "FIXPOINT",
+      "text": "The completed native ledger contains zero remaining failure classes.",
+      "oracle": "import_ledger.py --assert-empty passes."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "CAPTURE",
+      "label": "Capture the Turvo code-server console ledger",
+      "type": "weather",
+      "status": "parked",
+      "controller": "world",
+      "owner": "turvo",
+      "depends_on": [],
+      "scope": [
+        "docs/ledgers/vscode/0002-turvo.md"
+      ],
+      "obligations": [
+        "CAPTURE"
+      ],
+      "gist": "Make the native Turvo console export authoritative before creating failure work.",
+      "consumes": [
+        "running examples/code-server workbench",
+        "Firefox DevTools console export"
+      ],
+      "produces": [
+        "docs/ledgers/vscode/0002-turvo.md"
+      ],
+      "blueprint": [
+        "Launch code-server in Turvo, exercise the workbench, and export the console.",
+        "Classify the export into stable VSC-NNN source and first-message fingerprints."
+      ],
+      "oracle_class": "native Turvo console capture",
+      "implementation_mode": "external_observation",
+      "evidence_class": "operator-owned native DevTools export",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": [
+        "python3 scripts/vscode-ledger-classify.py --output docs/ledgers/vscode/0002-turvo.md docs/ledgers/vscode/0002-turvo-console.json",
+        "python3 plans/TURVO-CODE-SERVER-LEDGER/import_ledger.py --check"
+      ],
+      "discharge_evidence": [],
+      "non_conclusions": [
+        "A pending file, source audit, ServoShell ledger, or screenshot alone does not identify a Turvo failure class."
+      ],
+      "retraction_path": "Mark the capture pending and regenerate if the native artifact is invalidated.",
+      "park_reason": "the ledger explicitly records capture pending",
+      "resume_condition": "0002-turvo.md records a completed classifier capture with an explicit class count."
+    },
+    {
+      "id": "FIXPOINT",
+      "label": "Verify the code-server compatibility fixpoint",
+      "type": "verify.live",
+      "status": "pending",
+      "controller": "verifier",
+      "owner": "turvo",
+      "depends_on": [
+        "CAPTURE"
+      ],
+      "scope": [
+        "read-only docs/ledgers/vscode/0002-turvo.md"
+      ],
+      "obligations": [
+        "FIXPOINT"
+      ],
+      "gist": "Accept the board only when the completed native capture contains zero remaining classes.",
+      "consumes": [
+        "completed CAPTURE",
+        "all class verifier receipts"
+      ],
+      "produces": [
+        "compatibility ledger fixpoint receipt"
+      ],
+      "blueprint": [
+        "Require an explicit native classifier count of zero.",
+        "Reject a missing ledger, capture-pending marker, or lower-class substitute."
+      ],
+      "oracle_class": "native Turvo ledger with zero classified failure classes",
+      "implementation_mode": "terminal_live_verification",
+      "evidence_class": "operator-owned native DevTools export",
+      "substitution_allowed": false,
+      "live_oracle_required": true,
+      "proof_commands": [
+        "python3 plans/TURVO-CODE-SERVER-LEDGER/import_ledger.py --assert-empty"
+      ],
+      "discharge_evidence": [],
+      "non_conclusions": [
+        "Zero classes in an unclassified or capture-pending document is not a fixpoint receipt."
+      ],
+      "retraction_path": "Regenerate the board when a later native capture reports a VSC class."
+    }
+  ],
+  "terminal_node": "FIXPOINT"
+}

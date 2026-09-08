@@ -1,0 +1,3438 @@
+From ea2bbc9dfd01a79b653fd7cd7561e6b6766fb677 Mon Sep 17 00:00:00 2001
+From: Travis Gilbert <1travisgilbert@gmail.com>
+Date: Thu, 3 Sep 2026 20:25:49 -0400
+Subject: [PATCH] feat(storage): add embeddable storage engine factories
+
+---
+ components/config/prefs.rs                    |  14 +-
+ components/script/dom/indexeddb/idbrequest.rs |   7 +-
+ components/servo/servo.rs                     |  10 +-
+ components/shared/storage/cache_storage.rs    |  15 +
+ components/shared/storage/client_storage.rs   |  32 +
+ components/shared/storage/indexeddb.rs        | 326 +++++++-
+ components/shared/storage/lib.rs              |  44 +-
+ .../shared/storage/webstorage_thread.rs       |  63 ++
+ components/storage/cache_storage.rs           |  69 +-
+ components/storage/client_storage.rs          | 136 +++-
+ components/storage/indexeddb/engines/mod.rs   |  67 --
+ .../storage/indexeddb/engines/sqlite.rs       | 199 ++---
+ components/storage/indexeddb/mod.rs           |  78 +-
+ components/storage/storage_thread.rs          |  25 +-
+ components/storage/tests/cache_storage.rs     |   4 +-
+ components/storage/tests/client_storage.rs    |  12 +-
+ components/storage/tests/storage_thread.rs    | 293 +++++++-
+ components/storage/tests/webstorage.rs        |  17 +-
+ components/storage/webstorage/engines/mod.rs  |  11 -
+ .../storage/webstorage/engines/sqlite.rs      | 122 +--
+ components/storage/webstorage/mod.rs          | 701 ++++++++++++------
+ 21 files changed, 1669 insertions(+), 576 deletions(-)
+
+diff --git a/components/config/prefs.rs b/components/config/prefs.rs
+index e45579ea27f..59e8bdc73be 100644
+--- a/components/config/prefs.rs
++++ b/components/config/prefs.rs
+@@ -427,7 +427,7 @@ impl Preferences {
+             dom_adoptedstylesheet_enabled: false,
+             dom_allow_preloading_module_descendants: false,
+             dom_allow_scripts_to_close_windows: false,
+-            dom_async_clipboard_enabled: false,
++            dom_async_clipboard_enabled: true,
+             dom_bluetooth_enabled: false,
+             dom_bluetooth_testing_enabled: false,
+             dom_canvas_capture_enabled: false,
+@@ -435,21 +435,21 @@ impl Preferences {
+             dom_canvas_backend: String::new(),
+             dom_canvas_msg_buffer_size: 16,
+             dom_clipboardevent_enabled: true,
+-            dom_composition_event_enabled: false,
++            dom_composition_event_enabled: true,
+             dom_cookiestore_enabled: false,
+             dom_credential_management_enabled: false,
+             dom_crypto_subtle_enabled: true,
+             dom_document_dblclick_dist: 1,
+             dom_document_dblclick_timeout: 300,
+             dom_entries_api_enabled: false,
+-            dom_exec_command_enabled: false,
++            dom_exec_command_enabled: true,
+             dom_fontface_enabled: false,
+             dom_fullscreen_test: false,
+             dom_gamepad_enabled: true,
+             dom_geolocation_enabled: false,
+             dom_wakelock_enabled: false,
+-            dom_indexeddb_enabled: false,
+-            dom_intersection_observer_enabled: false,
++            dom_indexeddb_enabled: true,
++            dom_intersection_observer_enabled: true,
+             dom_microdata_testing_enabled: false,
+             dom_uievent_which_enabled: true,
+             dom_mutation_observer_enabled: true,
+@@ -560,14 +560,14 @@ impl Preferences {
+             layout_css_attr_enabled: false,
+             layout_css_ellipse_corners_enabled: false,
+             layout_css_progress_function_enabled: false,
+-            layout_grid_enabled: false,
++            layout_grid_enabled: true,
+             layout_style_sharing_cache_enabled: true,
+             // TODO(mrobinson): This should likely be based on the number of processors.
+             layout_threads: 3,
+             layout_parallelism_job_count_minimum: 4,
+             layout_parallelism_job_size_minimum: 16,
+             layout_unimplemented: false,
+-            layout_variable_fonts_enabled: false,
++            layout_variable_fonts_enabled: true,
+             layout_writing_mode_enabled: false,
+             media_glvideo_enabled: false,
+             media_testing_enabled: false,
+diff --git a/components/script/dom/indexeddb/idbrequest.rs b/components/script/dom/indexeddb/idbrequest.rs
+index 78823320cee..bdc25fd283f 100644
+--- a/components/script/dom/indexeddb/idbrequest.rs
++++ b/components/script/dom/indexeddb/idbrequest.rs
+@@ -16,7 +16,8 @@ use serde::{Deserialize, Serialize};
+ use servo_base::generic_channel::GenericSend;
+ use storage_traits::indexeddb::{
+     AsyncOperation, AsyncReadOnlyOperation, BackendError, BackendResult, IndexedDBKeyType,
+-    IndexedDBRecord, IndexedDBThreadMsg, IndexedDBTxnMode, PutItemResult, SyncOperation,
++    IndexedDBRecord, IndexedDBThreadMsg, IndexedDBTxnMode, KvsOperationContext, KvsOperationTarget,
++    PutItemResult, SyncOperation,
+ };
+ use stylo_atoms::Atom;
+ 
+@@ -549,6 +550,10 @@ impl IDBRequest {
+                 global.origin().immutable().clone(),
+                 String::from(transaction.get_db_name()),
+                 String::from(source.get_name()),
++                KvsOperationContext {
++                    target: KvsOperationTarget::ObjectStore,
++                    index_updates: Vec::new(),
++                },
+                 transaction.get_serial_number(),
+                 request_id,
+                 transaction_mode,
+diff --git a/components/servo/servo.rs b/components/servo/servo.rs
+index b08d06e8502..43a5c5fec9e 100644
+--- a/components/servo/servo.rs
++++ b/components/servo/servo.rs
+@@ -75,7 +75,7 @@ use servo_media::ServoMedia;
+ use servo_media::player::context::GlContext;
+ use servo_wakelock::DefaultWakeLockDelegate;
+ use storage::new_storage_threads;
+-use storage_traits::StorageThreads;
++use storage_traits::{StorageEngines, StorageThreads};
+ use style::global_style_data::StyleThreadPool;
+ #[cfg(feature = "webxr")]
+ use webxr::WebXrRegistry;
+@@ -977,6 +977,7 @@ impl Servo {
+             mem_profiler_chan.clone(),
+             opts.config_dir.clone(),
+             opts.temporary_storage,
++            builder.storage_engines,
+         );
+ 
+         create_constellation(
+@@ -1409,6 +1410,7 @@ pub struct ServoBuilder {
+     preferences: Option<Box<Preferences>>,
+     event_loop_waker: Box<dyn EventLoopWaker>,
+     protocol_registry: ProtocolRegistry,
++    storage_engines: StorageEngines,
+ }
+ 
+ impl Default for ServoBuilder {
+@@ -1418,6 +1420,7 @@ impl Default for ServoBuilder {
+             preferences: Default::default(),
+             event_loop_waker: Box::new(DefaultEventLoopWaker),
+             protocol_registry: Default::default(),
++            storage_engines: Default::default(),
+         }
+     }
+ }
+@@ -1446,6 +1449,11 @@ impl ServoBuilder {
+         self.protocol_registry = protocol_registry;
+         self
+     }
++
++    pub fn storage_engines(mut self, storage_engines: StorageEngines) -> Self {
++        self.storage_engines = storage_engines;
++        self
++    }
+ }
+ 
+ fn register_system_memory_reporter_for_event_loop(
+diff --git a/components/shared/storage/cache_storage.rs b/components/shared/storage/cache_storage.rs
+index b3c443c032b..2e35c2ab005 100644
+--- a/components/shared/storage/cache_storage.rs
++++ b/components/shared/storage/cache_storage.rs
+@@ -3,6 +3,7 @@
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+ use std::ops::{Deref, DerefMut};
++use std::path::PathBuf;
+ 
+ use malloc_size_of_derive::MallocSizeOf;
+ use serde::{Deserialize, Serialize};
+@@ -16,6 +17,20 @@ pub enum CacheStorageError<T> {
+     Internal(T),
+ }
+ 
++pub trait CacheStorageEngine: Send {
++    /// <https://w3c.github.io/ServiceWorker/#cache-storage-has>
++    fn has_cache(
++        &mut self,
++        origin: &ImmutableOrigin,
++        proxy: &StorageProxyMap,
++        cache_name: &str,
++    ) -> Result<bool, CacheStorageError<String>>;
++}
++
++pub trait CacheStorageEngineFactory: Send + Sync {
++    fn open(&self, storage_dir: PathBuf) -> Result<Box<dyn CacheStorageEngine>, String>;
++}
++
+ #[derive(Clone, Debug, Deserialize, MallocSizeOf, Serialize)]
+ pub struct CacheStorageThreadHandle {
+     sender: GenericSender<CacheStorageThreadMessage>,
+diff --git a/components/shared/storage/client_storage.rs b/components/shared/storage/client_storage.rs
+index dec44d4c8e9..1bb4c417d84 100644
+--- a/components/shared/storage/client_storage.rs
++++ b/components/shared/storage/client_storage.rs
+@@ -223,6 +223,38 @@ pub enum ClientStorageErrorr<T> {
+     Internal(T),
+ }
+ 
++pub trait RegistryEngine: Send {
++    fn create_database(
++        &mut self,
++        bottle_id: i64,
++        name: String,
++    ) -> Result<(PathBuf, bool), ClientStorageErrorr<String>>;
++    fn delete_database(
++        &mut self,
++        bottle_id: i64,
++        name: String,
++    ) -> Result<(), ClientStorageErrorr<String>>;
++    fn obtain_a_storage_bottle_map(
++        &mut self,
++        storage_type: StorageType,
++        webview: Option<WebViewId>,
++        storage_identifier: StorageIdentifier,
++        origin: ImmutableOrigin,
++        sender: &GenericSender<ClientStorageThreadMessage>,
++    ) -> Result<StorageProxyMap, ClientStorageErrorr<String>>;
++    fn persisted(&mut self, origin: ImmutableOrigin) -> Result<bool, String>;
++    fn persist(
++        &mut self,
++        origin: ImmutableOrigin,
++        permission_granted: bool,
++    ) -> Result<bool, String>;
++    fn estimate(&mut self, origin: ImmutableOrigin) -> Result<(u64, u64), String>;
++}
++
++pub trait RegistryEngineFactory: Send + Sync {
++    fn open(&self, storage_dir: PathBuf) -> Result<Box<dyn RegistryEngine>, String>;
++}
++
+ impl<T> From<T> for ClientStorageErrorr<T> {
+     fn from(err: T) -> Self {
+         ClientStorageErrorr::Internal(err)
+diff --git a/components/shared/storage/indexeddb.rs b/components/shared/storage/indexeddb.rs
+index 33e72042112..c8f9ccd7cdf 100644
+--- a/components/shared/storage/indexeddb.rs
++++ b/components/shared/storage/indexeddb.rs
+@@ -3,10 +3,12 @@
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+ use std::cmp::{Ordering, PartialEq, PartialOrd};
+-use std::collections::{HashMap, HashSet};
++use std::collections::{HashMap, HashSet, VecDeque};
+ use std::error::Error;
+ use std::fmt::{Debug, Display, Formatter};
++use std::path::PathBuf;
+ 
++use malloc_size_of::MallocSizeOf;
+ use malloc_size_of_derive::MallocSizeOf;
+ use profile_traits::generic_callback::GenericCallback;
+ use profile_traits::mem::ReportsChan;
+@@ -60,6 +62,192 @@ impl Error for BackendError {}
+ 
+ pub type BackendResult<T> = Result<T, BackendError>;
+ 
++/// A key used by storage backends to identify an IndexedDB database.
++#[derive(Clone, Debug, Eq, Hash, MallocSizeOf, PartialEq)]
++pub struct IndexedDBDescription {
++    pub origin: ImmutableOrigin,
++    pub name: String,
++}
++
++#[derive(MallocSizeOf)]
++pub struct KvsOperation {
++    pub store_name: String,
++    /// Identifies whether the request addresses the object store or one of its indexes, and
++    /// carries index keys already extracted by the script layer for record updates.
++    ///
++    /// The pinned Servo producer currently emits only [`KvsOperationTarget::ObjectStore`] with
++    /// no index updates because its `IDBIndex` implementation has no request methods and its
++    /// SQLite backend does not populate index record tables. Keeping this context at the engine
++    /// boundary lets external engines consume index semantics when that producer support exists,
++    /// without requiring a backend to decode JavaScript values or evaluate key paths.
++    pub context: KvsOperationContext,
++    pub operation: AsyncOperation,
++}
++
++#[derive(Clone, Debug, Default, Deserialize, MallocSizeOf, PartialEq, Serialize)]
++pub struct KvsOperationContext {
++    pub target: KvsOperationTarget,
++    pub index_updates: Vec<KvsIndexUpdate>,
++}
++
++#[derive(Clone, Debug, Default, Deserialize, MallocSizeOf, PartialEq, Serialize)]
++pub enum KvsOperationTarget {
++    #[default]
++    ObjectStore,
++    Index {
++        name: String,
++    },
++}
++
++/// Keys extracted for one index while preparing an object-store record update.
++///
++/// `keys` contains one entry per index record to write. A multi-entry index is flattened by the
++/// script layer before it reaches the backend; an empty vector means extraction produced no index
++/// record. The backend retains responsibility for uniqueness checks using its index schema.
++#[derive(Clone, Debug, Deserialize, MallocSizeOf, PartialEq, Serialize)]
++pub struct KvsIndexUpdate {
++    pub index_name: String,
++    pub keys: Vec<IndexedDBKeyType>,
++}
++
++#[derive(MallocSizeOf)]
++pub struct KvsTransaction {
++    pub mode: IndexedDBTxnMode,
++    pub requests: VecDeque<KvsOperation>,
++}
++
++/// The backend contract used by Servo's IndexedDB transaction scheduler.
++///
++/// Errors are normalized at this boundary so the trait can be used as a trait
++/// object by embedders while preserving the DOM-facing error categories.
++pub trait KvsEngine: MallocSizeOf + Send {
++    fn create_store(
++        &self,
++        store_name: &str,
++        key_path: Option<KeyPath>,
++        auto_increment: bool,
++    ) -> BackendResult<CreateObjectResult>;
++
++    fn delete_store(&self, store_name: &str) -> BackendResult<()>;
++
++    fn close_store(&self, store_name: &str) -> BackendResult<()>;
++
++    fn process_transaction(
++        &self,
++        transaction: KvsTransaction,
++        on_complete: Box<dyn FnOnce() + Send + 'static>,
++    );
++
++    fn key_generator_current_number(&self, store_name: &str) -> Option<i64>;
++    fn set_key_generator_current_number(
++        &self,
++        store_name: &str,
++        current_number: i64,
++    ) -> BackendResult<()>;
++    fn key_path(&self, store_name: &str) -> Option<KeyPath>;
++    fn object_store_names(&self) -> BackendResult<Vec<String>>;
++    fn indexes(&self, store_name: &str) -> BackendResult<Vec<IndexedDBIndex>>;
++
++    fn create_index(
++        &self,
++        store_name: &str,
++        index_name: String,
++        key_path: KeyPath,
++        unique: bool,
++        multi_entry: bool,
++    ) -> BackendResult<CreateObjectResult>;
++    fn delete_index(&self, store_name: &str, index_name: String) -> BackendResult<()>;
++
++    fn version(&self) -> BackendResult<u64>;
++    fn set_version(&self, version: u64) -> BackendResult<()>;
++}
++
++impl<T> KvsEngine for Box<T>
++where
++    T: KvsEngine + ?Sized,
++{
++    fn create_store(
++        &self,
++        store_name: &str,
++        key_path: Option<KeyPath>,
++        auto_increment: bool,
++    ) -> BackendResult<CreateObjectResult> {
++        (**self).create_store(store_name, key_path, auto_increment)
++    }
++
++    fn delete_store(&self, store_name: &str) -> BackendResult<()> {
++        (**self).delete_store(store_name)
++    }
++
++    fn close_store(&self, store_name: &str) -> BackendResult<()> {
++        (**self).close_store(store_name)
++    }
++
++    fn process_transaction(
++        &self,
++        transaction: KvsTransaction,
++        on_complete: Box<dyn FnOnce() + Send + 'static>,
++    ) {
++        (**self).process_transaction(transaction, on_complete)
++    }
++
++    fn key_generator_current_number(&self, store_name: &str) -> Option<i64> {
++        (**self).key_generator_current_number(store_name)
++    }
++
++    fn set_key_generator_current_number(
++        &self,
++        store_name: &str,
++        current_number: i64,
++    ) -> BackendResult<()> {
++        (**self).set_key_generator_current_number(store_name, current_number)
++    }
++
++    fn key_path(&self, store_name: &str) -> Option<KeyPath> {
++        (**self).key_path(store_name)
++    }
++
++    fn object_store_names(&self) -> BackendResult<Vec<String>> {
++        (**self).object_store_names()
++    }
++
++    fn indexes(&self, store_name: &str) -> BackendResult<Vec<IndexedDBIndex>> {
++        (**self).indexes(store_name)
++    }
++
++    fn create_index(
++        &self,
++        store_name: &str,
++        index_name: String,
++        key_path: KeyPath,
++        unique: bool,
++        multi_entry: bool,
++    ) -> BackendResult<CreateObjectResult> {
++        (**self).create_index(store_name, index_name, key_path, unique, multi_entry)
++    }
++
++    fn delete_index(&self, store_name: &str, index_name: String) -> BackendResult<()> {
++        (**self).delete_index(store_name, index_name)
++    }
++
++    fn version(&self) -> BackendResult<u64> {
++        (**self).version()
++    }
++
++    fn set_version(&self, version: u64) -> BackendResult<()> {
++        (**self).set_version(version)
++    }
++}
++
++pub trait IndexedDbEngineFactory: Send + Sync {
++    fn open(
++        &self,
++        path: PathBuf,
++        created: bool,
++        description: &IndexedDBDescription,
++    ) -> BackendResult<Box<dyn KvsEngine>>;
++}
++
+ #[derive(Clone, Debug, Deserialize, Eq, PartialEq, MallocSizeOf, Serialize)]
+ pub enum KeyPath {
+     String(String),
+@@ -642,8 +830,9 @@ pub enum IndexedDBThreadMsg {
+         ImmutableOrigin,
+         String, // Database
+         String, // ObjectStore
+-        u64,    // Serial number of the transaction that requests this operation
+-        u64,    // Monotonic request id in the transaction
++        KvsOperationContext,
++        u64, // Serial number of the transaction that requests this operation
++        u64, // Monotonic request id in the transaction
+         IndexedDBTxnMode,
+         AsyncOperation,
+     ),
+@@ -666,8 +855,99 @@ pub enum IndexedDBThreadMsg {
+ 
+ #[cfg(test)]
+ mod test {
++    use std::sync::{Arc, Mutex};
++
++    use malloc_size_of::MallocSizeOfOps;
++    use profile_traits::time::ProfilerChan;
++
+     use super::*;
+ 
++    struct RecordingEngine {
++        observed: Arc<Mutex<Option<KvsOperationContext>>>,
++    }
++
++    impl MallocSizeOf for RecordingEngine {
++        fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
++            0
++        }
++    }
++
++    impl KvsEngine for RecordingEngine {
++        fn create_store(
++            &self,
++            _store_name: &str,
++            _key_path: Option<KeyPath>,
++            _auto_increment: bool,
++        ) -> BackendResult<CreateObjectResult> {
++            Ok(CreateObjectResult::Created)
++        }
++
++        fn delete_store(&self, _store_name: &str) -> BackendResult<()> {
++            Ok(())
++        }
++
++        fn close_store(&self, _store_name: &str) -> BackendResult<()> {
++            Ok(())
++        }
++
++        fn process_transaction(
++            &self,
++            mut transaction: KvsTransaction,
++            on_complete: Box<dyn FnOnce() + Send + 'static>,
++        ) {
++            let request = transaction.requests.pop_front().unwrap();
++            *self.observed.lock().unwrap() = Some(request.context);
++            on_complete();
++        }
++
++        fn key_generator_current_number(&self, _store_name: &str) -> Option<i64> {
++            None
++        }
++
++        fn set_key_generator_current_number(
++            &self,
++            _store_name: &str,
++            _current_number: i64,
++        ) -> BackendResult<()> {
++            Ok(())
++        }
++
++        fn key_path(&self, _store_name: &str) -> Option<KeyPath> {
++            None
++        }
++
++        fn object_store_names(&self) -> BackendResult<Vec<String>> {
++            Ok(Vec::new())
++        }
++
++        fn indexes(&self, _store_name: &str) -> BackendResult<Vec<IndexedDBIndex>> {
++            Ok(Vec::new())
++        }
++
++        fn create_index(
++            &self,
++            _store_name: &str,
++            _index_name: String,
++            _key_path: KeyPath,
++            _unique: bool,
++            _multi_entry: bool,
++        ) -> BackendResult<CreateObjectResult> {
++            Ok(CreateObjectResult::Created)
++        }
++
++        fn delete_index(&self, _store_name: &str, _index_name: String) -> BackendResult<()> {
++            Ok(())
++        }
++
++        fn version(&self) -> BackendResult<u64> {
++            Ok(0)
++        }
++
++        fn set_version(&self, _version: u64) -> BackendResult<()> {
++            Ok(())
++        }
++    }
++
+     #[test]
+     fn test_as_singleton() {
+         let key = IndexedDBKeyType::Number(1.0);
+@@ -682,4 +962,44 @@ mod test {
+         assert!(!full_range.is_singleton());
+         assert!(full_range.as_singleton().is_none());
+     }
++
++    #[test]
++    fn external_engine_observes_index_operation_context() {
++        let observed = Arc::new(Mutex::new(None));
++        let engine: Box<dyn KvsEngine> = Box::new(RecordingEngine {
++            observed: observed.clone(),
++        });
++        let expected = KvsOperationContext {
++            target: KvsOperationTarget::Index {
++                name: "by-tag".to_owned(),
++            },
++            index_updates: vec![KvsIndexUpdate {
++                index_name: "by-tag".to_owned(),
++                keys: vec![IndexedDBKeyType::String("rust".to_owned())],
++            }],
++        };
++        let callback = GenericCallback::new(ProfilerChan(None), |_| {}).unwrap();
++        let (done_tx, done_rx) = std::sync::mpsc::channel();
++
++        engine.process_transaction(
++            KvsTransaction {
++                mode: IndexedDBTxnMode::Readwrite,
++                requests: VecDeque::from([KvsOperation {
++                    store_name: "documents".to_owned(),
++                    context: expected.clone(),
++                    operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
++                        callback,
++                        key: Some(IndexedDBKeyType::Number(1.0)),
++                        value: vec![1, 2, 3],
++                        should_overwrite: true,
++                        key_generator_current_number: None,
++                    }),
++                }]),
++            },
++            Box::new(move || done_tx.send(()).unwrap()),
++        );
++
++        done_rx.recv().unwrap();
++        assert_eq!(*observed.lock().unwrap(), Some(expected));
++    }
+ }
+diff --git a/components/shared/storage/lib.rs b/components/shared/storage/lib.rs
+index 62a6a1b8d2e..0ddecde5835 100644
+--- a/components/shared/storage/lib.rs
++++ b/components/shared/storage/lib.rs
+@@ -2,21 +2,57 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
++use std::sync::Arc;
++
+ use malloc_size_of::malloc_size_of_is_0;
+ use serde::{Deserialize, Serialize};
+ use servo_base::generic_channel::{self, GenericCallback, GenericSend, GenericSender, SendResult};
+ use servo_url::ImmutableOrigin;
+ 
+-use crate::cache_storage::CacheStorageThreadMessage;
+-use crate::client_storage::{ClientStorageThreadHandle, ClientStorageThreadMessage};
+-use crate::indexeddb::IndexedDBThreadMsg;
+-use crate::webstorage_thread::{OriginDescriptor, WebStorageThreadMsg, WebStorageType};
++use crate::cache_storage::{CacheStorageEngineFactory, CacheStorageThreadMessage};
++use crate::client_storage::{
++    ClientStorageThreadHandle, ClientStorageThreadMessage, RegistryEngineFactory,
++};
++use crate::indexeddb::{IndexedDBThreadMsg, IndexedDbEngineFactory};
++use crate::webstorage_thread::{
++    OriginDescriptor, WebStorageEngineFactory, WebStorageThreadMsg, WebStorageType,
++};
+ 
+ pub mod cache_storage;
+ pub mod client_storage;
+ pub mod indexeddb;
+ pub mod webstorage_thread;
+ 
++/// Optional storage engine factories supplied by an embedder.
++///
++/// A missing factory selects Servo's built-in backend for that storage API.
++/// This representation keeps the public contracts in the traits crate while
++/// the SQLite implementations remain in the backend crate, avoiding a crate
++/// dependency cycle.
++#[derive(Clone, Default)]
++pub struct StorageEngines {
++    pub indexeddb: Option<Arc<dyn IndexedDbEngineFactory>>,
++    pub registry: Option<Arc<dyn RegistryEngineFactory>>,
++    pub web_storage: Option<Arc<dyn WebStorageEngineFactory>>,
++    pub cache: Option<Arc<dyn CacheStorageEngineFactory>>,
++}
++
++impl StorageEngines {
++    pub fn new(
++        indexeddb: Arc<dyn IndexedDbEngineFactory>,
++        registry: Arc<dyn RegistryEngineFactory>,
++        web_storage: Arc<dyn WebStorageEngineFactory>,
++        cache: Arc<dyn CacheStorageEngineFactory>,
++    ) -> Self {
++        Self {
++            indexeddb: Some(indexeddb),
++            registry: Some(registry),
++            web_storage: Some(web_storage),
++            cache: Some(cache),
++        }
++    }
++}
++
+ #[derive(Clone, Debug, Deserialize, Serialize)]
+ pub struct StorageThreads {
+     client_storage_thread: GenericSender<ClientStorageThreadMessage>,
+diff --git a/components/shared/storage/webstorage_thread.rs b/components/shared/storage/webstorage_thread.rs
+index 89aa41ca204..bce1e8890f5 100644
+--- a/components/shared/storage/webstorage_thread.rs
++++ b/components/shared/storage/webstorage_thread.rs
+@@ -2,6 +2,9 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
++use std::collections::BTreeMap;
++use std::path::PathBuf;
++
+ use malloc_size_of_derive::MallocSizeOf;
+ use profile_traits::mem::ReportsChan;
+ use serde::{Deserialize, Serialize};
+@@ -9,6 +12,66 @@ use servo_base::generic_channel::GenericSender;
+ use servo_base::id::WebViewId;
+ use servo_url::ImmutableOrigin;
+ 
++#[derive(Clone, Default, MallocSizeOf)]
++pub struct OriginEntry {
++    tree: BTreeMap<String, String>,
++    size: usize,
++}
++
++impl OriginEntry {
++    pub fn inner(&self) -> &BTreeMap<String, String> {
++        &self.tree
++    }
++
++    pub fn insert(&mut self, key: String, value: String) -> Option<String> {
++        let old_value = self.tree.insert(key.clone(), value.clone());
++        let size_change = match &old_value {
++            Some(old) => value.len() as isize - old.len() as isize,
++            None => (key.len() + value.len()) as isize,
++        };
++        self.size = (self.size as isize + size_change) as usize;
++        old_value
++    }
++
++    pub fn remove(&mut self, key: &str) -> Option<String> {
++        let old_value = self.tree.remove(key);
++        if let Some(old) = &old_value {
++            self.size -= key.len() + old.len();
++        }
++        old_value
++    }
++
++    pub fn clear(&mut self) {
++        self.tree.clear();
++        self.size = 0;
++    }
++
++    pub fn size(&self) -> usize {
++        self.size
++    }
++}
++
++pub trait WebStorageEngine: Send {
++    fn len(&self) -> Result<usize, String>;
++    fn key(&self, index: usize) -> Result<Option<String>, String>;
++    fn keys(&self) -> Result<Vec<String>, String>;
++    fn get(&self, key: &str) -> Result<Option<String>, String>;
++    fn set(&mut self, key: &str, value: &str) -> Result<Option<String>, String>;
++    fn delete(&mut self, key: &str) -> Result<Option<String>, String>;
++    fn clear(&mut self) -> Result<bool, String>;
++    fn size(&self) -> Result<usize, String>;
++}
++
++pub trait WebStorageEngineFactory: Send + Sync {
++    fn open(
++        &self,
++        storage_type: WebStorageType,
++        webview_id: Option<WebViewId>,
++        origin: &ImmutableOrigin,
++        db_dir: Option<PathBuf>,
++    ) -> Result<Box<dyn WebStorageEngine>, String>;
++}
++
+ #[derive(Clone, Copy, Debug, Deserialize, PartialEq, MallocSizeOf, Serialize)]
+ pub enum WebStorageType {
+     Session,
+diff --git a/components/storage/cache_storage.rs b/components/storage/cache_storage.rs
+index 1462c2dab06..7ea5ae9f65f 100644
+--- a/components/storage/cache_storage.rs
++++ b/components/storage/cache_storage.rs
+@@ -2,32 +2,28 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+-use std::fmt::Debug;
+ use std::path::PathBuf;
++use std::sync::Arc;
+ use std::thread;
+ 
+ use log::error;
+ use servo_base::generic_channel::{self, GenericReceiver, GenericSender};
+ use storage_traits::cache_storage::{
+-    CacheStorageError, CacheStorageThreadHandle, CacheStorageThreadMessage,
+-    CacheStorageThreadResponse,
++    CacheStorageEngine, CacheStorageEngineFactory, CacheStorageError, CacheStorageThreadHandle,
++    CacheStorageThreadMessage, CacheStorageThreadResponse,
+ };
+ 
+-trait CacheStorageEngine {
+-    type Error: Debug;
+-
+-    /// <https://w3c.github.io/ServiceWorker/#cache-storage-has>
+-    fn has_cache(&mut self, cache_name: &str) -> Result<bool, CacheStorageError<Self::Error>>;
+-}
+-
+ pub struct DummyCacheStorageEngine;
+ 
+ impl CacheStorageEngine for DummyCacheStorageEngine {
+-    type Error = ();
+-
+     /// <https://w3c.github.io/ServiceWorker/#cache-storage-has>
+     /// The parallel steps.
+-    fn has_cache(&mut self, _cache_name: &str) -> Result<bool, CacheStorageError<Self::Error>> {
++    fn has_cache(
++        &mut self,
++        _origin: &servo_url::ImmutableOrigin,
++        _proxy: &storage_traits::client_storage::StorageProxyMap,
++        _cache_name: &str,
++    ) -> Result<bool, CacheStorageError<String>> {
+         // TODO: implement.
+         // Step 2.1:For each key → value of the relevant name to cache map:
+         // Step 2.1.1: If cacheName matches key, resolve promise with true and abort these steps.
+@@ -37,12 +33,28 @@ impl CacheStorageEngine for DummyCacheStorageEngine {
+     }
+ }
+ 
++pub(crate) struct DefaultCacheStorageEngineFactory;
++
++impl CacheStorageEngineFactory for DefaultCacheStorageEngineFactory {
++    fn open(&self, _storage_dir: PathBuf) -> Result<Box<dyn CacheStorageEngine>, String> {
++        Ok(Box::new(DummyCacheStorageEngine))
++    }
++}
++
+ pub trait CacheStorageThreadFactory {
+-    fn new(config_dir: Option<PathBuf>, temporary_storage: bool) -> Self;
++    fn new(
++        config_dir: Option<PathBuf>,
++        temporary_storage: bool,
++        factory: Option<Arc<dyn CacheStorageEngineFactory>>,
++    ) -> Self;
+ }
+ 
+ impl CacheStorageThreadFactory for CacheStorageThreadHandle {
+-    fn new(config_dir: Option<PathBuf>, temporary_storage: bool) -> CacheStorageThreadHandle {
++    fn new(
++        config_dir: Option<PathBuf>,
++        temporary_storage: bool,
++        factory: Option<Arc<dyn CacheStorageEngineFactory>>,
++    ) -> CacheStorageThreadHandle {
+         let (generic_sender, generic_receiver) = generic_channel::channel().unwrap();
+         let mut temp_dir: Option<tempfile::TempDir> = None;
+         let base_dir = config_dir
+@@ -67,7 +79,11 @@ impl CacheStorageThreadFactory for CacheStorageThreadHandle {
+             .spawn(move || {
+                 // Keep temp_dir alive while the thread runs.
+                 let _ = temp_dir;
+-                let engine = DummyCacheStorageEngine;
++                let factory = factory.unwrap_or_else(|| Arc::new(DefaultCacheStorageEngineFactory));
++                let Ok(engine) = factory.open(storage_dir) else {
++                    error!("Failed to initialize CacheStorage engine");
++                    return;
++                };
+                 CacheStorageThread::new(sender_clone, generic_receiver, engine).start();
+             })
+             .expect("Thread spawning failed");
+@@ -76,22 +92,19 @@ impl CacheStorageThreadFactory for CacheStorageThreadHandle {
+     }
+ }
+ 
+-struct CacheStorageThread<E: CacheStorageEngine> {
++struct CacheStorageThread {
+     receiver: GenericReceiver<CacheStorageThreadMessage>,
+     // Note: a sender to self might be required later for the storage engine.
+     _sender: GenericSender<CacheStorageThreadMessage>,
+-    engine: E,
++    engine: Box<dyn CacheStorageEngine>,
+ }
+ 
+-impl<E> CacheStorageThread<E>
+-where
+-    E: CacheStorageEngine,
+-{
++impl CacheStorageThread {
+     pub fn new(
+         _sender: GenericSender<CacheStorageThreadMessage>,
+         receiver: GenericReceiver<CacheStorageThreadMessage>,
+-        engine: E,
+-    ) -> CacheStorageThread<E> {
++        engine: Box<dyn CacheStorageEngine>,
++    ) -> CacheStorageThread {
+         CacheStorageThread {
+             _sender,
+             receiver,
+@@ -105,13 +118,13 @@ where
+                 CacheStorageThreadMessage::HasCache {
+                     cache_name,
+                     callback,
+-                    proxy: _,
+-                    origin: _,
++                    proxy,
++                    origin,
+                 } => {
+-                    let result = self.engine.has_cache(&cache_name);
++                    let result = self.engine.has_cache(&origin, &proxy, &cache_name);
+                     if callback
+                         .send(CacheStorageThreadResponse::HasCacheResult(
+-                            result.map(|_| false).map_err(|e| format!("{:?}", e)),
++                            result.map_err(|e| format!("{:?}", e)),
+                         ))
+                         .is_err()
+                     {
+diff --git a/components/storage/client_storage.rs b/components/storage/client_storage.rs
+index 868ffaadca2..509433fcd07 100644
+--- a/components/storage/client_storage.rs
++++ b/components/storage/client_storage.rs
+@@ -4,6 +4,7 @@
+ use std::fmt::Debug;
+ use std::path::PathBuf;
+ use std::str::FromStr;
++use std::sync::Arc;
+ use std::{fs, thread};
+ 
+ use log::warn;
+@@ -13,7 +14,7 @@ use servo_base::id::{BrowsingContextId, WebViewId};
+ use servo_url::ImmutableOrigin;
+ use storage_traits::client_storage::{
+     ClientStorageErrorr, ClientStorageThreadHandle, ClientStorageThreadMessage, Mode,
+-    StorageIdentifier, StorageProxyMap, StorageType,
++    RegistryEngine, RegistryEngineFactory, StorageIdentifier, StorageProxyMap, StorageType,
+ };
+ use uuid::Uuid;
+ 
+@@ -23,7 +24,7 @@ use uuid::Uuid;
+ /// limit (<https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria>).
+ const STORAGE_SHELF_QUOTA_BYTES: u64 = 10 * 1024 * 1024 * 1024;
+ 
+-trait RegistryEngine {
++trait RegistryBackend {
+     type Error: Debug;
+     fn create_database(
+         &mut self,
+@@ -417,7 +418,7 @@ fn directory_size(path: &PathBuf) -> Result<u64, String> {
+     Ok(size)
+ }
+ 
+-impl RegistryEngine for SqliteEngine {
++impl RegistryBackend for SqliteEngine {
+     type Error = rusqlite::Error;
+ 
+     /// Create a database for the indexedDB endpoint.
+@@ -662,12 +663,115 @@ impl RegistryEngine for SqliteEngine {
+     }
+ }
+ 
++fn map_registry_error<E: Debug>(error: ClientStorageErrorr<E>) -> ClientStorageErrorr<String> {
++    match error {
++        ClientStorageErrorr::BottleAlreadyExists => ClientStorageErrorr::BottleAlreadyExists,
++        ClientStorageErrorr::BucketDoesNotExist => ClientStorageErrorr::BucketDoesNotExist,
++        ClientStorageErrorr::DatabaseAlreadyExists => ClientStorageErrorr::DatabaseAlreadyExists,
++        ClientStorageErrorr::DatabaseDoesNotExist => ClientStorageErrorr::DatabaseDoesNotExist,
++        ClientStorageErrorr::DirectoryCreationFailed => {
++            ClientStorageErrorr::DirectoryCreationFailed
++        },
++        ClientStorageErrorr::DirectoryDeletionFailed => {
++            ClientStorageErrorr::DirectoryDeletionFailed
++        },
++        ClientStorageErrorr::SessionStorageRequiresWindow => {
++            ClientStorageErrorr::SessionStorageRequiresWindow
++        },
++        ClientStorageErrorr::Internal(error) => {
++            ClientStorageErrorr::Internal(format!("{error:?}"))
++        },
++    }
++}
++
++struct RegistryBackendAdapter<E>(E);
++
++impl<E> RegistryEngine for RegistryBackendAdapter<E>
++where
++    E: RegistryBackend + Send,
++{
++    fn create_database(
++        &mut self,
++        bottle_id: i64,
++        name: String,
++    ) -> Result<(PathBuf, bool), ClientStorageErrorr<String>> {
++        self.0
++            .create_database(bottle_id, name)
++            .map_err(map_registry_error)
++    }
++
++    fn delete_database(
++        &mut self,
++        bottle_id: i64,
++        name: String,
++    ) -> Result<(), ClientStorageErrorr<String>> {
++        self.0
++            .delete_database(bottle_id, name)
++            .map_err(map_registry_error)
++    }
++
++    fn obtain_a_storage_bottle_map(
++        &mut self,
++        storage_type: StorageType,
++        webview: Option<WebViewId>,
++        storage_identifier: StorageIdentifier,
++        origin: ImmutableOrigin,
++        sender: &GenericSender<ClientStorageThreadMessage>,
++    ) -> Result<StorageProxyMap, ClientStorageErrorr<String>> {
++        self.0
++            .obtain_a_storage_bottle_map(
++                storage_type,
++                webview,
++                storage_identifier,
++                origin,
++                sender,
++            )
++            .map_err(map_registry_error)
++    }
++
++    fn persisted(&mut self, origin: ImmutableOrigin) -> Result<bool, String> {
++        self.0.persisted(origin)
++    }
++
++    fn persist(
++        &mut self,
++        origin: ImmutableOrigin,
++        permission_granted: bool,
++    ) -> Result<bool, String> {
++        self.0.persist(origin, permission_granted)
++    }
++
++    fn estimate(&mut self, origin: ImmutableOrigin) -> Result<(u64, u64), String> {
++        self.0.estimate(origin)
++    }
++}
++
++pub(crate) struct SqliteRegistryEngineFactory;
++
++impl RegistryEngineFactory for SqliteRegistryEngineFactory {
++    fn open(&self, storage_dir: PathBuf) -> Result<Box<dyn RegistryEngine>, String> {
++        let engine = SqliteEngine::new(storage_dir).unwrap_or_else(|error| {
++            warn!("Failed to initialize ClientStorage engine into storage dir: {error:?}");
++            SqliteEngine::memory().unwrap()
++        });
++        Ok(Box::new(RegistryBackendAdapter(engine)))
++    }
++}
++
+ pub trait ClientStorageThreadFactory {
+-    fn new(config_dir: Option<PathBuf>, temporary_storage: bool) -> Self;
++    fn new(
++        config_dir: Option<PathBuf>,
++        temporary_storage: bool,
++        factory: Option<Arc<dyn RegistryEngineFactory>>,
++    ) -> Self;
+ }
+ 
+ impl ClientStorageThreadFactory for ClientStorageThreadHandle {
+-    fn new(config_dir: Option<PathBuf>, temporary_storage: bool) -> ClientStorageThreadHandle {
++    fn new(
++        config_dir: Option<PathBuf>,
++        temporary_storage: bool,
++        factory: Option<Arc<dyn RegistryEngineFactory>>,
++    ) -> ClientStorageThreadHandle {
+         let (generic_sender, generic_receiver) = generic_channel::channel().unwrap();
+         let mut temp_dir: Option<tempfile::TempDir> = None;
+         let base_dir = config_dir
+@@ -692,10 +796,11 @@ impl ClientStorageThreadFactory for ClientStorageThreadHandle {
+             .spawn(move || {
+                 // Keep temp_dir alive while the thread runs.
+                 let _ = temp_dir;
+-                let engine = SqliteEngine::new(storage_dir).unwrap_or_else(|error| {
+-                    warn!("Failed to initialize ClientStorage engine into storage dir: {error:?}");
+-                    SqliteEngine::memory().unwrap()
+-                });
++                let factory = factory.unwrap_or_else(|| Arc::new(SqliteRegistryEngineFactory));
++                let Ok(engine) = factory.open(storage_dir) else {
++                    warn!("Failed to initialize ClientStorage engine");
++                    return;
++                };
+                 ClientStorageThread::new(sender_clone, generic_receiver, engine).start();
+             })
+             .expect("Thread spawning failed");
+@@ -704,21 +809,18 @@ impl ClientStorageThreadFactory for ClientStorageThreadHandle {
+     }
+ }
+ 
+-struct ClientStorageThread<E: RegistryEngine> {
++struct ClientStorageThread {
+     receiver: GenericReceiver<ClientStorageThreadMessage>,
+     sender: GenericSender<ClientStorageThreadMessage>,
+-    engine: E,
++    engine: Box<dyn RegistryEngine>,
+ }
+ 
+-impl<E> ClientStorageThread<E>
+-where
+-    E: RegistryEngine,
+-{
++impl ClientStorageThread {
+     pub fn new(
+         sender: GenericSender<ClientStorageThreadMessage>,
+         receiver: GenericReceiver<ClientStorageThreadMessage>,
+-        engine: E,
+-    ) -> ClientStorageThread<E> {
++        engine: Box<dyn RegistryEngine>,
++    ) -> ClientStorageThread {
+         ClientStorageThread {
+             sender,
+             receiver,
+diff --git a/components/storage/indexeddb/engines/mod.rs b/components/storage/indexeddb/engines/mod.rs
+index 0cab234bc7a..7f9cc863c46 100644
+--- a/components/storage/indexeddb/engines/mod.rs
++++ b/components/storage/indexeddb/engines/mod.rs
+@@ -2,73 +2,6 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+-use std::collections::VecDeque;
+-
+-use malloc_size_of::MallocSizeOf;
+-use malloc_size_of_derive::MallocSizeOf;
+-use storage_traits::indexeddb::{
+-    AsyncOperation, CreateObjectResult, IndexedDBIndex, IndexedDBTxnMode, KeyPath,
+-};
+-
+ pub use self::sqlite::SqliteEngine;
+ 
+ mod sqlite;
+-
+-#[derive(MallocSizeOf)]
+-pub struct KvsOperation {
+-    pub store_name: String,
+-    pub operation: AsyncOperation,
+-}
+-
+-#[derive(MallocSizeOf)]
+-pub struct KvsTransaction {
+-    // Mode could be used by a more optimal implementation of transactions
+-    // that has different allocated threadpools for reading and writing
+-    pub mode: IndexedDBTxnMode,
+-    pub requests: VecDeque<KvsOperation>,
+-}
+-
+-pub trait KvsEngine: MallocSizeOf {
+-    type Error: std::error::Error;
+-
+-    fn create_store(
+-        &self,
+-        store_name: &str,
+-        key_path: Option<KeyPath>,
+-        auto_increment: bool,
+-    ) -> Result<CreateObjectResult, Self::Error>;
+-
+-    fn delete_store(&self, store_name: &str) -> Result<(), Self::Error>;
+-
+-    #[expect(dead_code)]
+-    fn close_store(&self, store_name: &str) -> Result<(), Self::Error>;
+-
+-    fn process_transaction(
+-        &self,
+-        transaction: KvsTransaction,
+-        on_complete: Box<dyn FnOnce() + Send + 'static>,
+-    );
+-
+-    fn key_generator_current_number(&self, store_name: &str) -> Option<i64>;
+-    fn set_key_generator_current_number(
+-        &self,
+-        store_name: &str,
+-        current_number: i64,
+-    ) -> Result<(), Self::Error>;
+-    fn key_path(&self, store_name: &str) -> Option<KeyPath>;
+-    fn object_store_names(&self) -> Result<Vec<String>, Self::Error>;
+-    fn indexes(&self, store_name: &str) -> Result<Vec<IndexedDBIndex>, Self::Error>;
+-
+-    fn create_index(
+-        &self,
+-        store_name: &str,
+-        index_name: String,
+-        key_path: KeyPath,
+-        unique: bool,
+-        multi_entry: bool,
+-    ) -> Result<CreateObjectResult, Self::Error>;
+-    fn delete_index(&self, store_name: &str, index_name: String) -> Result<(), Self::Error>;
+-
+-    fn version(&self) -> Result<u64, Self::Error>;
+-    fn set_version(&self, version: u64) -> Result<(), Self::Error>;
+-}
+diff --git a/components/storage/indexeddb/engines/sqlite.rs b/components/storage/indexeddb/engines/sqlite.rs
+index d1f285898dc..7924d610630 100644
+--- a/components/storage/indexeddb/engines/sqlite.rs
++++ b/components/storage/indexeddb/engines/sqlite.rs
+@@ -12,13 +12,12 @@ use sea_query_rusqlite::RusqliteBinder;
+ use servo_base::threadpool::ThreadPool;
+ use storage_traits::indexeddb::{
+     AsyncOperation, AsyncReadOnlyOperation, AsyncReadWriteOperation, AsyncSchemaOperation,
+-    BackendError, CreateObjectResult, IndexedDBIndex, IndexedDBKeyRange, IndexedDBKeyType,
+-    IndexedDBRecord, IndexedDBTxnMode, KeyPath, PutItemResult,
++    BackendError, BackendResult, CreateObjectResult, IndexedDBDescription, IndexedDBIndex,
++    IndexedDBKeyRange, IndexedDBKeyType, IndexedDBRecord, IndexedDBTxnMode, KeyPath, KvsEngine,
++    KvsTransaction, PutItemResult,
+ };
+ 
+-use crate::indexeddb::IndexedDBDescription;
+-use crate::indexeddb::engines::{KvsEngine, KvsTransaction};
+-use crate::shared::{DB_INIT_PRAGMAS, DB_PRAGMAS};
++use crate::shared::{DB_INIT_PRAGMAS, DB_PRAGMAS, is_sqlite_disk_full_error};
+ 
+ mod create;
+ mod database_model;
+@@ -27,6 +26,14 @@ mod object_data_model;
+ mod object_store_index_model;
+ mod object_store_model;
+ 
++fn backend_error_from_sqlite_error(error: Error) -> BackendError {
++    if is_sqlite_disk_full_error(&error) {
++        BackendError::QuotaExceeded
++    } else {
++        BackendError::DbErr(format!("{error:?}"))
++    }
++}
++
+ fn range_to_query(range: IndexedDBKeyRange) -> Condition {
+     // Special case for optimization
+     if let Some(singleton) = range.as_singleton() {
+@@ -66,7 +73,6 @@ pub struct SqliteEngine {
+     connection: Connection,
+     read_pool: Arc<ThreadPool>,
+     write_pool: Arc<ThreadPool>,
+-    created_db_path: bool,
+ }
+ 
+ impl SqliteEngine {
+@@ -84,7 +90,7 @@ impl SqliteEngine {
+     // TODO: intake dual pools
+     pub fn new(
+         path: PathBuf,
+-        created: bool,
++        _created: bool,
+         db_info: &IndexedDBDescription,
+         pool: Arc<ThreadPool>,
+     ) -> Result<Self, Error> {
+@@ -101,15 +107,9 @@ impl SqliteEngine {
+             db_path,
+             read_pool: pool.clone(),
+             write_pool: pool,
+-            created_db_path: created,
+         })
+     }
+ 
+-    /// Returns whether the physical db was created as part of `new`.
+-    pub(crate) fn created_db_path(&self) -> bool {
+-        self.created_db_path
+-    }
+-
+     fn init_db(path: &Path, db_info: &IndexedDBDescription) -> Result<Connection, Error> {
+         let connection = Connection::open(path)?;
+         if connection.table_exists(None, "database")? {
+@@ -450,15 +450,14 @@ impl SqliteEngine {
+ }
+ 
+ impl KvsEngine for SqliteEngine {
+-    type Error = Error;
+-
+     fn create_store(
+         &self,
+         store_name: &str,
+         key_path: Option<KeyPath>,
+         auto_increment: bool,
+-    ) -> Result<CreateObjectResult, Self::Error> {
++    ) -> BackendResult<CreateObjectResult> {
+         Self::create_store(&self.connection, store_name, key_path, auto_increment)
++            .map_err(backend_error_from_sqlite_error)
+     }
+     fn create_index(
+         &self,
+@@ -467,7 +466,7 @@ impl KvsEngine for SqliteEngine {
+         key_path: KeyPath,
+         unique: bool,
+         multi_entry: bool,
+-    ) -> Result<CreateObjectResult, Self::Error> {
++    ) -> BackendResult<CreateObjectResult> {
+         Self::create_index(
+             &self.connection,
+             store_name,
+@@ -476,13 +475,14 @@ impl KvsEngine for SqliteEngine {
+             unique,
+             multi_entry,
+         )
++        .map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn delete_store(&self, store_name: &str) -> Result<(), Self::Error> {
+-        Self::delete_store(&self.connection, store_name)
++    fn delete_store(&self, store_name: &str) -> BackendResult<()> {
++        Self::delete_store(&self.connection, store_name).map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn close_store(&self, _store_name: &str) -> Result<(), Self::Error> {
++    fn close_store(&self, _store_name: &str) -> BackendResult<()> {
+         // TODO: do something
+         Ok(())
+     }
+@@ -512,6 +512,10 @@ impl KvsEngine for SqliteEngine {
+                 },
+             };
+             for request in transaction.requests {
++                // The pinned SQLite implementation has schema support for indexes but no index
++                // request methods or index-record maintenance. Preserve its behavior by handling
++                // the operation against the object store while still carrying `request.context`
++                // intact to custom engines through the public KvsEngine contract.
+                 if let AsyncOperation::Schema(AsyncSchemaOperation::CreateObjectStore {
+                     callback,
+                     key_path,
+@@ -749,26 +753,29 @@ impl KvsEngine for SqliteEngine {
+         &self,
+         store_name: &str,
+         current_number: i64,
+-    ) -> Result<(), Self::Error> {
+-        // Ensure missing store is reported as QueryReturnedNoRows even when an
+-        // UPDATE might affect zero rows due to no-op assignment.
+-        let store_exists: bool = self.connection.query_row(
+-            "SELECT EXISTS(SELECT 1 FROM object_store WHERE name = ?)",
+-            params![store_name],
+-            |row| row.get(0),
+-        )?;
+-        if !store_exists {
+-            return Err(Error::QueryReturnedNoRows);
+-        }
++    ) -> BackendResult<()> {
++        let update = || -> Result<(), Error> {
++            // Ensure missing store is reported as QueryReturnedNoRows even when an
++            // UPDATE might affect zero rows due to no-op assignment.
++            let store_exists: bool = self.connection.query_row(
++                "SELECT EXISTS(SELECT 1 FROM object_store WHERE name = ?)",
++                params![store_name],
++                |row| row.get(0),
++            )?;
++            if !store_exists {
++                return Err(Error::QueryReturnedNoRows);
++            }
+ 
+-        let rows_affected = self.connection.execute(
+-            "UPDATE object_store SET auto_increment = ? WHERE name = ?",
+-            params![current_number, store_name],
+-        )?;
+-        if rows_affected > 1 {
+-            return Err(Error::QueryReturnedMoreThanOneRow);
+-        }
+-        Ok(())
++            let rows_affected = self.connection.execute(
++                "UPDATE object_store SET auto_increment = ? WHERE name = ?",
++                params![current_number, store_name],
++            )?;
++            if rows_affected > 1 {
++                return Err(Error::QueryReturnedMoreThanOneRow);
++            }
++            Ok(())
++        };
++        update().map_err(backend_error_from_sqlite_error)
+     }
+ 
+     fn key_path(&self, store_name: &str) -> Option<KeyPath> {
+@@ -788,56 +795,66 @@ impl KvsEngine for SqliteEngine {
+             .unwrap_or_default()
+     }
+ 
+-    fn object_store_names(&self) -> Result<Vec<String>, Self::Error> {
+-        let mut stmt = self.connection.prepare("SELECT name FROM object_store")?;
+-        stmt.query_map([], |row| row.get(0))?
+-            .collect::<Result<Vec<_>, _>>()
++    fn object_store_names(&self) -> BackendResult<Vec<String>> {
++        let load = || -> Result<Vec<String>, Error> {
++            let mut stmt = self.connection.prepare("SELECT name FROM object_store")?;
++            stmt.query_map([], |row| row.get(0))?
++                .collect::<Result<Vec<_>, _>>()
++        };
++        load().map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn indexes(&self, store_name: &str) -> Result<Vec<IndexedDBIndex>, Self::Error> {
+-        let object_store = self.connection.query_row(
+-            "SELECT * FROM object_store WHERE name = ?",
+-            params![store_name.to_string()],
+-            |row| object_store_model::Model::try_from(row),
+-        )?;
++    fn indexes(&self, store_name: &str) -> BackendResult<Vec<IndexedDBIndex>> {
++        let load = || -> Result<Vec<IndexedDBIndex>, Error> {
++            let object_store = self.connection.query_row(
++                "SELECT * FROM object_store WHERE name = ?",
++                params![store_name.to_string()],
++                |row| object_store_model::Model::try_from(row),
++            )?;
+ 
+-        let mut stmt = self
+-            .connection
+-            .prepare("SELECT * FROM object_store_index WHERE object_store_id = ?")?;
+-        let indexes = stmt
+-            .query_map(params![object_store.id], |row| {
+-                let model = object_store_index_model::Model::try_from(row)?;
+-                Ok(IndexedDBIndex {
+-                    name: model.name,
+-                    key_path: postcard::from_bytes(&model.key_path).unwrap(),
+-                    unique: model.unique_index,
+-                    multi_entry: model.multi_entry_index,
+-                })
+-            })?
+-            .collect::<Result<Vec<_>, _>>()?;
+-        Ok(indexes)
++            let mut stmt = self
++                .connection
++                .prepare("SELECT * FROM object_store_index WHERE object_store_id = ?")?;
++            let indexes = stmt
++                .query_map(params![object_store.id], |row| {
++                    let model = object_store_index_model::Model::try_from(row)?;
++                    Ok(IndexedDBIndex {
++                        name: model.name,
++                        key_path: postcard::from_bytes(&model.key_path).unwrap(),
++                        unique: model.unique_index,
++                        multi_entry: model.multi_entry_index,
++                    })
++                })?
++                .collect::<Result<Vec<_>, _>>()?;
++            Ok(indexes)
++        };
++        load().map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn delete_index(&self, store_name: &str, index_name: String) -> Result<(), Self::Error> {
++    fn delete_index(&self, store_name: &str, index_name: String) -> BackendResult<()> {
+         Self::delete_index(&self.connection, store_name, index_name)
++            .map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn version(&self) -> Result<u64, Self::Error> {
+-        let version: i64 =
+-            self.connection
+-                .query_row("SELECT version FROM database LIMIT 1", [], |row| row.get(0))?;
+-        Ok(u64::from_ne_bytes(version.to_ne_bytes()))
++    fn version(&self) -> BackendResult<u64> {
++        self.connection
++            .query_row("SELECT version FROM database LIMIT 1", [], |row| row.get(0))
++            .map(|version: i64| u64::from_ne_bytes(version.to_ne_bytes()))
++            .map_err(backend_error_from_sqlite_error)
+     }
+ 
+-    fn set_version(&self, version: u64) -> Result<(), Self::Error> {
+-        let rows_affected = self.connection.execute(
+-            "UPDATE database SET version = ?",
+-            params![i64::from_ne_bytes(version.to_ne_bytes())],
+-        )?;
+-        if rows_affected == 0 {
+-            return Err(Error::QueryReturnedNoRows);
+-        }
+-        Ok(())
++    fn set_version(&self, version: u64) -> BackendResult<()> {
++        let update = || -> Result<(), Error> {
++            let rows_affected = self.connection.execute(
++                "UPDATE database SET version = ?",
++                params![i64::from_ne_bytes(version.to_ne_bytes())],
++            )?;
++            if rows_affected == 0 {
++                return Err(Error::QueryReturnedNoRows);
++            }
++            Ok(())
++        };
++        update().map_err(backend_error_from_sqlite_error)
+     }
+ }
+ 
+@@ -851,11 +868,10 @@ fn get_db_status(connection: &Connection, op: i32) -> Result<i32, i32> {
+ }
+ 
+ impl MallocSizeOf for SqliteEngine {
+-    fn size_of(&self, ops: &mut MallocSizeOfOps) -> usize {
++    fn size_of(&self, _ops: &mut MallocSizeOfOps) -> usize {
+         // 48 KB (3.3.1 at https://sqlite.org/malloc.html)
+         const DEFAULT_LOOKASIDE_SIZE: usize = 48 * 1024;
+-        self.created_db_path.size_of(ops) +
+-            DEFAULT_LOOKASIDE_SIZE +
++        DEFAULT_LOOKASIDE_SIZE +
+             get_db_status(
+                 &self.connection,
+                 rusqlite::ffi::SQLITE_DBSTATUS_CACHE_USED_SHARED,
+@@ -886,14 +902,14 @@ mod tests {
+     };
+     use storage_traits::indexeddb::{
+         AsyncOperation, AsyncReadOnlyOperation, AsyncReadWriteOperation, CreateObjectResult,
+-        IndexedDBKeyRange, IndexedDBKeyType, IndexedDBTxnMode, KeyPath, PutItemResult,
++        IndexedDBDescription, IndexedDBKeyRange, IndexedDBKeyType, IndexedDBTxnMode, KeyPath,
++        KvsEngine, KvsOperation, KvsTransaction, PutItemResult,
+     };
+     use url::Host;
+ 
+     use crate::ClientStorageThreadFactory;
+-    use crate::indexeddb::IndexedDBDescription;
+     use crate::indexeddb::engines::sqlite::encoding;
+-    use crate::indexeddb::engines::{KvsEngine, KvsOperation, KvsTransaction, SqliteEngine};
++    use crate::indexeddb::engines::SqliteEngine;
+ 
+     fn install_test_namespace() {
+         PipelineNamespace::install(PipelineNamespaceId(1));
+@@ -925,7 +941,7 @@ mod tests {
+         }
+         let tmp_dir = tempfile::tempdir().unwrap();
+         let handle: ClientStorageThreadHandle =
+-            ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), true);
++            ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), true, None);
+ 
+         let storage_proxy_map = handle
+             .obtain_a_storage_bottle_map(
+@@ -1219,6 +1235,7 @@ mod tests {
+                 requests: VecDeque::from(vec![
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
+                             callback: get_callback(put.0),
+                             key: Some(IndexedDBKeyType::Number(1.0)),
+@@ -1229,6 +1246,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
+                             callback: get_callback(put2.0),
+                             key: Some(IndexedDBKeyType::String("2.0".to_string())),
+@@ -1239,6 +1257,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
+                             callback: get_callback(put3.0),
+                             key: Some(IndexedDBKeyType::Array(vec![
+@@ -1253,6 +1272,7 @@ mod tests {
+                     // Try to put a duplicate key without overwrite
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
+                             callback: get_callback(put_dup.0),
+                             key: Some(IndexedDBKeyType::Number(1.0)),
+@@ -1263,6 +1283,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::PutItem {
+                             callback: get_callback(put_overwrite.0),
+                             key: Some(IndexedDBKeyType::Number(1.0)),
+@@ -1273,6 +1294,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadOnly(AsyncReadOnlyOperation::GetItem {
+                             callback: get_callback(get_item_some.0),
+                             key_range: IndexedDBKeyRange::only(IndexedDBKeyType::Number(1.0)),
+@@ -1280,6 +1302,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadOnly(AsyncReadOnlyOperation::GetItem {
+                             callback: get_callback(get_item_none.0),
+                             key_range: IndexedDBKeyRange::only(IndexedDBKeyType::Number(5.0)),
+@@ -1287,6 +1310,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadOnly(AsyncReadOnlyOperation::GetAllItems {
+                             callback: get_callback(get_all_items.0),
+                             key_range: IndexedDBKeyRange::lower_bound(
+@@ -1298,6 +1322,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadOnly(AsyncReadOnlyOperation::Count {
+                             callback: get_callback(count.0),
+                             key_range: IndexedDBKeyRange::only(IndexedDBKeyType::Number(1.0)),
+@@ -1305,6 +1330,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::RemoveItem {
+                             callback: get_callback(remove.0),
+                             key_range: IndexedDBKeyRange::only(IndexedDBKeyType::Number(1.0)),
+@@ -1312,6 +1338,7 @@ mod tests {
+                     },
+                     KvsOperation {
+                         store_name: store_name.to_owned(),
++                        context: Default::default(),
+                         operation: AsyncOperation::ReadWrite(AsyncReadWriteOperation::Clear(
+                             get_callback(clear.0),
+                         )),
+diff --git a/components/storage/indexeddb/mod.rs b/components/storage/indexeddb/mod.rs
+index 9e7c9924c12..8fb95aa7f63 100644
+--- a/components/storage/indexeddb/mod.rs
++++ b/components/storage/indexeddb/mod.rs
+@@ -26,22 +26,28 @@ use servo_url::origin::ImmutableOrigin;
+ use storage_traits::client_storage::StorageProxyMap;
+ use storage_traits::indexeddb::{
+     AsyncOperation, BackendError, BackendResult, ConnectionMsg, CreateObjectResult, DatabaseInfo,
+-    DbResult, IndexedDBIndex, IndexedDBObjectStore, IndexedDBThreadMsg, IndexedDBTxnMode, KeyPath,
+-    SyncOperation, TxnCompleteMsg,
++    DbResult, IndexedDBDescription, IndexedDBIndex, IndexedDBObjectStore, IndexedDBThreadMsg,
++    IndexedDBTxnMode, IndexedDbEngineFactory, KeyPath, KvsEngine, KvsOperation,
++    KvsOperationContext, KvsTransaction, SyncOperation, TxnCompleteMsg,
+ };
+ use uuid::Uuid;
+ 
+-use crate::indexeddb::engines::{KvsEngine, KvsOperation, KvsTransaction, SqliteEngine};
++use crate::indexeddb::engines::SqliteEngine;
+ use crate::shared::is_sqlite_disk_full_error;
+ 
+ pub trait IndexedDBThreadFactory {
+-    fn new(mem_profiler_chan: MemProfilerChan, reporter_name: String) -> Self;
++    fn new(
++        mem_profiler_chan: MemProfilerChan,
++        reporter_name: String,
++        factory: Option<Arc<dyn IndexedDbEngineFactory>>,
++    ) -> Self;
+ }
+ 
+ impl IndexedDBThreadFactory for GenericSender<IndexedDBThreadMsg> {
+     fn new(
+         mem_profiler_chan: MemProfilerChan,
+         reporter_name: String,
++        factory: Option<Arc<dyn IndexedDbEngineFactory>>,
+     ) -> GenericSender<IndexedDBThreadMsg> {
+         let (chan, port) = generic_channel::channel().unwrap();
+         let chan2 = chan.clone();
+@@ -52,7 +58,7 @@ impl IndexedDBThreadFactory for GenericSender<IndexedDBThreadMsg> {
+             .name("IndexedDBManager".to_owned())
+             .spawn(move || {
+                 mem_profiler_chan.run_with_memory_reporting(
+-                    || IndexedDBManager::new(port, manager_sender).start(),
++                    || IndexedDBManager::new(port, manager_sender, factory).start(),
+                     reporter_name,
+                     chan2,
+                     IndexedDBThreadMsg::CollectMemoryReport,
+@@ -64,11 +70,19 @@ impl IndexedDBThreadFactory for GenericSender<IndexedDBThreadMsg> {
+     }
+ }
+ 
+-/// A key used to track databases.
+-#[derive(Clone, Debug, Eq, Hash, MallocSizeOf, PartialEq)]
+-pub struct IndexedDBDescription {
+-    pub origin: ImmutableOrigin,
+-    pub name: String,
++pub(crate) struct SqliteIndexedDbEngineFactory;
++
++impl IndexedDbEngineFactory for SqliteIndexedDbEngineFactory {
++    fn open(
++        &self,
++        path: std::path::PathBuf,
++        created: bool,
++        description: &IndexedDBDescription,
++    ) -> BackendResult<Box<dyn KvsEngine>> {
++        SqliteEngine::new(path, created, description, ThreadPool::global())
++            .map(|engine| Box::new(engine) as Box<dyn KvsEngine>)
++            .map_err(backend_error_from_sqlite_error)
++    }
+ }
+ 
+ #[derive(MallocSizeOf)]
+@@ -249,6 +263,7 @@ impl<E: KvsEngine> IndexedDBEnvironment<E> {
+     fn queue_operation(
+         &mut self,
+         store_name: &str,
++        context: KvsOperationContext,
+         serial_number: u64,
+         mode: IndexedDBTxnMode,
+         operation: AsyncOperation,
+@@ -262,6 +277,7 @@ impl<E: KvsEngine> IndexedDBEnvironment<E> {
+                 transaction.requests.push_back(KvsOperation {
+                     operation,
+                     store_name: String::from(store_name),
++                    context,
+                 });
+                 if was_empty {
+                     // If the queue was empty and we just added work, we must enqueue the txn
+@@ -280,6 +296,7 @@ impl<E: KvsEngine> IndexedDBEnvironment<E> {
+                     .push_back(KvsOperation {
+                         operation,
+                         store_name: String::from(store_name),
++                        context,
+                     });
+                 enqueue_mode = Some(mode);
+             },
+@@ -753,7 +770,7 @@ impl<E: KvsEngine> IndexedDBEnvironment<E> {
+         Ok(())
+     }
+ 
+-    fn version(&self) -> Result<u64, E::Error> {
++    fn version(&self) -> BackendResult<u64> {
+         self.engine.version()
+     }
+ 
+@@ -1015,8 +1032,8 @@ struct Connection {
+ struct IndexedDBManager {
+     port: GenericReceiver<IndexedDBThreadMsg>,
+     manager_sender: GenericSender<IndexedDBThreadMsg>,
+-    databases: HashMap<IndexedDBDescription, IndexedDBEnvironment<SqliteEngine>>,
+-    thread_pool: Arc<ThreadPool>,
++    databases: HashMap<IndexedDBDescription, IndexedDBEnvironment<Box<dyn KvsEngine>>>,
++    engine_factory: Arc<dyn IndexedDbEngineFactory>,
+ 
+     /// A global counter to produce unique transaction ids.
+     /// TODO: remove once db connections lifecyle is managed.
+@@ -1035,6 +1052,7 @@ impl IndexedDBManager {
+     fn new(
+         port: GenericReceiver<IndexedDBThreadMsg>,
+         manager_sender: GenericSender<IndexedDBThreadMsg>,
++        engine_factory: Option<Arc<dyn IndexedDbEngineFactory>>,
+     ) -> IndexedDBManager {
+         debug!("New indexedDBManager");
+ 
+@@ -1042,7 +1060,8 @@ impl IndexedDBManager {
+             port,
+             manager_sender,
+             databases: HashMap::new(),
+-            thread_pool: ThreadPool::global(),
++            engine_factory: engine_factory
++                .unwrap_or_else(|| Arc::new(SqliteIndexedDbEngineFactory)),
+             serial_number_counter: 0,
+             connection_queues: Default::default(),
+             connections: Default::default(),
+@@ -1077,6 +1096,7 @@ impl IndexedDBManager {
+                     origin,
+                     db_name,
+                     store_name,
++                    context,
+                     txn,
+                     _request_id,
+                     mode,
+@@ -1084,7 +1104,7 @@ impl IndexedDBManager {
+                 ) => {
+                     if let Some(db) = self.get_database_mut(origin.clone(), db_name.clone()) {
+                         // Queues an operation for a transaction without starting it
+-                        db.queue_operation(&store_name, txn, mode, operation);
++                        db.queue_operation(&store_name, context, txn, mode, operation);
+                         db.schedule_transactions(origin, &db_name);
+                     }
+                 },
+@@ -1147,6 +1167,7 @@ impl IndexedDBManager {
+                         // Queues an operation for a transaction without starting it
+                         database.queue_operation(
+                             &store_name,
++                            KvsOperationContext::default(),
+                             transaction_serial_number,
+                             IndexedDBTxnMode::Versionchange,
+                             AsyncOperation::Schema(operation),
+@@ -1562,7 +1583,7 @@ impl IndexedDBManager {
+         &self,
+         origin: ImmutableOrigin,
+         db_name: String,
+-    ) -> Option<&IndexedDBEnvironment<SqliteEngine>> {
++    ) -> Option<&IndexedDBEnvironment<Box<dyn KvsEngine>>> {
+         let idb_description = IndexedDBDescription {
+             origin,
+             name: db_name,
+@@ -1575,7 +1596,7 @@ impl IndexedDBManager {
+         &mut self,
+         origin: ImmutableOrigin,
+         db_name: String,
+-    ) -> Option<&mut IndexedDBEnvironment<SqliteEngine>> {
++    ) -> Option<&mut IndexedDBEnvironment<Box<dyn KvsEngine>>> {
+         let idb_description = IndexedDBDescription {
+             origin,
+             name: db_name,
+@@ -1828,11 +1849,9 @@ impl IndexedDBManager {
+                         return;
+                     },
+                 };
+-                let engine = match SqliteEngine::new(path, created, &key, self.thread_pool.clone())
+-                {
++                let engine = match self.engine_factory.open(path, created, &key) {
+                     Ok(engine) => engine,
+-                    Err(err) => {
+-                        let error = backend_error_from_sqlite_error(err);
++                    Err(error) => {
+                         if let Err(e) = sender.send(ConnectionMsg::DatabaseError {
+                             id: *id,
+                             name: db_name.clone(),
+@@ -1844,12 +1863,10 @@ impl IndexedDBManager {
+                         return;
+                     },
+                 };
+-                let created_db_path = engine.created_db_path();
+                 let db = IndexedDBEnvironment::new(engine, self.manager_sender.clone());
+                 let db_version = match db.version() {
+                     Ok(version) => version,
+-                    Err(err) => {
+-                        let error = backend_error_from_sqlite_error(err);
++                    Err(error) => {
+                         if let Err(e) = sender.send(ConnectionMsg::DatabaseError {
+                             id: *id,
+                             name: db_name.clone(),
+@@ -1862,7 +1879,7 @@ impl IndexedDBManager {
+                     },
+                 };
+ 
+-                *version = if created_db_path {
++                *version = if created {
+                     Some(requested_version.unwrap_or(1))
+                 } else {
+                     Some(requested_version.unwrap_or(db_version))
+@@ -1874,8 +1891,7 @@ impl IndexedDBManager {
+             Entry::Occupied(db) => {
+                 let db_version = match db.get().version() {
+                     Ok(version) => version,
+-                    Err(err) => {
+-                        let error = backend_error_from_sqlite_error(err);
++                    Err(error) => {
+                         if let Err(e) = sender.send(ConnectionMsg::DatabaseError {
+                             id: *id,
+                             name: db_name.clone(),
+@@ -2405,14 +2421,14 @@ impl IndexedDBManager {
+                         let _ = db.set_version(version);
+                     }
+                     // erroring out if the version is not upgraded can be and non-replicable
+-                    let _ = sender.send(db.version().map_err(backend_error_from_sqlite_error));
++                    let _ = sender.send(db.version());
+                 } else {
+                     let _ = sender.send(Err(BackendError::DbNotFound));
+                 }
+             },
+             SyncOperation::Version(sender, origin, db_name) => {
+                 if let Some(db) = self.get_database(origin, db_name) {
+-                    let _ = sender.send(db.version().map_err(backend_error_from_sqlite_error));
++                    let _ = sender.send(db.version());
+                 } else {
+                     let _ = sender.send(Err(BackendError::DbNotFound));
+                 }
+@@ -2496,10 +2512,10 @@ mod tests {
+     use servo_base::generic_channel;
+     use servo_base::threadpool::ThreadPool;
+     use servo_url::ImmutableOrigin;
+-    use storage_traits::indexeddb::{IndexedDBTxnMode, KeyPath};
++    use storage_traits::indexeddb::{IndexedDBDescription, IndexedDBTxnMode, KeyPath};
+     use url::Host;
+ 
+-    use super::{IndexedDBDescription, IndexedDBEnvironment};
++    use super::IndexedDBEnvironment;
+     use crate::indexeddb::engines::SqliteEngine;
+ 
+     fn test_origin() -> ImmutableOrigin {
+diff --git a/components/storage/storage_thread.rs b/components/storage/storage_thread.rs
+index 7aaec6ad4d0..85b146dc91f 100644
+--- a/components/storage/storage_thread.rs
++++ b/components/storage/storage_thread.rs
+@@ -6,11 +6,11 @@ use std::path::PathBuf;
+ 
+ use profile_traits::mem::ProfilerChan as MemProfilerChan;
+ use servo_base::generic_channel::GenericSender;
+-use storage_traits::StorageThreads;
+ use storage_traits::cache_storage::CacheStorageThreadHandle;
+ use storage_traits::client_storage::ClientStorageThreadHandle;
+ use storage_traits::indexeddb::IndexedDBThreadMsg;
+ use storage_traits::webstorage_thread::WebStorageThreadMsg;
++use storage_traits::{StorageEngines, StorageThreads};
+ 
+ use crate::{
+     CacheStorageThreadFactory, ClientStorageThreadFactory, IndexedDBThreadFactory,
+@@ -22,20 +22,26 @@ fn new_storage_thread_group(
+     config_dir: Option<PathBuf>,
+     temporary_storage: bool,
+     label: &str,
++    engines: &StorageEngines,
+ ) -> StorageThreads {
+-    let client_storage: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(config_dir.clone(), temporary_storage);
++    let client_storage: ClientStorageThreadHandle = ClientStorageThreadFactory::new(
++        config_dir.clone(),
++        temporary_storage,
++        engines.registry.clone(),
++    );
+     let idb: GenericSender<IndexedDBThreadMsg> = IndexedDBThreadFactory::new(
+         mem_profiler_chan.clone(),
+         format!("indexedDB-reporter-{label}"),
++        engines.indexeddb.clone(),
+     );
+     let web_storage: GenericSender<WebStorageThreadMsg> = WebStorageThreadFactory::new(
+         config_dir.clone(),
+         mem_profiler_chan,
+         format!("storage-reporter-{label}"),
++        engines.web_storage.clone(),
+     );
+     let cache_storage: CacheStorageThreadHandle =
+-        CacheStorageThreadFactory::new(config_dir, temporary_storage);
++        CacheStorageThreadFactory::new(config_dir, temporary_storage, engines.cache.clone());
+ 
+     StorageThreads::new(
+         client_storage.into(),
+@@ -49,15 +55,22 @@ pub fn new_storage_threads(
+     mem_profiler_chan: MemProfilerChan,
+     config_dir: Option<PathBuf>,
+     temporary_storage: bool,
++    engines: StorageEngines,
+ ) -> (StorageThreads, StorageThreads) {
+     let private_storage_threads = new_storage_thread_group(
+         mem_profiler_chan.clone(),
+         config_dir.clone(),
+         temporary_storage,
+         "private",
++        &engines,
++    );
++    let public_storage_threads = new_storage_thread_group(
++        mem_profiler_chan,
++        config_dir,
++        temporary_storage,
++        "public",
++        &engines,
+     );
+-    let public_storage_threads =
+-        new_storage_thread_group(mem_profiler_chan, config_dir, temporary_storage, "public");
+ 
+     (private_storage_threads, public_storage_threads)
+ }
+diff --git a/components/storage/tests/cache_storage.rs b/components/storage/tests/cache_storage.rs
+index 48d5d7eca4a..11626c88214 100644
+--- a/components/storage/tests/cache_storage.rs
++++ b/components/storage/tests/cache_storage.rs
+@@ -2,13 +2,13 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+-use servo_base::generic_channel::{self, GenericSend};
++use servo_base::generic_channel;
+ use storage::CacheStorageThreadFactory;
+ use storage_traits::cache_storage::{CacheStorageThreadHandle, CacheStorageThreadMessage};
+ 
+ #[test]
+ fn test_exit() {
+-    let handle: CacheStorageThreadHandle = CacheStorageThreadFactory::new(None, false);
++    let handle: CacheStorageThreadHandle = CacheStorageThreadFactory::new(None, false, None);
+ 
+     let (sender, receiver) = generic_channel::channel().unwrap();
+     handle
+diff --git a/components/storage/tests/client_storage.rs b/components/storage/tests/client_storage.rs
+index 881efce5390..f75aba3b03c 100644
+--- a/components/storage/tests/client_storage.rs
++++ b/components/storage/tests/client_storage.rs
+@@ -51,7 +51,7 @@ fn obtain_bottle_map(
+ 
+ #[test]
+ fn test_exit() {
+-    let handle: ClientStorageThreadHandle = ClientStorageThreadFactory::new(None, false);
++    let handle: ClientStorageThreadHandle = ClientStorageThreadFactory::new(None, false, None);
+ 
+     let (sender, receiver) = generic_channel::channel().unwrap();
+     handle
+@@ -69,7 +69,7 @@ fn test_workflow() {
+     install_test_namespace();
+     let tmp_dir = tempfile::tempdir().unwrap();
+     let handle: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false);
++        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false, None);
+ 
+     let url = ServoUrl::parse("https://example.com").unwrap();
+ 
+@@ -136,7 +136,7 @@ fn test_repeated_local_obtain_reuses_same_logical_rows() {
+     install_test_namespace();
+     let tmp_dir = tempfile::tempdir().unwrap();
+     let handle: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false);
++        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false, None);
+ 
+     let origin = ServoUrl::parse("https://example.com").unwrap().origin();
+     let webview = Some(WebViewId::new(servo_base::id::TEST_PAINTER_ID));
+@@ -191,7 +191,7 @@ fn test_repeated_session_obtain_reuses_same_logical_rows() {
+     install_test_namespace();
+     let tmp_dir = tempfile::tempdir().unwrap();
+     let handle: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false);
++        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false, None);
+ 
+     let origin = ServoUrl::parse("https://example.com").unwrap().origin();
+     let webview = Some(WebViewId::new(servo_base::id::TEST_PAINTER_ID));
+@@ -247,7 +247,7 @@ fn test_local_persistence_and_estimate() {
+     install_test_namespace();
+     let tmp_dir = tempfile::tempdir().unwrap();
+     let handle: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false);
++        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false, None);
+ 
+     let origin = ServoUrl::parse("https://example.com").unwrap().origin();
+     let webview = WebViewId::new(servo_base::id::TEST_PAINTER_ID);
+@@ -299,7 +299,7 @@ fn test_storage_manager_operations_fail_for_opaque_origins() {
+     install_test_namespace();
+     let tmp_dir = tempfile::tempdir().unwrap();
+     let handle: ClientStorageThreadHandle =
+-        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false);
++        ClientStorageThreadFactory::new(Some(tmp_dir.path().to_path_buf()), false, None);
+ 
+     let origin = ServoUrl::parse("data:text/plain,hello").unwrap().origin();
+ 
+diff --git a/components/storage/tests/storage_thread.rs b/components/storage/tests/storage_thread.rs
+index 5216f775956..3f01398f866 100644
+--- a/components/storage/tests/storage_thread.rs
++++ b/components/storage/tests/storage_thread.rs
+@@ -2,13 +2,24 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
++use std::collections::BTreeMap;
++use std::path::PathBuf;
++use std::sync::{Arc, Mutex};
++
+ use profile::mem as profile_mem;
+-use servo_base::generic_channel::{self, GenericSend};
+-use storage_traits::StorageThreads;
+-use storage_traits::cache_storage::CacheStorageThreadMessage;
+-use storage_traits::client_storage::ClientStorageThreadMessage;
++use servo_base::generic_channel::{self, GenericCallback, GenericSend};
++use servo_base::id::{BrowsingContextId, Index, PipelineNamespaceId, TEST_WEBVIEW_ID, WebViewId};
++use servo_url::ServoUrl;
++use storage_traits::cache_storage::{
++    CacheStorageEngine, CacheStorageEngineFactory, CacheStorageError, CacheStorageThreadMessage,
++    CacheStorageThreadResponse,
++};
++use storage_traits::client_storage::{ClientStorageThreadMessage, StorageProxyMap};
+ use storage_traits::indexeddb::{IndexedDBThreadMsg, SyncOperation};
+-use storage_traits::webstorage_thread::WebStorageThreadMsg;
++use storage_traits::webstorage_thread::{
++    WebStorageEngine, WebStorageEngineFactory, WebStorageThreadMsg, WebStorageType,
++};
++use storage_traits::{StorageEngines, StorageThreads};
+ 
+ fn shutdown_storage_group(threads: &StorageThreads) {
+     let (client_sender, client_receiver) = generic_channel::channel().unwrap();
+@@ -50,7 +61,7 @@ fn shutdown_storage_group(threads: &StorageThreads) {
+ fn test_new_storage_threads_create_independent_groups() {
+     let mem_profiler_chan = profile_mem::Profiler::create();
+     let (private_storage_threads, public_storage_threads) =
+-        storage::new_storage_threads(mem_profiler_chan, None, false);
++        storage::new_storage_threads(mem_profiler_chan, None, false, Default::default());
+ 
+     shutdown_storage_group(&private_storage_threads);
+     shutdown_storage_group(&public_storage_threads);
+@@ -59,3 +70,273 @@ fn test_new_storage_threads_create_independent_groups() {
+     #[cfg(windows)]
+     std::thread::sleep(std::time::Duration::from_millis(1000));
+ }
++
++struct AlwaysPresentCache;
++
++impl CacheStorageEngine for AlwaysPresentCache {
++    fn has_cache(
++        &mut self,
++        origin: &servo_url::ImmutableOrigin,
++        proxy: &StorageProxyMap,
++        cache_name: &str,
++    ) -> Result<bool, CacheStorageError<String>> {
++        Ok(origin.ascii_serialization() == "https://example.com"
++            && proxy.bottle_id == 42
++            && cache_name == "selected")
++    }
++}
++
++struct InMemoryCacheFactory;
++
++impl CacheStorageEngineFactory for InMemoryCacheFactory {
++    fn open(&self, _storage_dir: PathBuf) -> Result<Box<dyn CacheStorageEngine>, String> {
++        Ok(Box::new(AlwaysPresentCache))
++    }
++}
++
++#[derive(Default)]
++struct InMemoryWebStorageEngine {
++    values: BTreeMap<String, String>,
++    clear_event: Option<(Arc<Mutex<Vec<WebStorageOpen>>>, WebStorageOpen)>,
++}
++
++impl WebStorageEngine for InMemoryWebStorageEngine {
++    fn len(&self) -> Result<usize, String> {
++        Ok(self.values.len())
++    }
++
++    fn key(&self, index: usize) -> Result<Option<String>, String> {
++        Ok(self.values.keys().nth(index).cloned())
++    }
++
++    fn keys(&self) -> Result<Vec<String>, String> {
++        Ok(self.values.keys().cloned().collect())
++    }
++
++    fn get(&self, key: &str) -> Result<Option<String>, String> {
++        Ok(self.values.get(key).cloned())
++    }
++
++    fn set(&mut self, key: &str, value: &str) -> Result<Option<String>, String> {
++        Ok(self.values.insert(key.to_owned(), value.to_owned()))
++    }
++
++    fn delete(&mut self, key: &str) -> Result<Option<String>, String> {
++        Ok(self.values.remove(key))
++    }
++
++    fn clear(&mut self) -> Result<bool, String> {
++        let changed = !self.values.is_empty();
++        self.values.clear();
++        if let Some((events, event)) = &self.clear_event {
++            events.lock().unwrap().push(event.clone());
++        }
++        Ok(changed)
++    }
++
++    fn size(&self) -> Result<usize, String> {
++        Ok(self
++            .values
++            .iter()
++            .map(|(key, value)| key.len() + value.len())
++            .sum())
++    }
++}
++
++type WebStorageOpen = (WebStorageType, Option<WebViewId>, String);
++
++struct RecordingWebStorageFactory {
++    opens: Arc<Mutex<Vec<WebStorageOpen>>>,
++    clears: Arc<Mutex<Vec<WebStorageOpen>>>,
++}
++
++impl WebStorageEngineFactory for RecordingWebStorageFactory {
++    fn open(
++        &self,
++        storage_type: WebStorageType,
++        webview_id: Option<WebViewId>,
++        origin: &servo_url::ImmutableOrigin,
++        _db_dir: Option<PathBuf>,
++    ) -> Result<Box<dyn WebStorageEngine>, String> {
++        let context = (storage_type, webview_id, origin.ascii_serialization());
++        self.opens.lock().unwrap().push(context.clone());
++        Ok(Box::new(InMemoryWebStorageEngine {
++            values: BTreeMap::new(),
++            clear_event: Some((self.clears.clone(), context)),
++        }))
++    }
++}
++
++fn set_web_storage(
++    threads: &StorageThreads,
++    storage_type: WebStorageType,
++    webview_id: WebViewId,
++    origin: &servo_url::ImmutableOrigin,
++    value: &str,
++) {
++    let (sender, receiver) = generic_channel::channel().unwrap();
++    GenericSend::send(
++        threads,
++        WebStorageThreadMsg::SetItem(
++            sender,
++            storage_type,
++            webview_id,
++            origin.clone(),
++            "context".to_owned(),
++            value.to_owned(),
++        ),
++    )
++    .unwrap();
++    assert_eq!(receiver.recv().unwrap(), Ok((true, None)));
++}
++
++fn get_web_storage(
++    threads: &StorageThreads,
++    storage_type: WebStorageType,
++    webview_id: WebViewId,
++    origin: &servo_url::ImmutableOrigin,
++) -> Option<String> {
++    let (sender, receiver) = generic_channel::channel().unwrap();
++    GenericSend::send(
++        threads,
++        WebStorageThreadMsg::GetItem(
++            sender,
++            storage_type,
++            webview_id,
++            origin.clone(),
++            "context".to_owned(),
++        ),
++    )
++    .unwrap();
++    receiver.recv().unwrap()
++}
++
++#[test]
++fn test_storage_engine_factory_is_selected_end_to_end() {
++    let mem_profiler_chan = profile_mem::Profiler::create();
++    let config_dir = tempfile::tempdir().unwrap();
++    let web_storage_opens = Arc::new(Mutex::new(Vec::new()));
++    let web_storage_clears = Arc::new(Mutex::new(Vec::new()));
++    let engines = StorageEngines {
++        cache: Some(Arc::new(InMemoryCacheFactory)),
++        web_storage: Some(Arc::new(RecordingWebStorageFactory {
++            opens: web_storage_opens.clone(),
++            clears: web_storage_clears.clone(),
++        })),
++        ..Default::default()
++    };
++    let (private_storage_threads, public_storage_threads) = storage::new_storage_threads(
++        mem_profiler_chan,
++        Some(config_dir.path().to_path_buf()),
++        false,
++        engines,
++    );
++
++    let (callback, receiver) = GenericCallback::new_blocking().unwrap();
++    let proxy = StorageProxyMap {
++        bottle_id: 42,
++        handle: public_storage_threads.client_storage_handle(),
++    };
++    GenericSend::send(
++        &public_storage_threads,
++        CacheStorageThreadMessage::HasCache {
++            cache_name: "selected".to_string(),
++            callback,
++            proxy,
++            origin: ServoUrl::parse("https://example.com").unwrap().origin(),
++        },
++    )
++    .unwrap();
++
++    let CacheStorageThreadResponse::HasCacheResult(result) = receiver.recv().unwrap();
++    assert!(result.unwrap());
++
++    let origin = ServoUrl::parse("https://example.com").unwrap().origin();
++    let other_webview = WebViewId::mock_for_testing(BrowsingContextId {
++        namespace_id: PipelineNamespaceId(999),
++        index: Index::new(2).unwrap(),
++    });
++
++    set_web_storage(
++        &public_storage_threads,
++        WebStorageType::Local,
++        TEST_WEBVIEW_ID,
++        &origin,
++        "local",
++    );
++    assert_eq!(
++        get_web_storage(
++            &public_storage_threads,
++            WebStorageType::Local,
++            other_webview,
++            &origin,
++        ),
++        Some("local".to_owned())
++    );
++
++    set_web_storage(
++        &public_storage_threads,
++        WebStorageType::Session,
++        TEST_WEBVIEW_ID,
++        &origin,
++        "session-one",
++    );
++    set_web_storage(
++        &public_storage_threads,
++        WebStorageType::Session,
++        other_webview,
++        &origin,
++        "session-two",
++    );
++    assert_eq!(
++        get_web_storage(
++            &public_storage_threads,
++            WebStorageType::Session,
++            TEST_WEBVIEW_ID,
++            &origin,
++        ),
++        Some("session-one".to_owned())
++    );
++    assert_eq!(
++        get_web_storage(
++            &public_storage_threads,
++            WebStorageType::Session,
++            other_webview,
++            &origin,
++        ),
++        Some("session-two".to_owned())
++    );
++
++    let opens = web_storage_opens.lock().unwrap();
++    assert!(opens.contains(&(
++        WebStorageType::Local,
++        None,
++        "https://example.com".to_owned()
++    )));
++    assert!(opens.contains(&(
++        WebStorageType::Session,
++        Some(TEST_WEBVIEW_ID),
++        "https://example.com".to_owned(),
++    )));
++    assert!(opens.contains(&(
++        WebStorageType::Session,
++        Some(other_webview),
++        "https://example.com".to_owned(),
++    )));
++    drop(opens);
++
++    public_storage_threads.clear_webstorage_for_sites(WebStorageType::Local, &["example.com"]);
++    assert!(web_storage_clears.lock().unwrap().contains(&(
++        WebStorageType::Local,
++        None,
++        "https://example.com".to_owned(),
++    )));
++    assert!(
++        public_storage_threads
++            .webstorage_origins(WebStorageType::Local)
++            .is_empty()
++    );
++
++    shutdown_storage_group(&private_storage_threads);
++    shutdown_storage_group(&public_storage_threads);
++}
+diff --git a/components/storage/tests/webstorage.rs b/components/storage/tests/webstorage.rs
+index 5aa35992e11..016de0ce273 100644
+--- a/components/storage/tests/webstorage.rs
++++ b/components/storage/tests/webstorage.rs
+@@ -22,7 +22,12 @@ impl WebStorageTest {
+         let tmp_dir = tempfile::tempdir().unwrap();
+         let config_dir = tmp_dir.path().to_path_buf();
+         let mem_profiler_chan = profile_mem::Profiler::create();
+-        let threads = storage::new_storage_threads(mem_profiler_chan, Some(config_dir), false);
++        let threads = storage::new_storage_threads(
++            mem_profiler_chan,
++            Some(config_dir),
++            false,
++            Default::default(),
++        );
+ 
+         Self {
+             tmp_dir: Some(tmp_dir),
+@@ -32,7 +37,8 @@ impl WebStorageTest {
+ 
+     pub(crate) fn new_in_memory() -> Self {
+         let mem_profiler_chan = profile_mem::Profiler::create();
+-        let threads = storage::new_storage_threads(mem_profiler_chan, None, false);
++        let threads =
++            storage::new_storage_threads(mem_profiler_chan, None, false, Default::default());
+ 
+         Self {
+             tmp_dir: None,
+@@ -44,7 +50,12 @@ impl WebStorageTest {
+         let tmp_dir = self.tmp_dir.take();
+         let config_dir = tmp_dir.as_ref().map(|d| d.path().to_path_buf());
+         let mem_profiler_chan = profile_mem::Profiler::create();
+-        let threads = storage::new_storage_threads(mem_profiler_chan, config_dir, false);
++        let threads = storage::new_storage_threads(
++            mem_profiler_chan,
++            config_dir,
++            false,
++            Default::default(),
++        );
+ 
+         Self {
+             tmp_dir: tmp_dir,
+diff --git a/components/storage/webstorage/engines/mod.rs b/components/storage/webstorage/engines/mod.rs
+index 1d2023f8c05..61ced82faea 100644
+--- a/components/storage/webstorage/engines/mod.rs
++++ b/components/storage/webstorage/engines/mod.rs
+@@ -2,15 +2,4 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+ 
+-use crate::webstorage::OriginEntry;
+-
+ pub mod sqlite;
+-
+-pub trait WebStorageEngine {
+-    type Error;
+-    fn load(&self) -> Result<OriginEntry, Self::Error>;
+-    fn clear(&mut self) -> Result<(), Self::Error>;
+-    fn delete(&mut self, key: &str) -> Result<(), Self::Error>;
+-    fn set(&mut self, key: &str, value: &str) -> Result<(), Self::Error>;
+-    fn save(&mut self, data: &OriginEntry);
+-}
+diff --git a/components/storage/webstorage/engines/sqlite.rs b/components/storage/webstorage/engines/sqlite.rs
+index 78bd2ea2b42..da24b190261 100644
+--- a/components/storage/webstorage/engines/sqlite.rs
++++ b/components/storage/webstorage/engines/sqlite.rs
+@@ -5,13 +5,11 @@
+ use std::path::PathBuf;
+ use std::sync::Arc;
+ 
+-use log::error;
+-use rusqlite::Connection;
++use rusqlite::{Connection, OptionalExtension};
+ use servo_base::threadpool::ThreadPool;
+ 
+ use crate::shared::{DB_IN_MEMORY_INIT_PRAGMAS, DB_IN_MEMORY_PRAGMAS, DB_INIT_PRAGMAS, DB_PRAGMAS};
+-use crate::webstorage::OriginEntry;
+-use crate::webstorage::engines::WebStorageEngine;
++use storage_traits::webstorage_thread::WebStorageEngine;
+ 
+ pub struct SqliteEngine {
+     connection: Connection,
+@@ -61,63 +59,85 @@ impl SqliteEngine {
+ }
+ 
+ impl WebStorageEngine for SqliteEngine {
+-    type Error = rusqlite::Error;
+-
+-    fn load(&self) -> Result<OriginEntry, Self::Error> {
+-        let mut stmt = self.connection.prepare("SELECT key, value FROM data;")?;
+-        let rows = stmt.query_map([], |row| {
+-            let key: String = row.get(0)?;
+-            let value: String = row.get(1)?;
+-            Ok((key, value))
+-        })?;
+-
+-        let mut map = OriginEntry::default();
+-        for row in rows {
+-            let (key, value) = row?;
+-            map.insert(key, value);
+-        }
+-        Ok(map)
++    fn len(&self) -> Result<usize, String> {
++        self.connection
++            .query_row("SELECT COUNT(*) FROM data", [], |row| row.get::<_, i64>(0))
++            .map(|length| length as usize)
++            .map_err(|error| error.to_string())
+     }
+ 
+-    fn clear(&mut self) -> Result<(), Self::Error> {
+-        self.connection.execute("DELETE FROM data;", [])?;
+-        Ok(())
++    fn key(&self, index: usize) -> Result<Option<String>, String> {
++        self.connection
++            .query_row(
++                "SELECT key FROM data ORDER BY key LIMIT 1 OFFSET ?",
++                [index as i64],
++                |row| row.get(0),
++            )
++            .optional()
++            .map_err(|error| error.to_string())
+     }
+ 
+-    fn delete(&mut self, key: &str) -> Result<(), Self::Error> {
+-        self.connection
+-            .execute("DELETE FROM data WHERE key = ?;", [key])?;
+-        Ok(())
++    fn keys(&self) -> Result<Vec<String>, String> {
++        let load = || -> rusqlite::Result<Vec<String>> {
++            let mut statement = self
++                .connection
++                .prepare("SELECT key FROM data ORDER BY key")?;
++            statement
++                .query_map([], |row| row.get(0))?
++                .collect::<Result<Vec<_>, _>>()
++        };
++        load().map_err(|error| error.to_string())
+     }
+ 
+-    fn set(&mut self, key: &str, value: &str) -> Result<(), Self::Error> {
+-        // update or insert
+-        //
+-        // TODO: Replace this with an UPSERT once the schema guarantees a
+-        // UNIQUE/PRIMARY KEY constraint on `key`.
+-        let tx = self.connection.transaction()?;
+-        let rows = tx.execute("UPDATE data SET value = ? WHERE key = ?", [value, key])?;
+-        if rows == 0 {
+-            tx.execute("INSERT INTO data (key, value) VALUES (?, ?)", [key, value])?;
+-        }
+-        tx.commit()?;
+-        Ok(())
++    fn get(&self, key: &str) -> Result<Option<String>, String> {
++        self.connection
++            .query_row("SELECT value FROM data WHERE key = ?", [key], |row| {
++                row.get(0)
++            })
++            .optional()
++            .map_err(|error| error.to_string())
+     }
+ 
+-    fn save(&mut self, data: &OriginEntry) {
+-        fn save_inner(conn: &mut Connection, data: &OriginEntry) -> rusqlite::Result<()> {
+-            let tx = conn.transaction()?;
+-            tx.execute("DELETE FROM data;", [])?;
+-            let mut stmt = tx.prepare("INSERT INTO data (key, value) VALUES (?, ?);")?;
+-            for (key, value) in data.inner() {
+-                stmt.execute(rusqlite::params![key, value])?;
++    fn set(&mut self, key: &str, value: &str) -> Result<Option<String>, String> {
++        let old_value = self.get(key)?;
++        let mut set = || -> rusqlite::Result<()> {
++            // TODO: Replace this with an UPSERT once the schema guarantees a
++            // UNIQUE/PRIMARY KEY constraint on `key`.
++            let tx = self.connection.transaction()?;
++            let rows = tx.execute("UPDATE data SET value = ? WHERE key = ?", [value, key])?;
++            if rows == 0 {
++                tx.execute("INSERT INTO data (key, value) VALUES (?, ?)", [key, value])?;
+             }
+-            drop(stmt);
+             tx.commit()?;
+             Ok(())
+-        }
+-        if let Err(e) = save_inner(&mut self.connection, data) {
+-            error!("localstorage save error: {:?}", e);
+-        }
++        };
++        set().map(|()| old_value).map_err(|error| error.to_string())
++    }
++
++    fn delete(&mut self, key: &str) -> Result<Option<String>, String> {
++        let old_value = self.get(key)?;
++        self.connection
++            .execute("DELETE FROM data WHERE key = ?", [key])
++            .map(|_| old_value)
++            .map_err(|error| error.to_string())
++    }
++
++    fn clear(&mut self) -> Result<bool, String> {
++        let changed = self.len()? != 0;
++        self.connection
++            .execute("DELETE FROM data", [])
++            .map(|_| changed)
++            .map_err(|error| error.to_string())
++    }
++
++    fn size(&self) -> Result<usize, String> {
++        self.connection
++            .query_row(
++                "SELECT COALESCE(SUM(LENGTH(key) + LENGTH(value)), 0) FROM data",
++                [],
++                |row| row.get::<_, i64>(0),
++            )
++            .map(|size| size as usize)
++            .map_err(|error| error.to_string())
+     }
+ }
+diff --git a/components/storage/webstorage/mod.rs b/components/storage/webstorage/mod.rs
+index 082f23cc207..03ff9f20152 100644
+--- a/components/storage/webstorage/mod.rs
++++ b/components/storage/webstorage/mod.rs
+@@ -5,7 +5,6 @@
+ mod engines;
+ 
+ use std::borrow::ToOwned;
+-use std::collections::BTreeMap;
+ use std::collections::hash_map::Entry;
+ use std::path::PathBuf;
+ use std::sync::Arc;
+@@ -26,10 +25,12 @@ use servo_base::id::WebViewId;
+ use servo_base::threadpool::ThreadPool;
+ use servo_base::{read_json_from_file, write_json_to_file};
+ use servo_url::{ImmutableOrigin, ServoUrl};
+-use storage_traits::webstorage_thread::{OriginDescriptor, WebStorageThreadMsg, WebStorageType};
++use storage_traits::webstorage_thread::{
++    OriginDescriptor, OriginEntry, WebStorageEngine, WebStorageEngineFactory, WebStorageThreadMsg,
++    WebStorageType,
++};
+ use uuid::Uuid;
+ 
+-use crate::webstorage::engines::WebStorageEngine;
+ use crate::webstorage::engines::sqlite::SqliteEngine;
+ 
+ const QUOTA_SIZE_LIMIT: usize = 5 * 1024 * 1024;
+@@ -39,6 +40,7 @@ pub trait WebStorageThreadFactory {
+         config_dir: Option<PathBuf>,
+         mem_profiler_chan: MemProfilerChan,
+         reporter_name: String,
++        factory: Option<Arc<dyn WebStorageEngineFactory>>,
+     ) -> Self;
+ }
+ 
+@@ -48,6 +50,7 @@ impl WebStorageThreadFactory for GenericSender<WebStorageThreadMsg> {
+         config_dir: Option<PathBuf>,
+         mem_profiler_chan: MemProfilerChan,
+         reporter_name: String,
++        factory: Option<Arc<dyn WebStorageEngineFactory>>,
+     ) -> GenericSender<WebStorageThreadMsg> {
+         let (chan, port) = generic_channel::channel().unwrap();
+         let chan2 = chan.clone();
+@@ -55,7 +58,7 @@ impl WebStorageThreadFactory for GenericSender<WebStorageThreadMsg> {
+             .name("WebStorageManager".to_owned())
+             .spawn(move || {
+                 mem_profiler_chan.run_with_memory_reporting(
+-                    || WebStorageManager::new(port, config_dir).start(),
++                    || WebStorageManager::new(port, config_dir, factory).start(),
+                     reporter_name,
+                     chan2,
+                     WebStorageThreadMsg::CollectMemoryReport,
+@@ -66,6 +69,24 @@ impl WebStorageThreadFactory for GenericSender<WebStorageThreadMsg> {
+     }
+ }
+ 
++pub(crate) struct SqliteWebStorageEngineFactory;
++
++impl WebStorageEngineFactory for SqliteWebStorageEngineFactory {
++    fn open(
++        &self,
++        storage_type: WebStorageType,
++        webview_id: Option<WebViewId>,
++        _origin: &ImmutableOrigin,
++        db_dir: Option<PathBuf>,
++    ) -> Result<Box<dyn WebStorageEngine>, String> {
++        debug_assert_eq!(storage_type, WebStorageType::Local);
++        debug_assert!(webview_id.is_none());
++        SqliteEngine::new(&db_dir, ThreadPool::global())
++            .map(|engine| Box::new(engine) as Box<dyn WebStorageEngine>)
++            .map_err(|error| error.to_string())
++    }
++}
++
+ #[derive(Deserialize, MallocSizeOf, Serialize)]
+ pub struct StorageOrigins {
+     // TODO: Consider grouping by eTLD+1
+@@ -126,81 +147,19 @@ impl StorageOrigins {
+     }
+ }
+ 
+-#[derive(Clone, Default, MallocSizeOf)]
+-pub struct OriginEntry {
+-    tree: BTreeMap<String, String>,
+-    size: usize,
+-}
+-
+-impl OriginEntry {
+-    pub fn inner(&self) -> &BTreeMap<String, String> {
+-        &self.tree
+-    }
+-
+-    pub fn insert(&mut self, key: String, value: String) -> Option<String> {
+-        let old_value = self.tree.insert(key.clone(), value.clone());
+-        let size_change = match &old_value {
+-            Some(old) => value.len() as isize - old.len() as isize,
+-            None => (key.len() + value.len()) as isize,
+-        };
+-        self.size = (self.size as isize + size_change) as usize;
+-        old_value
+-    }
+-
+-    pub fn remove(&mut self, key: &str) -> Option<String> {
+-        let old_value = self.tree.remove(key);
+-        if let Some(old) = &old_value {
+-            self.size -= key.len() + old.len();
+-        }
+-        old_value
+-    }
+-
+-    pub fn clear(&mut self) {
+-        self.tree.clear();
+-        self.size = 0;
+-    }
+-
+-    pub fn size(&self) -> usize {
+-        self.size
+-    }
+-}
+-
+-struct WebStorageEnvironment<E: WebStorageEngine> {
+-    engine: E,
+-    data: OriginEntry,
++struct WebStorageEnvironment {
++    engine: Box<dyn WebStorageEngine>,
+ }
+ 
+-impl<E: WebStorageEngine> MallocSizeOf for WebStorageEnvironment<E> {
+-    fn size_of(&self, ops: &mut malloc_size_of::MallocSizeOfOps) -> usize {
+-        self.data.size_of(ops)
++impl MallocSizeOf for WebStorageEnvironment {
++    fn size_of(&self, _ops: &mut malloc_size_of::MallocSizeOfOps) -> usize {
++        0
+     }
+ }
+ 
+-impl<E: WebStorageEngine> WebStorageEnvironment<E> {
+-    fn new(engine: E) -> Self {
+-        WebStorageEnvironment {
+-            data: engine.load().unwrap_or_default(),
+-            engine,
+-        }
+-    }
+-
+-    fn clear(&mut self) {
+-        self.data.clear();
+-        let _ = self.engine.clear();
+-    }
+-
+-    fn delete(&mut self, key: &str) {
+-        let _ = self.engine.delete(key);
+-    }
+-
+-    fn set(&mut self, key: &str, value: &str) {
+-        let _ = self.engine.set(key, value);
+-    }
+-}
+-
+-impl<E: WebStorageEngine> Drop for WebStorageEnvironment<E> {
+-    fn drop(&mut self) {
+-        self.engine.save(&self.data);
++impl WebStorageEnvironment {
++    fn new(engine: Box<dyn WebStorageEngine>) -> Self {
++        WebStorageEnvironment { engine }
+     }
+ }
+ 
+@@ -209,27 +168,34 @@ struct WebStorageManager {
+     session_storage_origins: StorageOrigins,
+     local_storage_origins: StorageOrigins,
+     session_data: FxHashMap<WebViewId, FxHashMap<ImmutableOrigin, OriginEntry>>,
++    session_environments: FxHashMap<WebViewId, FxHashMap<ImmutableOrigin, WebStorageEnvironment>>,
+     config_dir: Option<PathBuf>,
+-    thread_pool: Arc<ThreadPool>,
+-    environments: FxHashMap<ImmutableOrigin, WebStorageEnvironment<SqliteEngine>>,
++    engine_factory: Arc<dyn WebStorageEngineFactory>,
++    use_engine_for_session: bool,
++    environments: FxHashMap<ImmutableOrigin, WebStorageEnvironment>,
+ }
+ 
+ impl WebStorageManager {
+     fn new(
+         port: GenericReceiver<WebStorageThreadMsg>,
+         config_dir: Option<PathBuf>,
++        engine_factory: Option<Arc<dyn WebStorageEngineFactory>>,
+     ) -> WebStorageManager {
+         let mut local_storage_origins = StorageOrigins::new();
+         if let Some(ref config_dir) = config_dir {
+             read_json_from_file(&mut local_storage_origins, config_dir, "localstorage.json");
+         }
++        let use_engine_for_session = engine_factory.is_some();
+         WebStorageManager {
+             port,
+             session_storage_origins: StorageOrigins::new(),
+             local_storage_origins,
+             session_data: FxHashMap::default(),
++            session_environments: FxHashMap::default(),
+             config_dir,
+-            thread_pool: ThreadPool::global(),
++            engine_factory: engine_factory
++                .unwrap_or_else(|| Arc::new(SqliteWebStorageEngineFactory)),
++            use_engine_for_session,
+             environments: FxHashMap::default(),
+         }
+     }
+@@ -307,7 +273,9 @@ impl WebStorageManager {
+             reports.push(Report {
+                 path: path!["storage", "session"],
+                 kind: ReportKind::ExplicitJemallocHeapSize,
+-                size: self.session_data.size_of(ops) + self.session_storage_origins.size_of(ops),
++                size: self.session_data.size_of(ops)
++                    + self.session_environments.size_of(ops)
++                    + self.session_storage_origins.size_of(ops),
+             });
+         });
+         reports
+@@ -319,27 +287,43 @@ impl WebStorageManager {
+         }
+     }
+ 
+-    fn get_origin_location(&self, origin: &ImmutableOrigin) -> Option<PathBuf> {
++    fn get_origin_location(
++        &self,
++        storage_type: WebStorageType,
++        webview_id: Option<WebViewId>,
++        origin: &ImmutableOrigin,
++    ) -> Option<PathBuf> {
+         match &self.config_dir {
+             Some(config_dir) => {
+                 const NAMESPACE_SERVO_WEBSTORAGE: &uuid::Uuid = &Uuid::from_bytes([
+                     0x37, 0x9e, 0x56, 0xb0, 0x1a, 0x76, 0x44, 0xc5, 0xa4, 0xdb, 0xe2, 0x18, 0xc5,
+                     0xc8, 0xa3, 0x5d,
+                 ]);
+-                let origin_uuid = Uuid::new_v5(
+-                    NAMESPACE_SERVO_WEBSTORAGE,
+-                    origin.ascii_serialization().as_bytes(),
+-                );
+-                Some(config_dir.join("webstorage").join(origin_uuid.to_string()))
++                let scope = match storage_type {
++                    WebStorageType::Local => origin.ascii_serialization(),
++                    WebStorageType::Session => format!(
++                        "{}|{}",
++                        webview_id.expect("session storage requires a webview"),
++                        origin.ascii_serialization()
++                    ),
++                };
++                let origin_uuid = Uuid::new_v5(NAMESPACE_SERVO_WEBSTORAGE, scope.as_bytes());
++                let base = config_dir.join("webstorage");
++                Some(match storage_type {
++                    WebStorageType::Local => base.join(origin_uuid.to_string()),
++                    WebStorageType::Session => base.join("session").join(origin_uuid.to_string()),
++                })
+             },
+             None => None,
+         }
+     }
+ 
+-    fn add_new_environment(&mut self, origin: &ImmutableOrigin) -> Result<(), rusqlite::Error> {
+-        let origin_location = self.get_origin_location(origin);
++    fn add_new_environment(&mut self, origin: &ImmutableOrigin) -> Result<(), String> {
++        let origin_location = self.get_origin_location(WebStorageType::Local, None, origin);
+ 
+-        let engine = SqliteEngine::new(&origin_location, self.thread_pool.clone())?;
++        let engine =
++            self.engine_factory
++                .open(WebStorageType::Local, None, origin, origin_location)?;
+         let environment = WebStorageEnvironment::new(engine);
+         self.environments.insert(origin.clone(), environment);
+         Ok(())
+@@ -348,7 +332,7 @@ impl WebStorageManager {
+     fn get_environment(
+         &mut self,
+         origin: &ImmutableOrigin,
+-    ) -> Result<&WebStorageEnvironment<SqliteEngine>, rusqlite::Error> {
++    ) -> Result<&WebStorageEnvironment, String> {
+         if self.environments.contains_key(origin) {
+             return Ok(self
+                 .environments
+@@ -367,7 +351,7 @@ impl WebStorageManager {
+     fn get_environment_mut(
+         &mut self,
+         origin: &ImmutableOrigin,
+-    ) -> Result<&mut WebStorageEnvironment<SqliteEngine>, rusqlite::Error> {
++    ) -> Result<&mut WebStorageEnvironment, String> {
+         if self.environments.contains_key(origin) {
+             return Ok(self
+                 .environments
+@@ -383,99 +367,126 @@ impl WebStorageManager {
+             .expect("environment should exist after add_new_environment"))
+     }
+ 
+-    fn select_data(
++    fn add_new_session_environment(
+         &mut self,
+-        storage_type: WebStorageType,
+         webview_id: WebViewId,
+-        origin: ImmutableOrigin,
+-    ) -> Option<&OriginEntry> {
+-        match storage_type {
+-            WebStorageType::Session => self
+-                .session_data
+-                .get(&webview_id)
+-                .and_then(|origin_map| origin_map.get(&origin)),
+-            WebStorageType::Local => {
+-                // FIXME: Selecting data for read only operations should not
+-                // create a new origin descriptor. However, this currently
+-                // needs to happen because get_environment always creates an
+-                // environment, even for read only operations.
+-                if self.local_storage_origins.ensure_origin_descriptor(&origin) {
+-                    self.save_local_storage_origins();
+-                }
+-                match self.get_environment(&origin) {
+-                    Ok(env) => Some(&env.data),
+-                    Err(e) => {
+-                        warn!("Failed to get storage environment: {:?}", e);
+-                        None
+-                    },
+-                }
+-            },
++        origin: &ImmutableOrigin,
++    ) -> Result<(), String> {
++        let origin_location =
++            self.get_origin_location(WebStorageType::Session, Some(webview_id), origin);
++        let engine = self.engine_factory.open(
++            WebStorageType::Session,
++            Some(webview_id),
++            origin,
++            origin_location,
++        )?;
++        self.session_environments
++            .entry(webview_id)
++            .or_default()
++            .insert(origin.clone(), WebStorageEnvironment::new(engine));
++        Ok(())
++    }
++
++    fn get_session_environment(
++        &mut self,
++        webview_id: WebViewId,
++        origin: &ImmutableOrigin,
++    ) -> Result<&WebStorageEnvironment, String> {
++        let exists = self
++            .session_environments
++            .get(&webview_id)
++            .is_some_and(|origins| origins.contains_key(origin));
++        if !exists {
++            self.add_new_session_environment(webview_id, origin)?;
+         }
++        Ok(self
++            .session_environments
++            .get(&webview_id)
++            .and_then(|origins| origins.get(origin))
++            .expect("session environment should exist after add_new_session_environment"))
+     }
+ 
+-    fn select_data_mut(
++    fn get_session_environment_mut(
+         &mut self,
+-        storage_type: WebStorageType,
+         webview_id: WebViewId,
+-        origin: ImmutableOrigin,
+-    ) -> Option<&mut OriginEntry> {
+-        match storage_type {
+-            WebStorageType::Session => self
+-                .session_data
+-                .get_mut(&webview_id)
+-                .and_then(|origin_map| origin_map.get_mut(&origin)),
+-            WebStorageType::Local => {
+-                // FIXME: Selecting data for read only operations should not
+-                // create a new origin descriptor. However, this currently
+-                // needs to happen because get_environment always creates an
+-                // environment, even for read only operations.
+-                if self.local_storage_origins.ensure_origin_descriptor(&origin) {
+-                    self.save_local_storage_origins();
+-                }
+-                match self.get_environment_mut(&origin) {
+-                    Ok(env) => Some(&mut env.data),
+-                    Err(e) => {
+-                        warn!("Failed to get storage environment: {:?}", e);
+-                        None
+-                    },
+-                }
+-            },
++        origin: &ImmutableOrigin,
++    ) -> Result<&mut WebStorageEnvironment, String> {
++        let exists = self
++            .session_environments
++            .get(&webview_id)
++            .is_some_and(|origins| origins.contains_key(origin));
++        if !exists {
++            self.add_new_session_environment(webview_id, origin)?;
+         }
++        Ok(self
++            .session_environments
++            .get_mut(&webview_id)
++            .and_then(|origins| origins.get_mut(origin))
++            .expect("session environment should exist after add_new_session_environment"))
+     }
+ 
+-    fn ensure_data_mut(
++    fn select_session_data(
++        &self,
++        webview_id: WebViewId,
++        origin: &ImmutableOrigin,
++    ) -> Option<&OriginEntry> {
++        self.session_data
++            .get(&webview_id)
++            .and_then(|origin_map| origin_map.get(origin))
++    }
++
++    fn select_session_data_mut(
+         &mut self,
+-        storage_type: WebStorageType,
+         webview_id: WebViewId,
+-        origin: ImmutableOrigin,
++        origin: &ImmutableOrigin,
+     ) -> Option<&mut OriginEntry> {
+-        match storage_type {
+-            WebStorageType::Session => {
+-                self.session_storage_origins
+-                    .ensure_origin_descriptor(&origin);
+-                Some(
+-                    self.session_data
+-                        .entry(webview_id)
+-                        .or_default()
+-                        .entry(origin)
+-                        .or_default(),
+-                )
+-            },
+-            WebStorageType::Local => {
+-                if self.local_storage_origins.ensure_origin_descriptor(&origin) {
+-                    self.save_local_storage_origins();
+-                }
+-                match self.get_environment_mut(&origin) {
+-                    Ok(env) => Some(&mut env.data),
+-                    Err(e) => {
+-                        warn!("Failed to get storage environment: {:?}", e);
+-                        None
+-                    },
+-                }
+-            },
++        self.session_data
++            .get_mut(&webview_id)
++            .and_then(|origin_map| origin_map.get_mut(origin))
++    }
++
++    fn ensure_session_data_mut(
++        &mut self,
++        webview_id: WebViewId,
++        origin: ImmutableOrigin,
++    ) -> &mut OriginEntry {
++        self.session_storage_origins
++            .ensure_origin_descriptor(&origin);
++        self.session_data
++            .entry(webview_id)
++            .or_default()
++            .entry(origin)
++            .or_default()
++    }
++
++    fn ensure_local_origin(&mut self, origin: &ImmutableOrigin) {
++        if self.local_storage_origins.ensure_origin_descriptor(origin) {
++            self.save_local_storage_origins();
+         }
+     }
+ 
++    fn set_engine_item(
++        environment: &mut WebStorageEnvironment,
++        name: &str,
++        value: &str,
++    ) -> Result<Result<(bool, Option<String>), ()>, String> {
++        let old_value = environment.engine.get(name)?;
++        let total_size = environment.engine.size()?;
++        let new_total_size = old_value
++            .as_ref()
++            .map_or(total_size + name.len() + value.len(), |old| {
++                total_size - old.len() + value.len()
++            });
++        if new_total_size > QUOTA_SIZE_LIMIT {
++            return Ok(Err(()));
++        }
++        if old_value.as_deref() == Some(value) {
++            return Ok(Ok((false, None)));
++        }
++        environment.engine.set(name, value)?;
++        Ok(Ok((true, old_value)))
++    }
++
+     fn length(
+         &mut self,
+         sender: GenericSender<usize>,
+@@ -483,10 +494,28 @@ impl WebStorageManager {
+         webview_id: WebViewId,
+         origin: ImmutableOrigin,
+     ) {
+-        let data = self.select_data(storage_type, webview_id, origin);
+-        sender
+-            .send(data.map_or(0, |entry| entry.inner().len()))
+-            .unwrap();
++        let length = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment(webview_id, &origin)
++                .and_then(|environment| environment.engine.len())
++                .unwrap_or_else(|error| {
++                    warn!("Failed to read session Web Storage length: {error}");
++                    0
++                }),
++            WebStorageType::Session => self
++                .select_session_data(webview_id, &origin)
++                .map_or(0, |entry| entry.inner().len()),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment(&origin)
++                    .and_then(|environment| environment.engine.len())
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to read Web Storage length: {error}");
++                        0
++                    })
++            },
++        };
++        sender.send(length).unwrap();
+     }
+ 
+     fn key(
+@@ -497,10 +526,28 @@ impl WebStorageManager {
+         origin: ImmutableOrigin,
+         index: u32,
+     ) {
+-        let data = self.select_data(storage_type, webview_id, origin);
+-        let key = data
+-            .and_then(|entry| entry.inner().keys().nth(index as usize))
+-            .cloned();
++        let key = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment(webview_id, &origin)
++                .and_then(|environment| environment.engine.key(index as usize))
++                .unwrap_or_else(|error| {
++                    warn!("Failed to read session Web Storage key: {error}");
++                    None
++                }),
++            WebStorageType::Session => self
++                .select_session_data(webview_id, &origin)
++                .and_then(|entry| entry.inner().keys().nth(index as usize))
++                .cloned(),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment(&origin)
++                    .and_then(|environment| environment.engine.key(index as usize))
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to read Web Storage key: {error}");
++                        None
++                    })
++            },
++        };
+         sender.send(key).unwrap();
+     }
+ 
+@@ -511,8 +558,27 @@ impl WebStorageManager {
+         webview_id: WebViewId,
+         origin: ImmutableOrigin,
+     ) {
+-        let data = self.select_data(storage_type, webview_id, origin);
+-        let keys = data.map_or(vec![], |entry| entry.inner().keys().cloned().collect());
++        let keys = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment(webview_id, &origin)
++                .and_then(|environment| environment.engine.keys())
++                .unwrap_or_else(|error| {
++                    warn!("Failed to read session Web Storage keys: {error}");
++                    vec![]
++                }),
++            WebStorageType::Session => self
++                .select_session_data(webview_id, &origin)
++                .map_or(vec![], |entry| entry.inner().keys().cloned().collect()),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment(&origin)
++                    .and_then(|environment| environment.engine.keys())
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to read Web Storage keys: {error}");
++                        vec![]
++                    })
++            },
++        };
+ 
+         sender.send(keys).unwrap();
+     }
+@@ -530,38 +596,50 @@ impl WebStorageManager {
+         name: String,
+         value: String,
+     ) {
+-        let Some(entry) = self.ensure_data_mut(storage_type, webview_id, origin.clone()) else {
+-            sender.send(Err(())).unwrap();
+-            return;
+-        };
+-        let total_size = entry.size();
+-
+-        let mut new_total_size = total_size + value.len();
+-        if let Some(old_value) = entry.inner().get(&name) {
+-            new_total_size -= old_value.len();
+-        } else {
+-            new_total_size += name.len();
+-        }
+-
+-        let message = if new_total_size > QUOTA_SIZE_LIMIT {
+-            Err(())
+-        } else {
+-            let result =
+-                entry
+-                    .insert(name.clone(), value.clone())
+-                    .map_or(Ok((true, None)), |old| {
+-                        if old == value {
+-                            Ok((false, None))
+-                        } else {
+-                            Ok((true, Some(old)))
+-                        }
++        let message = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => {
++                self.session_storage_origins
++                    .ensure_origin_descriptor(&origin);
++                let result = self
++                    .get_session_environment_mut(webview_id, &origin)
++                    .and_then(|environment| Self::set_engine_item(environment, &name, &value));
++                result.unwrap_or_else(|error| {
++                    warn!("Failed to set session Web Storage item: {error}");
++                    Err(())
++                })
++            },
++            WebStorageType::Session => {
++                let entry = self.ensure_session_data_mut(webview_id, origin);
++                let total_size = entry.size();
++                let old_value = entry.inner().get(&name);
++                let new_total_size = old_value
++                    .map_or(total_size + name.len() + value.len(), |old| {
++                        total_size - old.len() + value.len()
+                     });
+-            if storage_type == WebStorageType::Local &&
+-                let Ok(env) = self.get_environment_mut(&origin)
+-            {
+-                env.set(&name, &value);
+-            }
+-            result
++                if new_total_size > QUOTA_SIZE_LIMIT {
++                    Err(())
++                } else {
++                    entry
++                        .insert(name, value.clone())
++                        .map_or(Ok((true, None)), |old| {
++                            if old == value {
++                                Ok((false, None))
++                            } else {
++                                Ok((true, Some(old)))
++                            }
++                        })
++                }
++            },
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                let result = self
++                    .get_environment_mut(&origin)
++                    .and_then(|environment| Self::set_engine_item(environment, &name, &value));
++                result.unwrap_or_else(|error| {
++                    warn!("Failed to set Web Storage item: {error}");
++                    Err(())
++                })
++            },
+         };
+         sender.send(message).unwrap();
+     }
+@@ -574,10 +652,29 @@ impl WebStorageManager {
+         origin: ImmutableOrigin,
+         name: String,
+     ) {
+-        let data = self.select_data(storage_type, webview_id, origin);
+-        sender
+-            .send(data.and_then(|entry| entry.inner().get(&name)).cloned())
+-            .unwrap();
++        let value = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment(webview_id, &origin)
++                .and_then(|environment| environment.engine.get(&name))
++                .unwrap_or_else(|error| {
++                    warn!("Failed to get session Web Storage item: {error}");
++                    None
++                }),
++            WebStorageType::Session => self
++                .select_session_data(webview_id, &origin)
++                .and_then(|entry| entry.inner().get(&name))
++                .cloned(),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment(&origin)
++                    .and_then(|environment| environment.engine.get(&name))
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to get Web Storage item: {error}");
++                        None
++                    })
++            },
++        };
++        sender.send(value).unwrap();
+     }
+ 
+     /// Sends Some(old_value) in case there was a previous value with the key name, otherwise sends None
+@@ -589,14 +686,28 @@ impl WebStorageManager {
+         origin: ImmutableOrigin,
+         name: String,
+     ) {
+-        let data = self.select_data_mut(storage_type, webview_id, origin.clone());
+-        let old_value = data.and_then(|entry| entry.remove(&name));
++        let old_value = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment_mut(webview_id, &origin)
++                .and_then(|environment| environment.engine.delete(&name))
++                .unwrap_or_else(|error| {
++                    warn!("Failed to remove session Web Storage item: {error}");
++                    None
++                }),
++            WebStorageType::Session => self
++                .select_session_data_mut(webview_id, &origin)
++                .and_then(|entry| entry.remove(&name)),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment_mut(&origin)
++                    .and_then(|environment| environment.engine.delete(&name))
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to remove Web Storage item: {error}");
++                        None
++                    })
++            },
++        };
+         sender.send(old_value).unwrap();
+-        if storage_type == WebStorageType::Local &&
+-            let Ok(env) = self.get_environment_mut(&origin)
+-        {
+-            env.delete(&name);
+-        }
+     }
+ 
+     fn clear(
+@@ -606,25 +717,97 @@ impl WebStorageManager {
+         webview_id: WebViewId,
+         origin: ImmutableOrigin,
+     ) {
+-        let data = self.select_data_mut(storage_type, webview_id, origin.clone());
+-        sender
+-            .send(data.is_some_and(|entry| {
+-                if !entry.inner().is_empty() {
+-                    entry.clear();
+-                    true
+-                } else {
++        let changed = match storage_type {
++            WebStorageType::Session if self.use_engine_for_session => self
++                .get_session_environment_mut(webview_id, &origin)
++                .and_then(|environment| environment.engine.clear())
++                .unwrap_or_else(|error| {
++                    warn!("Failed to clear session Web Storage: {error}");
+                     false
+-                }
+-            }))
+-            .unwrap();
+-        if storage_type == WebStorageType::Local &&
+-            let Ok(env) = self.get_environment_mut(&origin)
+-        {
+-            env.clear();
+-        }
++                }),
++            WebStorageType::Session => self
++                .select_session_data_mut(webview_id, &origin)
++                .is_some_and(|entry| {
++                    if !entry.inner().is_empty() {
++                        entry.clear();
++                        true
++                    } else {
++                        false
++                    }
++                }),
++            WebStorageType::Local => {
++                self.ensure_local_origin(&origin);
++                self.get_environment_mut(&origin)
++                    .and_then(|environment| environment.engine.clear())
++                    .unwrap_or_else(|error| {
++                        warn!("Failed to clear Web Storage: {error}");
++                        false
++                    })
++            },
++        };
++        sender.send(changed).unwrap();
+     }
+ 
+     fn clone(&mut self, src_webview_id: WebViewId, dest_webview_id: WebViewId) {
++        if self.use_engine_for_session {
++            if let Some(dest_origins) = self.session_environments.remove(&dest_webview_id) {
++                for (_, mut environment) in dest_origins {
++                    if let Err(error) = environment.engine.clear() {
++                        warn!("Failed to clear destination session Web Storage: {error}");
++                    }
++                }
++            }
++
++            let snapshots = self
++                .session_environments
++                .get(&src_webview_id)
++                .map(|origins| {
++                    origins
++                        .iter()
++                        .filter_map(|(origin, environment)| {
++                            let snapshot = environment.engine.keys().and_then(|keys| {
++                                keys.into_iter()
++                                    .map(|key| {
++                                        environment
++                                            .engine
++                                            .get(&key)
++                                            .map(|value| value.map(|value| (key, value)))
++                                    })
++                                    .collect::<Result<Option<Vec<_>>, _>>()
++                            });
++                            match snapshot {
++                                Ok(Some(entries)) => Some((origin.clone(), entries)),
++                                Ok(None) => {
++                                    warn!("Session Web Storage key disappeared during clone");
++                                    None
++                                },
++                                Err(error) => {
++                                    warn!("Failed to read session Web Storage for clone: {error}");
++                                    None
++                                },
++                            }
++                        })
++                        .collect::<Vec<_>>()
++                })
++                .unwrap_or_default();
++
++            for (origin, entries) in snapshots {
++                let result = self
++                    .get_session_environment_mut(dest_webview_id, &origin)
++                    .and_then(|environment| {
++                        environment.engine.clear()?;
++                        for (key, value) in entries {
++                            environment.engine.set(&key, &value)?;
++                        }
++                        Ok(())
++                    });
++                if let Err(error) = result {
++                    warn!("Failed to clone session Web Storage: {error}");
++                }
++            }
++            return;
++        }
++
+         let Some(src_origin_entries) = self.session_data.get(&src_webview_id) else {
+             return;
+         };
+@@ -646,6 +829,27 @@ impl WebStorageManager {
+             WebStorageType::Session => {
+                 let origins = self.session_storage_origins.take_origins_for_sites(sites);
+ 
++                if self.use_engine_for_session {
++                    let mut failed_origins = Vec::new();
++                    self.session_environments.retain(|_, origins_map| {
++                        for origin in &origins {
++                            if let Some(mut environment) = origins_map.remove(origin) {
++                                if let Err(error) = environment.engine.clear() {
++                                    warn!("Failed to clear session Web Storage origin: {error}");
++                                    origins_map.insert(origin.clone(), environment);
++                                    failed_origins.push(origin.clone());
++                                }
++                            }
++                        }
++                        !origins_map.is_empty()
++                    });
++                    for origin in failed_origins {
++                        self.session_storage_origins
++                            .ensure_origin_descriptor(&origin);
++                    }
++                    return;
++                }
++
+                 self.session_data.retain(|_, origins_map| {
+                     for origin in &origins {
+                         origins_map.remove(origin);
+@@ -656,26 +860,31 @@ impl WebStorageManager {
+             WebStorageType::Local => {
+                 let origins = self.local_storage_origins.take_origins_for_sites(sites);
+ 
+-                if self.config_dir.is_some() {
+-                    for origin in origins {
+-                        self.environments.remove(&origin);
++                for origin in origins {
++                    let clear_result = self
++                        .get_environment_mut(&origin)
++                        .and_then(|environment| environment.engine.clear());
++                    if let Err(error) = clear_result {
++                        warn!("Failed to clear local Web Storage origin: {error}");
++                        self.local_storage_origins.ensure_origin_descriptor(&origin);
++                        continue;
++                    }
+ 
++                    self.environments.remove(&origin);
++                    if self.config_dir.is_some() {
+                         let origin_location = self
+-                            .get_origin_location(&origin)
++                            .get_origin_location(WebStorageType::Local, None, &origin)
+                             .expect("Should always be able to get origin location.");
+-
+                         if let Err(error) = std::fs::remove_dir_all(&origin_location) {
+-                            warn!("Failed to delete origin location: {:?}", error);
+-                            self.local_storage_origins.ensure_origin_descriptor(&origin);
++                            if error.kind() != std::io::ErrorKind::NotFound {
++                                warn!("Failed to delete origin location: {:?}", error);
++                                self.local_storage_origins.ensure_origin_descriptor(&origin);
++                            }
+                         }
+                     }
+-
+-                    self.save_local_storage_origins();
+-                } else {
+-                    for origin in origins {
+-                        self.environments.remove(&origin);
+-                    }
+                 }
++
++                self.save_local_storage_origins();
+             },
+         }
+     }
+-- 
+2.53.0
+

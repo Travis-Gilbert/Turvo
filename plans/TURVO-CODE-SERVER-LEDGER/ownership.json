@@ -1,0 +1,5 @@
+{
+  "default_owner": "turvo",
+  "default_owner_reason": "An untriaged cross-layer symptom is assigned to the Turvo integration owner until evidence supports a fingerprint-locked fork override.",
+  "overrides": {}
+}

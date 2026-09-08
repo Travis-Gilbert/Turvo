@@ -37,6 +37,10 @@ for the first working window.
 | A7 | `turvo` 0.1.0 is published; existing app swaps in two edits | API and docs wired; unpublished | crates.io release and clean consumer smoke |
 | A8 | TheoremWeb desktop boots with its Servo fork via consumer `[patch]` | Pending downstream release gate; no Theorem checkout modified | Exact-revision Theorem build and native boot receipt |
 
+Current execution scope is amended by [Record 002](002-unix-public-integration.md):
+public patched-engine integration is authorized on Linux/macOS, and Windows is
+explicitly deferred. The original release acceptance rows above remain open.
+
 ## Implementation slices
 
 1. Bootstrap the imported runtime, exact pins, builder API, devtools options,

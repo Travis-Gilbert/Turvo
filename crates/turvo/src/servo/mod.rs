@@ -93,6 +93,7 @@ impl InnerWebView {
       initialization_scripts,
       ipc_handler,
       custom_protocols,
+      attributes.use_https_scheme,
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
@@ -148,6 +149,7 @@ impl InnerWebView {
       initialization_scripts,
       ipc_handler,
       custom_protocols,
+      attributes.use_https_scheme,
       navigation_handler,
       document_title_changed_handler,
       on_page_load_handler,
@@ -287,7 +289,7 @@ impl InnerWebView {
   }
 
   pub fn load_url(&self, url: &str) -> Result<()> {
-    let url = Url::parse(url).map_err(|error| Error::Servo(format!("invalid URL: {error}")))?;
+    let url = self.embedder.browser_url(parse_url(url, "URL")?)?;
     self.embedder.webview().load(url);
     self.embedder.servo().spin_event_loop();
     Ok(())
@@ -324,7 +326,7 @@ impl InnerWebView {
   }
 
   pub fn load_url_with_headers(&self, url: &str, headers: http::HeaderMap) -> Result<()> {
-    let url = parse_url(url, "URL")?;
+    let url = self.embedder.browser_url(parse_url(url, "URL")?)?;
     self
       .embedder
       .webview()
