@@ -1,6 +1,6 @@
 # Dependency projection
 
-Canonical SHA-256: `92ef5216b6d77400fff93d0497b6dfb3def0f3b0949b148276e4990e1276c563`
+Canonical SHA-256: `e80beb1aa16e530ef2571a9a7f011f4363ceedeb98fbf15e0fe9d11e89fba7f2`
 
 ```mermaid
 flowchart TD
@@ -32,8 +32,8 @@ flowchart TD
   E02["E02 Require a published-engine release graph"]
   W09["W09 Publish Turvo 0.1.0 and prove a clean consumer"]
   V09["V09 Verify the published crate and two-edit consumer"]
-  W10["W10 Integrate Turvo into Theorem desktop and browser hosts"]
-  V10["V10 Verify Theorem uses one Servo revision"]
+  W10["W10 Integrate Turvo into the Theorem desktop host"]
+  V10["V10 Verify Theorem uses Turvo's sole Servo pin"]
   W11["W11 Close documentation, follow-on plans, and acceptance drift"]
   V11["V11 Verify Turvo reaches fixpoint"]
   P00 --> D00

@@ -2,7 +2,7 @@ name: Servo integration policy
 
 on:
   push:
-    branches: ['integration/**']
+    branches: ['integration/**', next]
     paths:
       - Cargo.toml
       - Cargo.lock
@@ -83,8 +83,9 @@ jobs:
       - name: Verify the ordered versioned patch stack
         shell: bash
         run: |
-          patch_check="$RUNNER_TEMP/pinned-servo-patch-check"
-          git clone pinned-servo "$patch_check"
+          patch_index="$RUNNER_TEMP/pinned-servo-patch-stack.index"
+          test ! -e "$patch_index"
+          GIT_INDEX_FILE="$patch_index" git -C pinned-servo read-tree HEAD
           for patch in \
             0007-sendable-web-resource-responders.patch \
             0006-align-jemalloc-consumer-graph.patch \
@@ -94,7 +95,7 @@ jobs:
             0002-cancellation-feature-lockfile.patch \
             0001-policy-preserving-http-interception.patch
           do
-            git -C "$patch_check" apply --reverse "$GITHUB_WORKSPACE/patches/servo/$patch"
+            GIT_INDEX_FILE="$patch_index" git -C pinned-servo apply --cached --reverse "$GITHUB_WORKSPACE/patches/servo/$patch"
           done
       - name: Install Linux networking test prerequisites
         if: runner.os == 'Linux'

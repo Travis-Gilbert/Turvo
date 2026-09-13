@@ -1,15 +1,15 @@
 {
   "schema": "theorem.portable-plan.v1",
   "plan_id": "TURVO-1.0-COMPLETION",
-  "generation": 6,
+  "generation": 7,
   "charted_from": {
     "binding": "portable",
     "reason": "The user requested compute-graph-plans and execute-graph-plans, but no callable Theorem plan, multihead, coordination, encode, or continuity surface is available."
   },
-  "destination": "Ship Turvo 0.1.0 as a public, deterministic, desktop-only Tauri runtime backed by an in-process pinned Servo engine, with native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, Firefox DevTools, runtime-managed window.open, automated Servo migration, a published two-edit consumer path, and an exact-revision Theorem consumer receipt.",
-  "fixpoint": "O01-O13 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.",
+  "destination": "Ship Turvo 0.1.0 as the public, deterministic Servo integration home for the Theorem desktop, with one exact engine pin, hosted migration and bundle lanes, native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, arbitrary third-party-site support, Firefox DevTools, runtime-managed window.open, a published Tauri consumer path, and an exact-revision Theorem consumer receipt.",
+  "fixpoint": "O01-O13 each carry their declared evidence. GitHub main and next exist; Turvo alone owns the exact Servo pin; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, window.open, and third-party origin-boundary gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem consumes Turvo without a duplicate Servo pin; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.",
   "execution_profile": {
-    "branch": "integration/servo-0.5-unix",
+    "branch": "next",
     "required_platforms": [
       "Linux",
       "macOS"
@@ -18,12 +18,12 @@
       "Windows"
     ],
     "deferral_reason": "The user explicitly said to skip Windows for now on 2026-08-30. Its failing native receipts remain evidence of unresolved work under O13/WX1/VX1.",
-    "dependency_policy": "The user authorized version-pinned public Servo/Tauri integration branches. Preserve main/next and Theorem-owned branches; test actual source revisions on Linux/macOS.",
+    "dependency_policy": "Turvo owns the exact product pin to Travis-Gilbert/servo:theorem/v0.5.0. Migrate on next, require Linux/macOS hosted proof, promote to main only when green, and remove Theorem's duplicate pin when it consumes Turvo.",
     "release_gate": "E02 retains the published-engine/two-edit consumer requirement; VX1 retains deferred Windows proof. Neither can be discharged by integration-branch CI."
   },
   "hard_prerequisite": "Never substitute source inspection, inherited upstream CI, metadata, or package listing for current-tip compilation or native behavior. Preserve unrelated repositories and credentials. The crates.io publish node is irreversible and remains held until every prerequisite obligation has a replayable receipt.",
   "scope_exclusions": [
-    "No arbitrary third-party web compatibility commitment.",
+    "No system-webview or DOM-owned Theorem chrome; GPUI owns native windows and chrome while Turvo supplies Servo content surfaces.",
     "No offscreen GPUI compositor implementation in the 0.1.0 windowed release; only its follow-on plan is required.",
     "No performance, memory, startup, or binary-size claim before a reproducible benchmark receipt.",
     "No unsafe fabrication of Tauri NewWindowOpener platform objects.",
@@ -93,8 +93,8 @@
     {
       "id": "O11",
       "source": "Desired end state; acceptance 8",
-      "text": "TheoremWeb desktop boots on Turvo using a consumer-owned Travis-Gilbert/servo theorem branch via patch, and apps/browser pins the identical Servo revision without a private requirement in Turvo.",
-      "oracle": "Exact Theorem commit, resolved dependency graph, and native boot receipts for desktop and browser host."
+      "text": "TheoremWeb desktop consumes Turvo for the in-process Servo embedding, Turvo is the only repository that declares the exact Travis-Gilbert/servo theorem pin, and GPUI remains the native window and chrome owner.",
+      "oracle": "Exact Turvo and Theorem commits, a cross-repository pin-unity scan, resolved dependency graph, and native desktop boot receipt."
     },
     {
       "id": "O12",
@@ -335,7 +335,7 @@
     {
       "id": "ADR09",
       "question": "How does the user's new authority change the parked graph?",
-      "choice": "Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.",
+      "choice": "The historical integration/servo-0.5-unix lane established the public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Record 003 supersedes that lane for current work: migrate the unified Theorem Servo fork on next, while retaining Windows as O13/WX1/VX1 and published-engine release effects behind E02.",
       "options_considered": [
         "Continue waiting for upstream releases: no longer needed for the authorized development branch.",
         "Silently delete Windows/release obligations: would confuse deferred work with proof.",
@@ -358,7 +358,7 @@
   ],
   "scope_law": "Only one mutating actor owns an exact declared scope at a time. Verification scopes are read-only. Parallel work nodes have disjoint scopes; any newly discovered overlap serializes through a plan rewrite before editing.",
   "enforce_scope_overlap": true,
-  "scope_exclusions_note": "External Tauri and Theorem work uses separate clean worktrees and never mutates unrelated shared dirty checkouts.",
+  "scope_exclusions_note": "Record 003 governs current ownership and scope: Turvo is the Servo home, Theorem consumes it, GPUI owns windows and chrome, and arbitrary third-party sites are in scope. External work uses separate clean worktrees and never mutates unrelated shared dirty checkouts.",
   "palette": {
     "probe.research": {
       "controller": "agent",
@@ -406,7 +406,7 @@
     {
       "rank": 1,
       "node": "W03",
-      "why": "V02I now proves the IPC boundary on Linux/macOS. Complete the already versioned runtime-neutral opener seam before examples depend on real popup behavior.",
+      "why": "Record 003's next-branch unified-fork migration and hosted Linux/macOS proof take precedence. Once that cross-repository gate is green, V02I permits this retained popup backlog to resume.",
       "value_vector": {
         "success": {
           "value": "uncertain",
@@ -1656,7 +1656,7 @@
     },
     {
       "id": "W10",
-      "label": "Integrate Turvo into Theorem desktop and browser hosts",
+      "label": "Integrate Turvo into the Theorem desktop host",
       "type": "work.external",
       "status": "pending",
       "controller": "agent",
@@ -1664,12 +1664,12 @@
         "V09"
       ],
       "scope": [
-        "isolated Theorem worktree Turvo dependency, consumer Servo patch, apps/browser pin, and integration records"
+        "isolated Theorem worktree Turvo dependency, duplicate Servo-pin removal, and integration records"
       ],
       "obligations": [
         "O11"
       ],
-      "gist": "Make TheoremWeb desktop and apps/browser resolve one theorem Servo revision while Turvo remains public-fork independent.",
+      "gist": "Make TheoremWeb consume Turvo's Servo embedding while GPUI retains windows and chrome and Turvo remains the only exact-pin authority.",
       "consumes": [
         "V09 published Turvo",
         "Theorem current ownership and build instructions"
@@ -1680,8 +1680,8 @@
         "native boot receipts"
       ],
       "blueprint": [
-        "Use a clean Theorem worktree and consumer-owned patch entries.",
-        "Do not add the private Servo fork to Turvo or disturb unrelated Theorem work."
+        "Use a clean Theorem worktree and consume Turvo's public integration surface.",
+        "Remove Theorem's duplicate Servo pin and fork ledger without disturbing unrelated Theorem work."
       ],
       "oracle_class": "exact-revision cross-repository native integration",
       "implementation_mode": "real_external_integration",
@@ -1699,7 +1699,7 @@
     },
     {
       "id": "V10",
-      "label": "Verify Theorem uses one Servo revision",
+      "label": "Verify Theorem uses Turvo's sole Servo pin",
       "type": "verify.live",
       "status": "pending",
       "controller": "verifier",
@@ -1707,12 +1707,12 @@
         "W10"
       ],
       "scope": [
-        "read-only Theorem integration diff, dependency graphs, and native boot receipts"
+        "read-only Turvo and Theorem integration diffs, cross-repository pin scan, dependency graph, and native boot receipt"
       ],
       "obligations": [
         "O11"
       ],
-      "gist": "Prove desktop and browser hosts share the exact fork revision and Turvo has no private-fork dependency.",
+      "gist": "Prove Turvo is the only exact-pin authority, Theorem consumes its embedding, and GPUI still owns native windows and chrome.",
       "consumes": [
         "W10 integration"
       ],
@@ -1720,7 +1720,7 @@
         "Theorem integration verification receipt"
       ],
       "blueprint": [
-        "Audit both dependency graphs and independently reproduce the native boots at the exact commit."
+        "Scan both repositories for pin declarations, audit the resolved dependency graph, and independently reproduce the native desktop boot at the exact commits."
       ],
       "oracle_class": "independent cross-repository native verification",
       "implementation_mode": "independent_verification",
@@ -1728,8 +1728,9 @@
       "substitution_allowed": false,
       "live_oracle_required": true,
       "proof_commands": [
+        "python3 scripts/check-servo-pin-unity.py",
         "cargo tree -i servo",
-        "native TheoremWeb and browser-host boot oracles"
+        "native TheoremWeb desktop boot oracle"
       ],
       "discharge_evidence": [],
       "retraction_path": "Return W10 to frontier with the mismatched revision or failed host."
