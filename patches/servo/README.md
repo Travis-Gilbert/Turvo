@@ -1,9 +1,11 @@
 # Public Servo HTTP integration
 
-The exact source and patch digests are in `integration.json`. The patches apply
-to published Servo 0.5.0's recorded commit
-`77fccacc1f1fdce10498d50173aafaa09d02879e` and are published on the isolated
-`Travis-Gilbert/servo:turvo/storage-engines-1.0` branch. Theorem branches are untouched.
+The exact source and patch digests are in `integration.json`. The unified fork
+descends from the upstream Servo `v0.5.0` tag at
+`1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019` and is published as
+`Travis-Gilbert/servo:theorem/v0.5.0`. It carries both the prior Theorem
+embedder work and Turvo's engine/security patches; Turvo is the sole consumer
+repository that declares the product pin. See `FORK.md` and `upstream-base`.
 The second patch locks the added Tokio cancellation feature's existing
 `futures-util` dependency. The third patch makes the file-manager test reuse
 the networking suite's shared runtime instead of initializing and dropping its
@@ -20,7 +22,8 @@ The seventh patch makes the public web-resource response handle `Send`, so a
 bounded Turvo interceptor can finish Servo-owned responses from its worker
 thread without an unsafe wrapper or a duplicate response path.
 The current public revision is
-`c535d2b639bde66570dbcf0f07c3fce009c01b9a`.
+`b70d4e64c0005d5dc2d5257c09f997dba235410a`, 20 commits ahead of and zero
+commits behind upstream `v0.5.0`.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,
@@ -48,8 +51,9 @@ request-client tests cover caller-kind serialization, fail-closed compatibility,
 and builder propagation. Run:
 
 ```sh
-cargo +1.94.0 test -p servo-net --test main --locked
-cargo +1.94.0 test -p servo-net-traits --test request_client --locked
+cargo +1.95.0 test -p servo-net --test main --locked
+cargo +1.95.0 test -p servo-net-traits --test request_client --locked
+cargo +1.95.0 test -p servo-storage --lib --locked
 ```
 
 Hosted test and native application receipts are required before acceptance.

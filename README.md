@@ -1,8 +1,10 @@
 # Turvo
 
-Turvo is an experimental Tauri desktop runtime backed by Servo. It embeds one
-version of the renderer in the application so Linux, Windows, and macOS do not
-silently select different system webviews.
+Turvo is the Servo integration home for the Theorem desktop. It owns the exact
+engine pin, migration lane, hosted engine proof, and desktop bundling path.
+GPUI owns Theorem's native windows and chrome; Turvo supplies the in-process
+Servo embedding. The existing Tauri runtime is one consumer of that embedding,
+not Turvo's product boundary.
 
 The project is aiming for an Electron-class application shell without bundling
 Chromium. Performance, memory, startup-time, and binary-size claims are
@@ -10,10 +12,12 @@ deliberately deferred until Turvo has a reproducible benchmark suite.
 
 ## Current status
 
-Active integration work is Linux/macOS-first on `integration/servo-0.5-unix`.
-That branch pins public Servo/Tauri patches; Windows is explicitly deferred,
-not verified. The published-engine release contract remains gated. See
-[Record 002](docs/records/002-unix-public-integration.md) for the current scope.
+Active integration work is Linux/macOS-first on `next`, through draft PR #3.
+That lane pins `Travis-Gilbert/servo:theorem/v0.5.0` at an exact revision before
+promotion to `main`; Windows is explicitly deferred, not verified. The
+published-engine release contract remains gated. See
+[Record 003](docs/records/003-theorem-desktop-servo-home.md) for the ownership
+and scope change.
 
 Turvo is pre-release software. The repository currently contains:
 
@@ -35,7 +39,9 @@ cross-origin and CSP checks. The public integration's ordinary
 `fetch()`/HEAD/static-module/dynamic-module tests pass on Linux/macOS; full native
 acceptance still awaits the sandbox-probe correction and exact-tip rerun.
 Source and automated review are not runtime proof.
-Do not use this bootstrap in production or load untrusted remote pages/frames.
+Do not use this pre-release bootstrap in production until its required
+origin-boundary and third-party compatibility gates pass. Arbitrary remote
+pages and frames are nevertheless part of the supported product scope.
 The [protocol audit](https://github.com/Travis-Gilbert/Turvo/blob/main/docs/research/protocol-origin-boundary.md)
 records the engine API limitations and required negative tests.
 
@@ -128,9 +134,13 @@ default model is GPT-5.3 Codex Spark and can be overridden with the
 
 ## Scope
 
-Turvo is an application shell for content the application ships. Compatibility
-with arbitrary third-party websites is not a project goal. Mobile targets keep
-Tauri's Wry runtime; Turvo is desktop-only.
+Turvo is the desktop home of Theorem's Servo integration. It must preserve web
+origin boundaries for application content and third-party sites alike; remote,
+nested, opaque, and sandboxed callers never inherit local application
+capabilities or bundled-asset authority. Compatibility defects against
+third-party sites are in scope when they violate the supported web-platform or
+security contract. Mobile targets keep Tauri's Wry runtime; Turvo is
+desktop-only.
 
 For an application that also ships on mobile, make the runtime dependency
 target-specific so the desktop graph does not enable Wry and the mobile graph

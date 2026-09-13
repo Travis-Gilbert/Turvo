@@ -1,8 +1,8 @@
 # Continuity
 
-Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
+Canonical SHA-256: `e80beb1aa16e530ef2571a9a7f011f4363ceedeb98fbf15e0fe9d11e89fba7f2`
 
-Generation: `6`
+Generation: `7`
 
 ## Resume here
 

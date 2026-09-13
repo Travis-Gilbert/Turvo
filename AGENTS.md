@@ -74,10 +74,11 @@ Tech Stack: Rust, Tauri 2, Servo, Tao, GitHub Actions
 
 ## Overview
 
-Turvo is a desktop-only Tauri runtime that embeds a pinned Servo engine in
-process. It aims to provide an Electron-class application shell without a
-bundled Chromium runtime while keeping engine choice deterministic across
-Linux, Windows, and macOS.
+Turvo is the Servo integration home for the Theorem desktop. It owns the exact
+Servo pin, migration lane, hosted engine proof, and desktop bundling path. GPUI
+owns Theorem's native windows and chrome. Turvo's existing desktop-only Tauri
+runtime is one consumer of the in-process Servo embedding, not the repository's
+product boundary.
 
 Performance, memory, startup-time, and binary-size claims require benchmark
 receipts and must not be presented as established project facts.
@@ -91,12 +92,12 @@ receipts and must not be presented as established project facts.
 | API parity probe | Invoke/events/window commands implemented, not locally launched | `examples/api` |
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | Linux/macOS required for current integration; Windows explicitly deferred with failing security receipts retained | Record 002; graph O13/WX1 |
-| Completion graph | W02I/V02I complete on `integration/servo-0.5-unix`; W03 and W05 are the next implementation frontier | `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
-| Public integration | Exact public Servo/Tauri pins adopted; ordinary assets/modules and worker/hostile-frame denials pass natively on Linux/macOS | CI run 33567283891; Record 002; `patches/servo` |
+| Completion graph | The prior standalone completion graph retains historical receipts; the Theorem desktop-shell addendum governs the current cross-repository migration | Record 003; `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
+| Public integration | `next` pins the unified `Travis-Gilbert/servo:theorem/v0.5.0` fork at `b70d4e64`; promotion awaits required Linux/macOS CI | draft PR #3; Record 003; `patches/servo/FORK.md` |
 | Tauri opener proposal | Public opener seam adopted and compatibility green; actual Servo popup metadata and integration remain open | CI run 33357076684; `patches/tauri` |
-| Monthly Servo lane | Defined, not demonstrated | `.github/workflows/servo-next.yml` |
+| Monthly Servo lane | Active on `next`; draft migration PR opened | draft PR #3; `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
-| Theorem integration | Pending and separately owned | Acceptance A8 in Record 001 |
+| Theorem integration | Pending after Turvo promotion; Turvo owns Servo integration and Theorem consumes it without a duplicate pin | Record 003 |
 
 ## Recent Decisions
 
@@ -108,6 +109,8 @@ receipts and must not be presented as established project facts.
 | 2026-08-30 | Separate compile CI from native behavior proof | Successful compilation does not demonstrate rendering, IPC, origin security, or window behavior. |
 | 2026-08-30 | Relay monthly agent changes as a scoped patch through fresh jobs | The migration agent should not receive a GitHub token, and credentialed PR creation must not execute agent-modified code. |
 | 2026-08-30 | Proceed with public exact-revision Servo/Tauri integration without repeated confirmation; defer Windows | Explicit user correction; preserve Linux/macOS security checks, published-release gates, and Theorem-owned branches. See Record 002. |
+| 2026-09-13 | Make Turvo the sole home of Theorem's Servo integration while GPUI retains native window and chrome ownership | Removes duplicate engine-pin authority; the Tauri runtime remains one consumer. See Record 003. |
+| 2026-09-13 | Treat arbitrary third-party pages as supported scope | The Theorem desktop compatibility matrix requires remote sites; origin-boundary negative tests are mandatory. See Record 003. |
 
 ## Development Commands
 
@@ -127,9 +130,9 @@ build graph.
 
 ## Next Step
 
-Continue W03 on `integration/servo-0.5-unix`; read `CONTINUITY.md` and Record 002.
-Public pinned Servo/Tauri patches are authorized. Complete the real Servo popup
-metadata and runtime integration without fabricating Wry-native state. Linux/macOS
-native behavior remains mandatory. Windows is O13/WX1; published-engine release
-is E02. Neither deferred obligation is complete, and existing Theorem branches
-stay intact.
+Finish the `next` migration in draft PR #3 and require the Servo policy plus
+ordinary Linux/macOS CI to pass before promotion to `main`. Then let Theorem
+consume Turvo and remove its duplicate Servo pin authority. Read Record 003
+before the older standalone completion graph: its W03/W05 backlog remains, but
+it does not override the current ownership, branch, or third-party-site scope.
+Windows remains deferred under O13/WX1, and publication remains gated by E02.

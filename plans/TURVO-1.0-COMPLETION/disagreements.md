@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
+Canonical SHA-256: `e80beb1aa16e530ef2571a9a7f011f4363ceedeb98fbf15e0fe9d11e89fba7f2`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
@@ -70,7 +70,7 @@ Retraction: Revise or remove the proposal before adoption; Turvo's released depe
 
 ## ADR09: How does the user's new authority change the parked graph?
 
-Choice: Resume on integration/servo-0.5-unix with public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Carry Windows as O13/WX1/VX1 and keep published-engine release effects behind E02. Make reversible implementation decisions without another confirmation request.
+Choice: The historical integration/servo-0.5-unix lane established the public exact-revision Servo/Tauri patches and required Linux/macOS native security checks. Record 003 supersedes that lane for current work: migrate the unified Theorem Servo fork on next, while retaining Windows as O13/WX1/VX1 and published-engine release effects behind E02.
 
 Reversibility: `reversible_with_cost`
 
