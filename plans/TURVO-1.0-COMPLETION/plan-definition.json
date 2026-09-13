@@ -851,9 +851,9 @@
       "proof_commands": [
         "cargo test -p turvo --lib --tests --locked",
         "native IPC source-authentication suite",
-        "cargo +1.94.0 test -p servo-net --test main --locked in the exact public engine checkout",
+        "cargo +1.95.0 test -p servo-net --test main --locked in the exact public engine checkout",
         "python3 scripts/check_integration.py",
-        "cargo +1.94.0 test -p servo-net --test main --locked filemanager_thread::test_filemanager -- --exact"
+        "cargo +1.95.0 test -p servo-net --test main --locked filemanager_thread::test_filemanager -- --exact"
       ],
       "discharge_evidence": [
         "Turvo be7bb189aaaff9b6e0ac79ae17d948d215d2c9bd pins public Servo 526e95cf47ba81485225660fe1a14dc000ffd4b7, requires Window-backed engine provenance for privileged IPC, and retains the full hostile-frame, navigation, CSP, asset, module, binary, channel, and event suite.",

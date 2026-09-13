@@ -128,9 +128,13 @@ default model is GPT-5.3 Codex Spark and can be overridden with the
 
 ## Scope
 
-Turvo is an application shell for content the application ships. Compatibility
-with arbitrary third-party websites is not a project goal. Mobile targets keep
-Tauri's Wry runtime; Turvo is desktop-only.
+Turvo is the desktop home of Theorem's Servo integration. It must preserve web
+origin boundaries for application content and third-party sites alike; remote,
+nested, opaque, and sandboxed callers never inherit local application
+capabilities or bundled-asset authority. Compatibility defects against
+third-party sites are in scope when they violate the supported web-platform or
+security contract. Mobile targets keep Tauri's Wry runtime; Turvo is
+desktop-only.
 
 For an application that also ships on mobile, make the runtime dependency
 target-specific so the desktop graph does not enable Wry and the mobile graph

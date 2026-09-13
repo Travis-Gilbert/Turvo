@@ -1,0 +1,8 @@
+# Machine-readable lineage for the unified Theorem/Turvo Servo fork.
+#
+# The former v0.4.0 release line diverges from v0.5.0 at the merge base below.
+# ADDENDUM-1 deliberately exercises the FORK.md rebase exception: the surviving
+# commits were replayed onto the exact v0.5.0 tag and Turvo became pin owner.
+previous_release_merge_base=b5675b1bc38498a26530b27e578122a8068af3b6
+upstream_ref=refs/tags/v0.5.0
+upstream_commit=1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019

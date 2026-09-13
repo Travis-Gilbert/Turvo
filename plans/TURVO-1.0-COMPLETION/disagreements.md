@@ -1,6 +1,6 @@
 # Decisions and disagreements
 
-Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
+Canonical SHA-256: `92ef5216b6d77400fff93d0497b6dfb3def0f3b0949b148276e4990e1276c563`
 
 These decisions resolve known design forks. A failed oracle reopens the named decision through its retraction path rather than weakening acceptance.
 
