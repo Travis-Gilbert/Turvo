@@ -44,7 +44,7 @@ jobs:
       - name: Read the versioned public engine pin
         id: engine
         shell: bash
-        run: jq -r '"repository=\(.repository)\nrevision=\(.revision)\nbranch=\(.branch)\nbase_revision=\(.base_revision)\nahead_by=\(.ahead_by)\nbehind_by=\(.behind_by)\nrust_channel=\(.rust_channel)"' patches/servo/integration.json >> "$GITHUB_OUTPUT"
+        run: jq -r '"upstream_repository=\(.upstream_repository)\nrepository=\(.repository)\nrevision=\(.revision)\nbranch=\(.branch)\nbase_revision=\(.base_revision)\nahead_by=\(.ahead_by)\nbehind_by=\(.behind_by)\nrust_channel=\(.rust_channel)"' patches/servo/integration.json >> "$GITHUB_OUTPUT"
       - name: Check out the exact public engine revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -68,7 +68,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "${{ steps.engine.outputs.revision }}"
           test "$(git ls-remote https://github.com/${{ steps.engine.outputs.repository }}.git refs/heads/${{ steps.engine.outputs.branch }} | cut -f1)" = "${{ steps.engine.outputs.revision }}"
-          git fetch origin refs/tags/v0.5.0:refs/tags/v0.5.0
+          git fetch "https://github.com/${{ steps.engine.outputs.upstream_repository }}.git" refs/tags/v0.5.0:refs/tags/v0.5.0
           test "$(git rev-parse refs/tags/v0.5.0^{commit})" = "${{ steps.engine.outputs.base_revision }}"
           git merge-base --is-ancestor "${{ steps.engine.outputs.base_revision }}" HEAD
           read -r behind_by ahead_by < <(git rev-list --left-right --count "${{ steps.engine.outputs.base_revision }}...HEAD")
