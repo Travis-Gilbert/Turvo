@@ -12,8 +12,8 @@ Tauri the application window system.
 | Upstream tag | `refs/tags/v0.5.0` = `1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019` |
 | Previous-release merge base | `b5675b1bc38498a26530b27e578122a8068af3b6` |
 | Fork branch | `Travis-Gilbert/servo:theorem/v0.5.0` |
-| Current pin | `b70d4e64c0005d5dc2d5257c09f997dba235410a` |
-| Relationship | `ahead_by=20`, `behind_by=0` against upstream `v0.5.0` |
+| Current pin | `e92cdaa790797479c1821c33470c64e0d166feb2` |
+| Relationship | `ahead_by=56`, `behind_by=0` against upstream `v0.5.0` |
 | Rust channel | `1.95.0`, identical to upstream `v0.5.0` and Turvo's `rust-toolchain.toml` |
 | Recorded in | `integration.json` and `upstream-base` |
 | Enforced by | `.github/workflows/servo-integration.yml` |
@@ -43,9 +43,14 @@ invalidate receipts bound to the old SHA.
 | `e2a2d5e575` | Make web-resource responders sendable | Local embedder seam |
 | `65d71b0bfe` | Escape keyword-named Promise wrapper methods | Candidate upstream generator fix |
 | `4182b51681` through `b70d4e64c0` | Repair and verify the v0.5 carry against current module, media, sandbox, and lifecycle APIs | Rebase adaptation |
+| `b5fead2675` through `6ed6091e4e` | IndexedDB index records, cursor iteration, the getAll family, `IDBRecord`, transaction rollback, and reported backend failures in place of panics | Local engine work, accepted independently at `6ed6091e4e` against the IndexedDB web-platform suite |
+| `fec9c84f8f` through `e92cdaa790` | Web Locks, shared-worker teardown, and named browsing-context lookup through the constellation | Local engine work, accepted independently at `e92cdaa790` against the Web Locks and window-proxy suites |
 
-The versioned patch files retain Turvo's seven original engine commits for
-digest and reverse-application checks. The branch is authoritative when those
+The versioned patch files retain Turvo's seven original engine commits plus
+one squashed file per independently verified slice, nine in all, for digest
+and reverse-application checks. Reversing the nine in order at the current pin
+reconstructs the same tree reversing the seven produced at the previous pin,
+which is what makes the two additions a decomposition rather than a rewrite. The branch is authoritative when those
 patch artifacts and the exact pin disagree.
 
 ## Rules

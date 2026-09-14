@@ -21,9 +21,20 @@ to resolve in that workspace without two crates claiming `links = "jemalloc"`.
 The seventh patch makes the public web-resource response handle `Send`, so a
 bounded Turvo interceptor can finish Servo-owned responses from its worker
 thread without an unsafe wrapper or a duplicate response path.
+The eighth patch is the IndexedDB conformance slice: index records and cursor
+iteration, the getAll family and `IDBRecord`, transaction rollback, key
+generation where the operation runs, and the removal of the backend's panics
+in favour of reported failures. It squashes thirty-three commits and is the
+exact range an independent verifier accepted at `6ed6091e4e`.
+The ninth patch adds the Web Locks API, ends shared workers when their owner
+set empties, and finds named browsing contexts through the constellation. It
+squashes three commits and is the range the same verifier accepted at
+`e92cdaa790`.
 The current public revision is
-`b70d4e64c0005d5dc2d5257c09f997dba235410a`, 20 commits ahead of and zero
-commits behind upstream `v0.5.0`.
+`e92cdaa790797479c1821c33470c64e0d166feb2`, 56 commits ahead of and zero
+commits behind upstream `v0.5.0`. The two newest patch files each cover one
+independently verified slice, so the nine files still reverse-apply in order
+to the same tree the seven produced at the previous pin.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,

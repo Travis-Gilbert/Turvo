@@ -87,6 +87,8 @@ jobs:
           test ! -e "$patch_index"
           GIT_INDEX_FILE="$patch_index" git -C pinned-servo read-tree HEAD
           for patch in \
+            0009-web-locks-and-window-proxies.patch \
+            0008-indexeddb-conformance-slice.patch \
             0007-sendable-web-resource-responders.patch \
             0006-align-jemalloc-consumer-graph.patch \
             0005-storage-engine-factories.patch \

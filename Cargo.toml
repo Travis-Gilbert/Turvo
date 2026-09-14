@@ -25,11 +25,11 @@ ureq = { version = "3.4", default-features = false }
 # Public development integration only. Registry release remains gated by E02;
 # published versions do not yet provide these runtime/origin contracts.
 [patch.crates-io]
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "b70d4e64c0005d5dc2d5257c09f997dba235410a" }
-servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "b70d4e64c0005d5dc2d5257c09f997dba235410a" }
-servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "b70d4e64c0005d5dc2d5257c09f997dba235410a" }
-servo-storage-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "b70d4e64c0005d5dc2d5257c09f997dba235410a" }
-servo-url = { git = "https://github.com/Travis-Gilbert/servo", rev = "b70d4e64c0005d5dc2d5257c09f997dba235410a" }
+servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-storage-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-url = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
 tauri = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-runtime = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-utils = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }

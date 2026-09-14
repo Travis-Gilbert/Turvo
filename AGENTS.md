@@ -93,7 +93,7 @@ receipts and must not be presented as established project facts.
 | DevTools | Secure configuration implemented, native attachment pending | Record 001 A4 |
 | Cross-platform CI | Linux/macOS required for current integration; Windows explicitly deferred with failing security receipts retained | Record 002; graph O13/WX1 |
 | Completion graph | The prior standalone completion graph retains historical receipts; the Theorem desktop-shell addendum governs the current cross-repository migration | Record 003; `plans/TURVO-1.0-COMPLETION/CONTINUITY.md` |
-| Public integration | `next` pins the unified `Travis-Gilbert/servo:theorem/v0.5.0` fork at `b70d4e64`; promotion awaits required Linux/macOS CI | draft PR #3; Record 003; `patches/servo/FORK.md` |
+| Public integration | `next` pins the unified `Travis-Gilbert/servo:theorem/v0.5.0` fork at `e92cdaa7`; promotion awaits required Linux/macOS CI | draft PR #3; Record 003; `patches/servo/FORK.md` |
 | Tauri opener proposal | Public opener seam adopted and compatibility green; actual Servo popup metadata and integration remain open | CI run 33357076684; `patches/tauri` |
 | Monthly Servo lane | Active on `next`; draft migration PR opened | draft PR #3; `.github/workflows/servo-next.yml` |
 | crates.io release | Pending | Acceptance A7 in Record 001 |
