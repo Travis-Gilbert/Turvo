@@ -25,6 +25,7 @@ use super::ipc::{
 const MAX_CODE_SERVER_RESOURCE_BYTES: u64 = 64 * 1024 * 1024;
 const VSCODE_RESOURCE_SUFFIX: &str = ".vscode-resource.vscode-cdn.net";
 const VSCODE_WEBVIEW_SUFFIX: &str = ".vscode-cdn.net";
+const VSCODE_WEBVIEW_ENTRY_DIRECTORY: &str = "/out/vs/workbench/contrib/webview/browser/pre/";
 
 #[derive(Clone)]
 struct CodeServerProxy {
@@ -72,21 +73,34 @@ impl CodeServerProxy {
       let path = percent_decode_str(source.path())
         .decode_utf8()
         .map_err(|_| http::StatusCode::BAD_REQUEST)?;
+      // The URL path contributes one structural slash before VS Code's
+      // percent-encoded absolute resource path. Preserve absolute and UNC
+      // paths while removing only that duplicated structural slash.
+      let path = if path.starts_with("//") {
+        &path[1..]
+      } else {
+        path.as_ref()
+      };
       if path.as_bytes().contains(&0) {
         return Err(http::StatusCode::BAD_REQUEST);
       }
       let mut target = self.endpoint("vscode-remote-resource");
-      target.query_pairs_mut().append_pair("path", &path);
+      target.query_pairs_mut().append_pair("path", path);
       return Ok(Some(target));
     }
 
     let path = percent_decode_str(source.path())
       .decode_utf8()
       .map_err(|_| http::StatusCode::BAD_REQUEST)?;
+    let is_webview_entry = ["index.html", "fake.html"].into_iter().any(|entry| {
+      path
+        .strip_suffix(entry)
+        .is_some_and(|prefix| prefix.ends_with(VSCODE_WEBVIEW_ENTRY_DIRECTORY))
+    });
     if path
       .split('/')
       .any(|component| matches!(component, "." | ".."))
-      || !matches!(path.rsplit('/').next(), Some("index.html" | "fake.html"))
+      || !is_webview_entry
     {
       return Err(http::StatusCode::NOT_FOUND);
     }

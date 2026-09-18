@@ -1,9 +1,11 @@
 # Public Servo HTTP integration
 
-The exact source and patch digests are in `integration.json`. The patches apply
-to published Servo 0.5.0's recorded commit
-`77fccacc1f1fdce10498d50173aafaa09d02879e` and are published on the isolated
-`Travis-Gilbert/servo:turvo/storage-engines-1.0` branch. Theorem branches are untouched.
+The exact source and patch digests are in `integration.json`. The unified fork
+descends from the upstream Servo `v0.5.0` tag at
+`1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019` and is published as
+`Travis-Gilbert/servo:theorem/v0.5.0`. It carries both the prior Theorem
+embedder work and Turvo's engine/security patches; Turvo is the sole consumer
+repository that declares the product pin. See `FORK.md` and `upstream-base`.
 The second patch locks the added Tokio cancellation feature's existing
 `futures-util` dependency. The third patch makes the file-manager test reuse
 the networking suite's shared runtime instead of initializing and dropping its
@@ -19,8 +21,20 @@ to resolve in that workspace without two crates claiming `links = "jemalloc"`.
 The seventh patch makes the public web-resource response handle `Send`, so a
 bounded Turvo interceptor can finish Servo-owned responses from its worker
 thread without an unsafe wrapper or a duplicate response path.
+The eighth patch is the IndexedDB conformance slice: index records and cursor
+iteration, the getAll family and `IDBRecord`, transaction rollback, key
+generation where the operation runs, and the removal of the backend's panics
+in favour of reported failures. It squashes thirty-three commits and is the
+exact range an independent verifier accepted at `6ed6091e4e`.
+The ninth patch adds the Web Locks API, ends shared workers when their owner
+set empties, and finds named browsing contexts through the constellation. It
+squashes three commits and is the range the same verifier accepted at
+`e92cdaa790`.
 The current public revision is
-`c535d2b639bde66570dbcf0f07c3fce009c01b9a`.
+`e92cdaa790797479c1821c33470c64e0d166feb2`, 56 commits ahead of and zero
+commits behind upstream `v0.5.0`. The two newest patch files each cover one
+independently verified slice, so the nine files still reverse-apply in order
+to the same tree the seven produced at the previous pin.
 
 The request interceptor replaces only HTTP transport, after request policy
 selection and before normal response processing. CSP, CORS/preflight, redirects,
@@ -48,8 +62,9 @@ request-client tests cover caller-kind serialization, fail-closed compatibility,
 and builder propagation. Run:
 
 ```sh
-cargo +1.94.0 test -p servo-net --test main --locked
-cargo +1.94.0 test -p servo-net-traits --test request_client --locked
+cargo +1.95.0 test -p servo-net --test main --locked
+cargo +1.95.0 test -p servo-net-traits --test request_client --locked
+cargo +1.95.0 test -p servo-storage --lib --locked
 ```
 
 Hosted test and native application receipts are required before acceptance.

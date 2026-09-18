@@ -1,6 +1,6 @@
 # Lessons and constraints
 
-Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
+Canonical SHA-256: `e80beb1aa16e530ef2571a9a7f011f4363ceedeb98fbf15e0fe9d11e89fba7f2`
 
 ## Current facts
 
@@ -47,7 +47,7 @@ Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91
 
 ## Explicit exclusions
 
-- No arbitrary third-party web compatibility commitment.
+- No system-webview or DOM-owned Theorem chrome; GPUI owns native windows and chrome while Turvo supplies Servo content surfaces.
 - No offscreen GPUI compositor implementation in the 0.1.0 windowed release; only its follow-on plan is required.
 - No performance, memory, startup, or binary-size claim before a reproducible benchmark receipt.
 - No unsafe fabrication of Tauri NewWindowOpener platform objects.

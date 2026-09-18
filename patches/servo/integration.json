@@ -1,9 +1,12 @@
 {
   "upstream_repository": "servo/servo",
-  "base_revision": "77fccacc1f1fdce10498d50173aafaa09d02879e",
+  "base_revision": "1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019",
   "repository": "Travis-Gilbert/servo",
-  "revision": "c535d2b639bde66570dbcf0f07c3fce009c01b9a",
-  "branch": "turvo/storage-engines-1.0",
+  "revision": "e92cdaa790797479c1821c33470c64e0d166feb2",
+  "branch": "theorem/v0.5.0",
+  "ahead_by": 56,
+  "behind_by": 0,
+  "rust_channel": "1.95.0",
   "patches": [
     {
       "path": "0001-policy-preserving-http-interception.patch",
@@ -32,6 +35,14 @@
     {
       "path": "0007-sendable-web-resource-responders.patch",
       "sha256": "6e77b01e86c7a17174cfa48210ba2e9bdd7d3f535df40945d30377ff968e6762"
+    },
+    {
+      "path": "0008-indexeddb-conformance-slice.patch",
+      "sha256": "e7a0ba9fc708400410fc590e24b2036f404703169d756a4b1f987072ccd64918"
+    },
+    {
+      "path": "0009-web-locks-and-window-proxies.patch",
+      "sha256": "ad8f67fa87395a54316e1ff3b7bcfc454b9fda8dd9b575f8d2ba26272b846cea"
     }
   ]
 }

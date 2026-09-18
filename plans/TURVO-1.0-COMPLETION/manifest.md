@@ -1,26 +1,26 @@
 # TURVO-1.0-COMPLETION completion board
 
-Canonical SHA-256: `e6805a0db8f36fc01c742435d134de3216bccc5ae26e7a53634283614f91c765`
+Canonical SHA-256: `e80beb1aa16e530ef2571a9a7f011f4363ceedeb98fbf15e0fe9d11e89fba7f2`
 
 ## Destination
 
-Ship Turvo 0.1.0 as a public, deterministic, desktop-only Tauri runtime backed by an in-process pinned Servo engine, with native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, Firefox DevTools, runtime-managed window.open, automated Servo migration, a published two-edit consumer path, and an exact-revision Theorem consumer receipt.
+Ship Turvo 0.1.0 as the public, deterministic Servo integration home for the Theorem desktop, with one exact engine pin, hosted migration and bundle lanes, native Linux, Windows, and macOS proof, secure local-versus-remote capability behavior, arbitrary third-party-site support, Firefox DevTools, runtime-managed window.open, a published Tauri consumer path, and an exact-revision Theorem consumer receipt.
 
 ## Active integration profile
 
-Branch: `integration/servo-0.5-unix`
+Branch: `next`
 
 Required: Linux, macOS. Deferred: Windows.
 
 The user explicitly said to skip Windows for now on 2026-08-30. Its failing native receipts remain evidence of unresolved work under O13/WX1/VX1.
 
-The user authorized version-pinned public Servo/Tauri integration branches. Preserve main/next and Theorem-owned branches; test actual source revisions on Linux/macOS.
+Turvo owns the exact product pin to Travis-Gilbert/servo:theorem/v0.5.0. Migrate on next, require Linux/macOS hosted proof, promote to main only when green, and remove Theorem's duplicate pin when it consumes Turvo.
 
 Release: E02 retains the published-engine/two-edit consumer requirement; VX1 retains deferred Windows proof. Neither can be discharged by integration-branch CI.
 
 ## Fixpoint
 
-O01-O13 each carry their declared evidence. GitHub main and next exist; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, and window.open gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem boots with its consumer-owned Servo patch; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.
+O01-O13 each carry their declared evidence. GitHub main and next exist; Turvo alone owns the exact Servo pin; the exact source tip passes compile, lint, package, native smoke, DevTools, origin, IPC, events, plugin, tray, multi-window, window.open, and third-party origin-boundary gates on the required platforms; servo-next has opened a real migration PR; turvo 0.1.0 is published and consumed in a clean app; Theorem consumes Turvo without a duplicate Servo pin; no benchmark claim appears without a benchmark receipt; no rewrite remains applicable. The current integration milestone is Linux/macOS; Windows and the published-engine release gate remain explicitly deferred, not discharged.
 
 ## Hard prerequisite
 
@@ -34,7 +34,7 @@ The user requested bootstrap, graph computation, and execution, then explicitly 
 
 ## Opening move
 
-- 1. `W03`: V02I now proves the IPC boundary on Linux/macOS. Complete the already versioned runtime-neutral opener seam before examples depend on real popup behavior.
+- 1. `W03`: Record 003's next-branch unified-fork migration and hosted Linux/macOS proof take precedence. Once that cross-repository gate is green, V02I permits this retained popup backlog to resume.
 
 ## Task board
 

@@ -11,7 +11,7 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.94"
+rust-version = "1.95"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/Travis-Gilbert/Turvo"
 repository = "https://github.com/Travis-Gilbert/Turvo"
@@ -25,11 +25,11 @@ ureq = { version = "3.4", default-features = false }
 # Public development integration only. Registry release remains gated by E02;
 # published versions do not yet provide these runtime/origin contracts.
 [patch.crates-io]
-servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
-servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
-servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
-servo-storage-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
-servo-url = { git = "https://github.com/Travis-Gilbert/servo", rev = "c535d2b639bde66570dbcf0f07c3fce009c01b9a" }
+servo = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-net-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-base = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-storage-traits = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
+servo-url = { git = "https://github.com/Travis-Gilbert/servo", rev = "e92cdaa790797479c1821c33470c64e0d166feb2" }
 tauri = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-runtime = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
 tauri-utils = { git = "https://github.com/Travis-Gilbert/tauri", rev = "e84733018d84c8004645e04cbc8fea8511ae36b1" }
