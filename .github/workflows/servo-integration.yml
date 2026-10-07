@@ -129,6 +129,10 @@ jobs:
         working-directory: pinned-servo
         shell: bash
         run: cargo +1.95.0 test -p servo-storage --lib --locked 2>&1 | tee storage-tests.log
+      - name: Run storage registry and factory integration tests
+        working-directory: pinned-servo
+        shell: bash
+        run: cargo +1.95.0 test -p servo-storage --test main --locked 2>&1 | tee storage-integration-tests.log
       - name: Run request-client identity tests
         working-directory: pinned-servo
         shell: bash
@@ -142,5 +146,6 @@ jobs:
             pinned-servo/net-tests.log
             pinned-servo/filemanager-test.log
             pinned-servo/storage-tests.log
+            pinned-servo/storage-integration-tests.log
             pinned-servo/request-client-tests.log
           if-no-files-found: ignore

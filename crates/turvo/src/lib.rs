@@ -120,7 +120,7 @@ pub mod error;
 pub use devtools::{
   DevtoolsServer, InvalidCodeServerUrl, InvalidDevtoolsPort, OptionsAlreadyLocked, TurvoOptions,
 };
-/// Process-wide Servo configuration, including optional storage factories.
+/// Process-wide Servo configuration for DevTools and code-server resources.
 pub type EngineOptions = TurvoOptions;
 pub use error::{Error as ServoError, Result as ServoResult};
 

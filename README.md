@@ -1,10 +1,11 @@
 # Turvo
 
-Turvo is the Servo integration home for the Theorem desktop. It owns the exact
-engine pin, migration lane, hosted engine proof, and desktop bundling path.
-GPUI owns Theorem's native windows and chrome; Turvo supplies the in-process
-Servo embedding. The existing Tauri runtime is one consumer of that embedding,
-not Turvo's product boundary.
+Turvo is an independent Servo application runtime and SDK with its own exact
+engine pin, migration lane, hosted proof, packaging and releases. Theorem owns
+its GPUI product and in-repository embedding with an independent exact Servo
+pin. The projects can share the downstream Servo fork without coupling their
+integration code or release schedules. Turvo's existing public Tauri runtime
+remains supported.
 
 The project is aiming for an Electron-class application shell without bundling
 Chromium. Performance, memory, startup-time, and binary-size claims are
@@ -16,8 +17,15 @@ Active integration work is Linux/macOS-first on `next`, through draft PR #3.
 That lane pins `Travis-Gilbert/servo:theorem/v0.5.0` at an exact revision before
 promotion to `main`; Windows is explicitly deferred, not verified. The
 published-engine release contract remains gated. See
-[Record 003](docs/records/003-theorem-desktop-servo-home.md) for the ownership
-and scope change.
+[Record 004](docs/records/004-independent-servo-consumers.md) for current
+ownership and [Record 003](docs/records/003-theorem-desktop-servo-home.md) for
+the superseded migration decision.
+
+The candidate removes `TurvoOptions::with_storage_engines` and the
+`turvo::storage::StorageEngines` reexport. This is an intentional public API
+break: Turvo uses Servo's default backends, and external injection callers must
+adapt. The engine pin is unchanged. See Record 004 for the consumer audit and
+the default CacheStorage dummy limitation.
 
 Turvo is pre-release software. The repository currently contains:
 
@@ -118,6 +126,12 @@ can use a prebuilt SpiderMonkey artifact where one is available. Do not start a
 local build without ample free disk space; hosted CI is the authoritative
 compile lane for the active Linux/macOS integration targets.
 
+The current manifest still disables incremental compilation for every local
+development build. CI separately sets `CARGO_PROFILE_DEV_INCREMENTAL=false`
+because its Servo artifacts create runner disk pressure. Restoring local
+incremental compilation awaits a scoped repeat-edit timing and disk-use
+comparison; no local speedup has been measured. See Record 004.
+
 ## Engine policy
 
 - `main` pins the current Servo LTS release exactly.
@@ -127,6 +141,9 @@ compile lane for the active Linux/macOS integration targets.
   its scoped patch and open a draft PR against `next`.
 - A failing `next` migration does not block `main`; it is an early warning for
   the next LTS update.
+- Each consumer selects and verifies its own exact pin. Turvo's promotion and
+  release do not gate Theorem product changes. The shared fork's retained
+  patches and lineage remain recorded in [the fork ledger](patches/servo/FORK.md).
 
 The scheduled agent workflow expects an `OPENAI_API_KEY` Actions secret. Its
 default model is GPT-5.3 Codex Spark and can be overridden with the
@@ -134,7 +151,7 @@ default model is GPT-5.3 Codex Spark and can be overridden with the
 
 ## Scope
 
-Turvo is the desktop home of Theorem's Servo integration. It must preserve web
+Turvo provides a desktop Servo runtime and SDK. It must preserve web
 origin boundaries for application content and third-party sites alike; remote,
 nested, opaque, and sandboxed callers never inherit local application
 capabilities or bundled-asset authority. Compatibility defects against

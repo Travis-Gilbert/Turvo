@@ -2,7 +2,13 @@
 
 Date: 2026-09-13
 
-Status: Accepted by `SPEC-THEOREM-DESKTOP-SHELL-SERVO-RR-1.0-ADDENDUM-1`.
+Status: Historical. Exclusive Theorem integration, pin, migration, validation
+and bundling ownership superseded on 2026-10-07 by
+[Record 004](004-independent-servo-consumers.md). The original record described
+the addendum as accepted, although the addendum's header says Proposed; that
+historical discrepancy is retained rather than treated as new acceptance.
+The origin-boundary, third-party compatibility and platform proof obligations
+below survive. The text below records the prior decision, not current ownership.
 
 ## Decision
 

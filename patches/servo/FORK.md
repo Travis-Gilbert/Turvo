@@ -1,9 +1,11 @@
 # Unified Theorem/Turvo Servo fork
 
-Turvo owns the Servo integration, exact pin, migration policy, and hosted
-verification for Theorem desktop. GPUI remains the native window and chrome
-owner; this fork supplies the embeddable web engine and does not make Servo or
-Tauri the application window system.
+Turvo and Theorem are independent consumers of this shared downstream Servo
+fork. Each owns its embedding, exact consumer pin, validation and releases.
+Theorem's GPUI product owns its native window and chrome. This directory records
+Turvo's selected revision and the shared patch history; it does not require
+Theorem to consume Turvo or select the same revision. See
+[Record 004](../../docs/records/004-independent-servo-consumers.md).
 
 ## Lineage
 
@@ -12,7 +14,7 @@ Tauri the application window system.
 | Upstream tag | `refs/tags/v0.5.0` = `1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019` |
 | Previous-release merge base | `b5675b1bc38498a26530b27e578122a8068af3b6` |
 | Fork branch | `Travis-Gilbert/servo:theorem/v0.5.0` |
-| Current pin | `e92cdaa790797479c1821c33470c64e0d166feb2` |
+| Turvo consumer pin | `e92cdaa790797479c1821c33470c64e0d166feb2` |
 | Relationship | `ahead_by=56`, `behind_by=0` against upstream `v0.5.0` |
 | Rust channel | `1.95.0`, identical to upstream `v0.5.0` and Turvo's `rust-toolchain.toml` |
 | Recorded in | `integration.json` and `upstream-base` |
@@ -60,7 +62,23 @@ patch artifacts and the exact pin disagree.
 3. Adopting another upstream release requires updating `upstream-base`, this
    ledger, `integration.json`, the Rust channel, and all invalidated receipts in
    one reviewed change.
-4. Theorem consumes Turvo and does not declare a duplicate Servo pin or fork
-   ledger.
+4. Each consumer enforces one exact engine family within its workspace. A
+   consumer upgrade does not change another consumer's pin or acceptance state.
 5. No generated or AI-authored change is submitted upstream; upstream
    contribution policy remains binding.
+
+## Patch queue maintenance
+
+Preserve the nine-patch baseline and its digests while separating storage
+injection from the generally useful compatibility changes. Patch 0008 extends
+contracts introduced by 0005; reversing 0005 alone removes more than injection
+and breaks the conformance slice. A cleanup must be a separately verified
+candidate, not a deletion of that baseline or its historical branches.
+
+For each new or revised patch, record its narrow purpose, exact upstream base,
+dependency order, regression command and reason it remains necessary. Before
+adopting a later upstream release, check equivalent upstream behavior. Drop a
+patch only after the same regression demonstrates equivalence; otherwise adapt
+it and rerun the relevant tests. Keep this migration on v0.5.0; a Servo 0.7
+upgrade is separate work. Historical verification in the table is not fresh
+evidence for a changed candidate. Record 004 names the current cleanup blockers.
