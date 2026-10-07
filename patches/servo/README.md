@@ -4,8 +4,10 @@ The exact source and patch digests are in `integration.json`. The unified fork
 descends from the upstream Servo `v0.5.0` tag at
 `1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019` and is published as
 `Travis-Gilbert/servo:theorem/v0.5.0`. It carries both the prior Theorem
-embedder work and Turvo's engine/security patches; Turvo is the sole consumer
-repository that declares the product pin. See `FORK.md` and `upstream-base`.
+embedder work and Turvo's engine/security patches. Turvo and Theorem select
+independent exact consumer pins; this directory records Turvo's selected
+revision and the shared patch history. See `FORK.md`, `upstream-base` and
+[Record 004](../../docs/records/004-independent-servo-consumers.md).
 The second patch locks the added Tokio cancellation feature's existing
 `futures-util` dependency. The third patch makes the file-manager test reuse
 the networking suite's shared runtime instead of initializing and dropping its
@@ -65,7 +67,12 @@ and builder propagation. Run:
 cargo +1.95.0 test -p servo-net --test main --locked
 cargo +1.95.0 test -p servo-net-traits --test request_client --locked
 cargo +1.95.0 test -p servo-storage --lib --locked
+cargo +1.95.0 test -p servo-storage --test main --locked
 ```
+
+Both storage targets are required: `--lib` exercises SQLite/backend units,
+while `--test main` includes registry, Web Storage and factory-selection
+regressions. Declaring these CI commands does not establish a candidate pass.
 
 Hosted test and native application receipts are required before acceptance.
 The source patch alone is not a security, performance, or registry-release claim.
