@@ -21,6 +21,12 @@ published-engine release contract remains gated. See
 ownership and [Record 003](docs/records/003-theorem-desktop-servo-home.md) for
 the superseded migration decision.
 
+The candidate removes `TurvoOptions::with_storage_engines` and the
+`turvo::storage::StorageEngines` reexport. This is an intentional public API
+break: Turvo uses Servo's default backends, and external injection callers must
+adapt. The engine pin is unchanged. See Record 004 for the consumer audit and
+the default CacheStorage dummy limitation.
+
 Turvo is pre-release software. The repository currently contains:
 
 - an in-process Servo 0.5.0 runtime over Tao and `tauri-runtime` 2.11.3;

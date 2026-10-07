@@ -10,8 +10,6 @@ use std::{
 
 use url::{Host, Url};
 
-use crate::storage::StorageEngines;
-
 type DevtoolsConnectionHandler = Arc<dyn Fn() -> bool + Send + Sync>;
 type DevtoolsServerHandler = Arc<dyn Fn(DevtoolsServer) + Send + Sync>;
 
@@ -70,7 +68,6 @@ pub struct TurvoOptions {
   devtools_connection_handler: Option<DevtoolsConnectionHandler>,
   devtools_server_handler: Option<DevtoolsServerHandler>,
   code_server_url: Option<Url>,
-  storage_engines: StorageEngines,
 }
 
 impl TurvoOptions {
@@ -140,15 +137,6 @@ impl TurvoOptions {
     Ok(self)
   }
 
-  /// Selects the storage factories used by all Servo webviews in this process.
-  ///
-  /// Passing [`StorageEngines::default`] preserves Servo's built-in backends.
-  #[must_use]
-  pub fn with_storage_engines(mut self, storage_engines: StorageEngines) -> Self {
-    self.storage_engines = storage_engines;
-    self
-  }
-
   pub(crate) fn devtools_listen_address(&self) -> Option<SocketAddr> {
     self
       .devtools_port
@@ -180,10 +168,6 @@ impl TurvoOptions {
   pub(crate) fn code_server_url(&self) -> Option<&Url> {
     self.code_server_url.as_ref()
   }
-
-  pub(crate) fn storage_engines(&self) -> &StorageEngines {
-    &self.storage_engines
-  }
 }
 
 impl fmt::Debug for TurvoOptions {
@@ -200,18 +184,6 @@ impl fmt::Debug for TurvoOptions {
         &self.devtools_server_handler.is_some(),
       )
       .field("code_server_url", &self.code_server_url)
-      .field(
-        "custom_storage_engine_count",
-        &[
-          self.storage_engines.indexeddb.is_some(),
-          self.storage_engines.registry.is_some(),
-          self.storage_engines.web_storage.is_some(),
-          self.storage_engines.cache.is_some(),
-        ]
-        .into_iter()
-        .filter(|selected| *selected)
-        .count(),
-      )
       .finish()
   }
 }
@@ -293,16 +265,10 @@ pub(crate) fn configured_options() -> TurvoOptions {
 #[cfg(test)]
 mod tests {
   use super::{DevtoolsServer, OptionsState, TurvoOptions};
-  use crate::storage::{CacheStorageEngine, CacheStorageEngineFactory, StorageEngines};
   use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
-    path::PathBuf,
-    sync::{
-      atomic::{AtomicBool, Ordering},
-      Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
   };
-  use storage_traits::{cache_storage::CacheStorageError, client_storage::StorageProxyMap};
   use url::Url;
 
   #[test]
@@ -385,49 +351,29 @@ mod tests {
     }
   }
 
-  struct MemoryCacheEngine;
-
-  impl CacheStorageEngine for MemoryCacheEngine {
-    fn has_cache(
-      &mut self,
-      _origin: &servo_url::ImmutableOrigin,
-      _proxy: &StorageProxyMap,
-      cache_name: &str,
-    ) -> Result<bool, CacheStorageError<String>> {
-      Ok(cache_name == "selected-by-turvo")
-    }
-  }
-
-  struct MemoryCacheFactory {
-    opened: Arc<AtomicBool>,
-  }
-
-  impl CacheStorageEngineFactory for MemoryCacheFactory {
-    fn open(&self, _storage_dir: PathBuf) -> Result<Box<dyn CacheStorageEngine>, String> {
-      self.opened.store(true, Ordering::SeqCst);
-      Ok(Box::new(MemoryCacheEngine))
-    }
-  }
-
   #[test]
-  fn storage_hook_preserves_an_injected_factory() {
-    let opened = Arc::new(AtomicBool::new(false));
-    let engines = StorageEngines {
-      cache: Some(Arc::new(MemoryCacheFactory {
-        opened: opened.clone(),
-      })),
-      ..StorageEngines::default()
-    };
-    let options = TurvoOptions::default().with_storage_engines(engines);
-    let _engine = options
-      .storage_engines()
-      .cache
-      .as_ref()
-      .unwrap()
-      .open(PathBuf::from("unused-by-memory-engine"))
+  fn default_builder_bootstrap_preserves_nonstorage_configuration() {
+    // Construct the public default builder without starting a native engine.
+    let _: tauri::Builder<crate::Turvo> = crate::builder();
+    let endpoint = Url::parse("http://127.0.0.1:8080/").unwrap();
+    let mut state = OptionsState::default();
+    state
+      .configure(
+        TurvoOptions::default()
+          .try_with_code_server_url(endpoint.clone())
+          .unwrap()
+          .try_with_devtools_port(7000)
+          .unwrap()
+          .with_devtools_connection_handler(|| true),
+      )
       .unwrap();
-
-    assert!(opened.load(Ordering::SeqCst));
+    for engine in 0..2 {
+      let options = state.start_engine();
+      assert_eq!(options.code_server_url(), Some(&endpoint));
+      assert!(options.approve_devtools_connection());
+      assert_eq!(options.devtools_listen_address().is_some(), engine == 0);
+    }
+    assert!(state.configure(TurvoOptions::default()).is_err());
   }
 
   #[test]

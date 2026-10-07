@@ -4,10 +4,10 @@
 
 //! Servo storage-engine contracts exposed by Turvo.
 //!
-//! Applications provide factories through [`StorageEngines`]. Leaving a slot
-//! empty preserves the backend built into the pinned Servo fork.
+//! These reusable backend contracts remain available for downstream storage
+//! implementations. Turvo's runtime uses Servo's built-in storage selection;
+//! configuring custom factories through Turvo options is no longer supported.
 
-pub use storage_traits::StorageEngines;
 pub use storage_traits::{
   cache_storage::{CacheStorageEngine, CacheStorageEngineFactory},
   client_storage::{RegistryEngine, RegistryEngineFactory},

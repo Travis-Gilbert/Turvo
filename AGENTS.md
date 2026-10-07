@@ -102,6 +102,7 @@ receipts and must not be presented as established project facts.
 | crates.io release | Pending | Acceptance A7 in Record 001 |
 | Theorem integration | Independent embedding and pin ownership approved; Theorem's native migration and acceptance remain pending | Record 004 |
 | Storage integration gate | Library and main integration targets declared for macOS/Linux; fresh candidate execution pending | `.github/workflows/servo-integration.yml`; Record 004 |
+| Storage adapter candidate | Custom injection API removed; default builder retained at the existing pin; public API break and runtime proof pending | Record 004 |
 
 ## Recent Decisions
 

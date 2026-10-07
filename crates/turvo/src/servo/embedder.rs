@@ -714,7 +714,6 @@ impl Embedder {
       .preferences(preferences)
       .event_loop_waker(Box::new(waker))
       .protocol_registry(protocol_registry)
-      .storage_engines(runtime_options.storage_engines().clone())
       .build();
     servo.set_delegate(Rc::new(EngineDelegate {
       options: runtime_options,

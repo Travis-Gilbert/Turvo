@@ -64,6 +64,49 @@ proof must replace retired injection-only proofs. Do not combine this with an
 upstream version upgrade, delete historical branches, or repin before required
 candidate validation.
 
+## Turvo default-storage adapter candidate
+
+The follow-on adapter cleanup starts at Turvo
+`5c4e2021f0cfdfd8ffc3bd34cf2765d1ce4fcc02` and removes
+`TurvoOptions::with_storage_engines`, its stored aggregate
+and accessor, the runtime `ServoBuilder::storage_engines` call, and the public
+`turvo::storage::StorageEngines` reexport. Every production Servo construction
+now uses the builder's default storage selection. The exact Servo pin remains
+`e92cdaa790797479c1821c33470c64e0d166feb2`; the default builder API exists in
+both that baseline and the separate forward engine-cleanup candidate.
+
+This intentionally breaks the public injection API for the candidate release.
+The supported first-party source inventory found only the runtime forwarding
+call and a unit test configuring a mock factory; it found no configured
+application/example caller. External callers are unknown, so this is not a
+claim that the API has no consumers worldwide. Users of the removed API must
+adapt before taking this candidate release. Historical source/patch records
+and the named Theorem storage branch above remain available.
+
+Reusable engine/factory trait reexports, the storage module and dependency,
+RustyRed's OrderedMap and backend implementations are retained. The Tauri
+runtime, native capabilities and origin-boundary tests remain supported.
+Default SQLite IndexedDB/registry/localStorage and in-memory sessionStorage
+behavior remain the engine's responsibility. The pinned default CacheStorage
+backend is still a dummy returning false for `has_cache`; this adapter cleanup
+does not implement cache persistence or establish Cache API conformance.
+
+The removed mock-factory test is replaced by a component regression constructing
+the public default Tauri builder and checking that runtime bootstrap preserves
+code-server settings and connection approval across webviews while claiming a
+fixed DevTools endpoint once and locking late configuration. It does not start
+Servo or prove default backend persistence. The separate engine candidate's
+default-storage regressions and real macOS/Linux runtime journeys remain
+required before repinning or claiming storage acceptance.
+
+Local adapter checks on 2026-10-07 passed all 15 existing Python policy tests,
+`scripts/check_integration.py`, Rustfmt parsing of all four changed Rust files,
+focused formatting checks and `git diff --check`. An inventory of 29 first-party
+Rust files under `crates/` and `examples/` found no remaining injection API or
+aggregate references. Root/Turvo manifests and the lockfile were independently
+checked unchanged. No Cargo compilation or Rust/native test execution is
+claimed for this adapter candidate.
+
 ## Development and validation changes
 
 The hosted Servo policy retains its macOS/Linux matrix, exact SHA/lineage,
